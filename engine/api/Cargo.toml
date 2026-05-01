@@ -1,0 +1,11 @@
+[package]
+name = "hotsas_api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+hotsas_application = { path = "../application" }
+hotsas_core = { path = "../core" }
+serde.workspace = true

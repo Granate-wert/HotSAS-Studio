@@ -1,0 +1,21 @@
+[package]
+name = "hotsas_desktop_tauri"
+version = "0.1.0"
+description = "HotSAS Studio desktop shell"
+authors = ["HotSAS Studio contributors"]
+edition = "2021"
+
+[lib]
+name = "hotsas_desktop_tauri_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+hotsas_application = { path = "../../../engine/application" }
+hotsas_adapters = { path = "../../../engine/adapters" }
+hotsas_api = { path = "../../../engine/api" }
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

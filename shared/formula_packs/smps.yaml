@@ -1,0 +1,49 @@
+packId: smps
+title: Switch-Mode Power Supplies
+version: 0.1.0
+formulas:
+  - id: buck_converter_placeholder
+    title: Buck Converter Placeholder
+    category: smps/buck
+    description: Placeholder for future duty cycle, ripple, stress, loss, and thermal estimates.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+      Vout:
+        unit: V
+        description: Output voltage
+      Iout:
+        unit: A
+        description: Output current
+    equations:
+      - id: duty
+        latex: "D \\approx \\frac{V_{out}}{V_{in}}"
+        expression: "D = Vout / Vin"
+        solve_for: ["D", "Vin", "Vout"]
+    outputs:
+      D:
+        unit: ""
+        description: Ideal duty cycle
+    linkedCircuitTemplateId: buck_converter_template
+  - id: boost_converter_placeholder
+    title: Boost Converter Placeholder
+    category: smps/boost
+    description: Placeholder for future boost converter calculations.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+      Vout:
+        unit: V
+        description: Output voltage
+    equations:
+      - id: duty
+        latex: "D \\approx 1 - \\frac{V_{in}}{V_{out}}"
+        expression: "D = 1 - Vin / Vout"
+        solve_for: ["D", "Vin", "Vout"]
+    outputs:
+      D:
+        unit: ""
+        description: Ideal duty cycle
+    linkedCircuitTemplateId: boost_converter_template

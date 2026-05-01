@@ -1,0 +1,50 @@
+packId: op_amp
+title: Operational Amplifiers
+version: 0.1.0
+formulas:
+  - id: op_amp_inverting_gain
+    title: Inverting Op-Amp Gain
+    category: op_amp/gain
+    description: Ideal inverting amplifier gain placeholder.
+    variables:
+      Rin:
+        unit: Ohm
+        description: Input resistor
+        default: 10k
+      Rf:
+        unit: Ohm
+        description: Feedback resistor
+        default: 100k
+    equations:
+      - id: gain
+        latex: "A_v = -\\frac{R_f}{R_{in}}"
+        expression: "Av = -Rf / Rin"
+        solve_for: ["Av", "Rf", "Rin"]
+    outputs:
+      Av:
+        unit: ""
+        description: Voltage gain
+    linkedCircuitTemplateId: inverting_op_amp_template
+  - id: op_amp_non_inverting_gain
+    title: Non-Inverting Op-Amp Gain
+    category: op_amp/gain
+    description: Ideal non-inverting amplifier gain placeholder.
+    variables:
+      Rg:
+        unit: Ohm
+        description: Gain resistor
+        default: 10k
+      Rf:
+        unit: Ohm
+        description: Feedback resistor
+        default: 100k
+    equations:
+      - id: gain
+        latex: "A_v = 1 + \\frac{R_f}{R_g}"
+        expression: "Av = 1 + Rf / Rg"
+        solve_for: ["Av", "Rf", "Rg"]
+    outputs:
+      Av:
+        unit: ""
+        description: Voltage gain
+    linkedCircuitTemplateId: non_inverting_op_amp_template

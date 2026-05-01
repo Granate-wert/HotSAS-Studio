@@ -1,0 +1,15 @@
+[[permission]]
+identifier = "allow-hotsas-commands"
+description = "Allows the main HotSAS Studio window to invoke v1 vertical slice backend commands."
+commands.allow = [
+  "create_rc_low_pass_demo_project",
+  "calculate_rc_low_pass",
+  "nearest_e24_for_resistor",
+  "nearest_e24",
+  "generate_spice_netlist",
+  "run_mock_ac_simulation",
+  "export_markdown_report",
+  "export_html_report",
+  "save_project_json",
+  "run_vertical_slice_preview",
+]

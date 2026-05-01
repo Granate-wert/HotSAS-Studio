@@ -1,0 +1,8 @@
+node_modules/
+dist/
+target/
+.tauri/
+*.log
+*.tmp
+shared/test_projects/**/*.circuit/results/
+shared/test_projects/**/*.circuit/exports/

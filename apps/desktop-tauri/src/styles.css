@@ -1,0 +1,163 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #0e1117;
+  color: #e6edf6;
+}
+
+body {
+  margin: 0;
+  min-width: 1100px;
+  background: #0e1117;
+}
+
+.navbar {
+  background: #121722;
+  border-right: 1px solid #263244;
+}
+
+.main {
+  background: #0e1117;
+}
+
+.workbench {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #263244;
+  background: #111722;
+}
+
+.save-path {
+  flex: 1;
+  min-width: 280px;
+  max-width: 560px;
+}
+
+.error-panel {
+  margin: 12px 16px 0;
+  padding: 10px 12px;
+  background: #3b1821;
+  border: 1px solid #7b2e3c;
+}
+
+.grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-rows: minmax(420px, 1fr) 330px;
+  min-height: 0;
+}
+
+.schematic-panel {
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid #263244;
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  background: #0f1520;
+}
+
+.side-panel {
+  padding: 16px;
+  background: #121722;
+  border-bottom: 1px solid #263244;
+}
+
+.metric {
+  padding: 10px 12px;
+  border: 1px solid #263244;
+  border-radius: 6px;
+  background: #0f1520;
+}
+
+.bottom-panel {
+  grid-column: 1 / -1;
+  min-height: 0;
+  border-top: 1px solid #263244;
+  background: #111722;
+}
+
+.screen-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+  background: #0e1117;
+}
+
+.screen-content {
+  max-width: 1120px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.screen-content.wide {
+  max-width: none;
+}
+
+.metric-grid {
+  max-width: 360px;
+}
+
+.tabs,
+.mantine-Tabs-panel {
+  height: 100%;
+}
+
+.pre-scroll {
+  height: 286px;
+}
+
+pre {
+  margin: 0;
+  padding: 16px;
+  color: #d7e0ee;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.chart {
+  height: 286px;
+  width: 100%;
+}
+
+.screen-content.wide .chart {
+  height: min(560px, calc(100vh - 190px));
+  min-height: 360px;
+}
+
+.react-flow__node {
+  border-radius: 6px;
+  border-color: #56657a;
+  background: #171f2d;
+  color: #e6edf6;
+  min-width: 118px;
+}
+
+.react-flow__edge-path {
+  stroke: #7db2ff;
+  stroke-width: 2;
+}
+
+.react-flow__edge-textbg {
+  fill: #111722;
+}
+
+.react-flow__edge-text {
+  fill: #d7e0ee;
+}

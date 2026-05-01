@@ -1,0 +1,53 @@
+packId: basic_electronics
+title: Basic Electronics
+version: 0.1.0
+formulas:
+  - id: ohms_law
+    title: Ohm's Law
+    category: basic/dc
+    description: Relation between voltage, current, and resistance.
+    variables:
+      V:
+        unit: V
+        description: Voltage
+      I:
+        unit: A
+        description: Current
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 10k
+    equations:
+      - id: ohms_law
+        latex: "V = I R"
+        expression: "V = I * R"
+        solve_for: ["V", "I", "R"]
+    outputs:
+      V:
+        unit: V
+        description: Voltage
+  - id: voltage_divider
+    title: Voltage Divider
+    category: basic/dc
+    description: Two-resistor voltage divider.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+      R1:
+        unit: Ohm
+        description: Upper resistor
+        default: 10k
+      R2:
+        unit: Ohm
+        description: Lower resistor
+        default: 10k
+    equations:
+      - id: divider
+        latex: "V_{out} = V_{in} \\frac{R_2}{R_1 + R_2}"
+        expression: "Vout = Vin * R2 / (R1 + R2)"
+        solve_for: ["Vout", "Vin", "R1", "R2"]
+    outputs:
+      Vout:
+        unit: V
+        description: Output voltage
