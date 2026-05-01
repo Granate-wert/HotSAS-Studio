@@ -1,6 +1,6 @@
 use hotsas_core::{
-    CircuitProject, EngineeringUnit, GraphPoint, GraphSeries, ReportModel, SimulationProfile,
-    SimulationResult, SimulationStatus, ValueWithUnit,
+    CircuitProject, CircuitQueryService, EngineeringUnit, GraphPoint, GraphSeries, ReportModel,
+    SimulationProfile, SimulationResult, SimulationStatus, ValueWithUnit,
 };
 use hotsas_ports::{
     FormulaEnginePort, NetlistExporterPort, PortError, ReportExporterPort, SimulationEnginePort,
@@ -60,8 +60,8 @@ pub struct SpiceNetlistExporter;
 
 impl NetlistExporterPort for SpiceNetlistExporter {
     fn export_spice_netlist(&self, project: &CircuitProject) -> Result<String, PortError> {
-        let resistance = component_parameter(project, "R1", "resistance")?;
-        let capacitance = component_parameter(project, "C1", "capacitance")?;
+        let resistance = require_component_parameter(project, "R1", "resistance")?;
+        let capacitance = require_component_parameter(project, "C1", "capacitance")?;
 
         Ok(format!(
             "* HotSAS Studio - RC Low-Pass Demo\n* Source of truth: CircuitModel\nV1 net_in 0 AC 1\nR1 net_in net_out {}\nC1 net_out 0 {}\n.ac dec 100 10 1e6\n.end",
@@ -80,8 +80,8 @@ impl SimulationEnginePort for MockSimulationEngine {
         project: &CircuitProject,
         profile: &SimulationProfile,
     ) -> Result<SimulationResult, PortError> {
-        let resistance = component_parameter(project, "R1", "resistance")?;
-        let capacitance = component_parameter(project, "C1", "capacitance")?;
+        let resistance = require_component_parameter(project, "R1", "resistance")?;
+        let capacitance = require_component_parameter(project, "C1", "capacitance")?;
         let cutoff = 1.0 / (2.0 * PI * resistance.si_value() * capacitance.si_value());
         let start = profile
             .parameters
@@ -197,19 +197,13 @@ impl ReportExporterPort for MarkdownReportExporter {
 #[derive(Debug, Default)]
 pub struct PdfReportExporterPlaceholder;
 
-fn component_parameter(
+fn require_component_parameter(
     project: &CircuitProject,
     component_id: &str,
     parameter: &str,
 ) -> Result<ValueWithUnit, PortError> {
-    project
-        .schematic
-        .components
-        .iter()
-        .find(|component| component.instance_id == component_id)
-        .and_then(|component| component.overridden_parameters.get(parameter))
-        .cloned()
-        .ok_or_else(|| PortError::Export(format!("missing parameter {component_id}.{parameter}")))
+    CircuitQueryService::require_component_parameter(project, component_id, parameter)
+        .map_err(|error| PortError::Export(error.to_string()))
 }
 
 fn format_si(value: f64) -> String {

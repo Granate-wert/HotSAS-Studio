@@ -93,3 +93,9 @@ export type VerticalSliceDto = {
   markdown_report: string;
   html_report: string;
 };
+
+export type ApiErrorDto = {
+  code: string;
+  message: string;
+  details?: string | null;
+};

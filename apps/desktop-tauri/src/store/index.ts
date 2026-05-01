@@ -4,7 +4,7 @@ import type {
   PreferredValueDto,
   ProjectDto,
   SimulationResultDto,
-} from './types';
+} from '../types';
 
 type HotSasState = {
   project: ProjectDto | null;
