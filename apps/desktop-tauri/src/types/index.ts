@@ -104,6 +104,30 @@ export type FormulaDetailsDto = {
   default_simulation: string | null;
 };
 
+export type FormulaVariableInputDto = {
+  name: string;
+  value: string;
+  unit?: string | null;
+};
+
+export type FormulaCalculationRequestDto = {
+  formula_id: string;
+  variables: FormulaVariableInputDto[];
+};
+
+export type FormulaOutputValueDto = {
+  name: string;
+  value: ValueDto;
+};
+
+export type FormulaEvaluationResultDto = {
+  formula_id: string;
+  equation_id: string;
+  expression: string;
+  outputs: FormulaOutputValueDto[];
+  warnings: string[];
+};
+
 export type PreferredValueDto = {
   requested_value: ValueDto;
   series: string;

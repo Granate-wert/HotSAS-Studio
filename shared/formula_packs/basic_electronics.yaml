@@ -21,7 +21,10 @@ formulas:
       - id: ohms_law
         latex: "V = I R"
         expression: "V = I * R"
-        solve_for: ["V", "I", "R"]
+        solve_for:
+          - V
+          - I
+          - R
     outputs:
       V:
         unit: V
@@ -46,7 +49,11 @@ formulas:
       - id: divider
         latex: "V_{out} = V_{in} \\frac{R_2}{R_1 + R_2}"
         expression: "Vout = Vin * R2 / (R1 + R2)"
-        solve_for: ["Vout", "Vin", "R1", "R2"]
+        solve_for:
+          - Vout
+          - Vin
+          - R1
+          - R2
     outputs:
       Vout:
         unit: V

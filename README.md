@@ -33,6 +33,9 @@ v1.1.3 loads formula packs at runtime from `shared/formula_packs` through the
 Rust backend. The Formula Library UI receives DTOs through Tauri commands; React
 does not parse YAML or calculate formulas.
 
+v1.1.4 adds generic backend formula evaluation for the supported RC low-pass,
+Ohm's Law, and voltage divider expressions.
+
 ## Architecture
 
 `engine/` is a Rust workspace:

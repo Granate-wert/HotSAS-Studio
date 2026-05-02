@@ -1,7 +1,8 @@
 use hotsas_core::{
     CircuitProject, CircuitQueryService, EngineeringUnit, FormulaDefinition, FormulaEquation,
-    FormulaOutput, FormulaPack, FormulaVariable, GraphPoint, GraphSeries, ReportModel,
-    SimulationProfile, SimulationResult, SimulationStatus, SimulationType, ValueWithUnit,
+    FormulaEvaluationResult, FormulaExpressionValidationResult, FormulaOutput, FormulaPack,
+    FormulaVariable, GraphPoint, GraphSeries, ReportModel, SimulationProfile, SimulationResult,
+    SimulationStatus, SimulationType, ValueWithUnit,
 };
 use hotsas_ports::{
     FormulaEnginePort, NetlistExporterPort, PortError, ReportExporterPort, SimulationEnginePort,
@@ -345,6 +346,145 @@ impl FormulaEnginePort for SimpleFormulaEngine {
         let cutoff = 1.0 / (2.0 * PI * resistance.si_value() * capacitance.si_value());
         Ok(ValueWithUnit::new_si(cutoff, EngineeringUnit::Hertz))
     }
+
+    fn evaluate_formula(
+        &self,
+        formula: &FormulaDefinition,
+        variables: &BTreeMap<String, ValueWithUnit>,
+    ) -> Result<FormulaEvaluationResult, PortError> {
+        let equation = formula
+            .equations
+            .first()
+            .ok_or_else(|| PortError::Formula("formula has no equations".to_string()))?;
+        let outputs = match formula.id.as_str() {
+            "rc_low_pass_cutoff" => self.evaluate_rc_low_pass(variables)?,
+            "ohms_law" => self.evaluate_ohms_law(variables)?,
+            "voltage_divider" => self.evaluate_voltage_divider(variables)?,
+            _ => self.evaluate_expression(&equation.expression, variables, &formula.outputs)?,
+        };
+
+        Ok(FormulaEvaluationResult {
+            formula_id: formula.id.clone(),
+            equation_id: equation.id.clone(),
+            expression: equation.expression.clone(),
+            inputs: variables.clone(),
+            outputs,
+            warnings: vec![],
+        })
+    }
+
+    fn evaluate_expression(
+        &self,
+        expression: &str,
+        variables: &BTreeMap<String, ValueWithUnit>,
+        _expected_outputs: &BTreeMap<String, FormulaOutput>,
+    ) -> Result<BTreeMap<String, ValueWithUnit>, PortError> {
+        match normalize_expression(expression).as_str() {
+            "fc=1/(2*pi*R*C)" => self.evaluate_rc_low_pass(variables),
+            "V=I*R" => self.evaluate_ohms_law(variables),
+            "Vout=Vin*R2/(R1+R2)" => self.evaluate_voltage_divider(variables),
+            _ => Err(PortError::Formula(format!(
+                "unsupported expression: {expression}"
+            ))),
+        }
+    }
+
+    fn validate_expression(
+        &self,
+        expression: &str,
+    ) -> Result<FormulaExpressionValidationResult, PortError> {
+        let supported = matches!(
+            normalize_expression(expression).as_str(),
+            "fc=1/(2*pi*R*C)" | "V=I*R" | "Vout=Vin*R2/(R1+R2)"
+        );
+        Ok(FormulaExpressionValidationResult {
+            expression: expression.to_string(),
+            supported,
+            reason: if supported {
+                None
+            } else {
+                Some(format!("unsupported expression: {expression}"))
+            },
+        })
+    }
+}
+
+impl SimpleFormulaEngine {
+    fn evaluate_rc_low_pass(
+        &self,
+        variables: &BTreeMap<String, ValueWithUnit>,
+    ) -> Result<BTreeMap<String, ValueWithUnit>, PortError> {
+        let resistance = require_variable(variables, "R", EngineeringUnit::Ohm)?;
+        let capacitance = require_variable(variables, "C", EngineeringUnit::Farad)?;
+        if resistance.si_value() <= 0.0 || capacitance.si_value() <= 0.0 {
+            return Err(PortError::Formula("R and C must be positive".to_string()));
+        }
+        Ok(BTreeMap::from([(
+            "fc".to_string(),
+            ValueWithUnit::new_si(
+                1.0 / (2.0 * PI * resistance.si_value() * capacitance.si_value()),
+                EngineeringUnit::Hertz,
+            ),
+        )]))
+    }
+
+    fn evaluate_ohms_law(
+        &self,
+        variables: &BTreeMap<String, ValueWithUnit>,
+    ) -> Result<BTreeMap<String, ValueWithUnit>, PortError> {
+        let current = require_variable(variables, "I", EngineeringUnit::Ampere)?;
+        let resistance = require_variable(variables, "R", EngineeringUnit::Ohm)?;
+        Ok(BTreeMap::from([(
+            "V".to_string(),
+            ValueWithUnit::new_si(
+                current.si_value() * resistance.si_value(),
+                EngineeringUnit::Volt,
+            ),
+        )]))
+    }
+
+    fn evaluate_voltage_divider(
+        &self,
+        variables: &BTreeMap<String, ValueWithUnit>,
+    ) -> Result<BTreeMap<String, ValueWithUnit>, PortError> {
+        let input_voltage = require_variable(variables, "Vin", EngineeringUnit::Volt)?;
+        let upper = require_variable(variables, "R1", EngineeringUnit::Ohm)?;
+        let lower = require_variable(variables, "R2", EngineeringUnit::Ohm)?;
+        if upper.si_value() <= 0.0 || lower.si_value() <= 0.0 {
+            return Err(PortError::Formula("R1 and R2 must be positive".to_string()));
+        }
+        Ok(BTreeMap::from([(
+            "Vout".to_string(),
+            ValueWithUnit::new_si(
+                input_voltage.si_value() * lower.si_value() / (upper.si_value() + lower.si_value()),
+                EngineeringUnit::Volt,
+            ),
+        )]))
+    }
+}
+
+fn require_variable<'a>(
+    variables: &'a BTreeMap<String, ValueWithUnit>,
+    name: &str,
+    unit: EngineeringUnit,
+) -> Result<&'a ValueWithUnit, PortError> {
+    let value = variables
+        .get(name)
+        .ok_or_else(|| PortError::Formula(format!("missing variable {name}")))?;
+    if value.unit != unit {
+        return Err(PortError::Formula(format!(
+            "{name} must be expressed in {}",
+            unit.symbol()
+        )));
+    }
+    Ok(value)
+}
+
+fn normalize_expression(expression: &str) -> String {
+    expression
+        .chars()
+        .filter(|ch| !ch.is_whitespace())
+        .collect()
 }
 
 #[derive(Debug, Default)]

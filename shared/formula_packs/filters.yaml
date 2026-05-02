@@ -19,7 +19,10 @@ formulas:
       - id: cutoff
         latex: "f_c = \\frac{1}{2\\pi R C}"
         expression: "fc = 1 / (2*pi*R*C)"
-        solve_for: ["fc", "R", "C"]
+        solve_for:
+          - fc
+          - R
+          - C
     outputs:
       fc:
         unit: Hz
@@ -52,7 +55,10 @@ formulas:
       - id: cutoff
         latex: "f_c = \\frac{1}{2\\pi R C}"
         expression: "fc = 1 / (2*pi*R*C)"
-        solve_for: ["fc", "R", "C"]
+        solve_for:
+          - fc
+          - R
+          - C
     outputs:
       fc:
         unit: Hz

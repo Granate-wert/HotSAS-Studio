@@ -17,4 +17,5 @@ commands.allow = [
   "list_formula_categories",
   "get_formula",
   "get_formula_pack_metadata",
+  "calculate_formula",
 ]

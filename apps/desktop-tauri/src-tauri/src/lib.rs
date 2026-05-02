@@ -3,8 +3,9 @@ use hotsas_adapters::{
     SimpleFormulaEngine, SpiceNetlistExporter,
 };
 use hotsas_api::{
-    ApiError, FormulaDetailsDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi,
-    PreferredValueDto, ProjectDto, SaveProjectDto, SimulationResultDto, VerticalSliceDto,
+    ApiError, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
+    FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi, PreferredValueDto, ProjectDto,
+    SaveProjectDto, SimulationResultDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use std::sync::Arc;
@@ -93,6 +94,14 @@ fn get_formula_pack_metadata(api: State<'_, HotSasApi>) -> Result<Vec<FormulaPac
     api.get_formula_pack_metadata().map_err(tauri_error)
 }
 
+#[tauri::command]
+fn calculate_formula(
+    api: State<'_, HotSasApi>,
+    request: FormulaCalculationRequestDto,
+) -> Result<FormulaEvaluationResultDto, String> {
+    api.calculate_formula(request).map_err(tauri_error)
+}
+
 fn tauri_error(error: ApiError) -> String {
     serde_json::to_string(&error.to_dto()).unwrap_or_else(|_| error.to_string())
 }
@@ -126,7 +135,8 @@ pub fn run() {
             list_formulas,
             list_formula_categories,
             get_formula,
-            get_formula_pack_metadata
+            get_formula_pack_metadata,
+            calculate_formula
         ])
         .run(tauri::generate_context!())
         .expect("error while running HotSAS Studio");

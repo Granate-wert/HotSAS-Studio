@@ -1,6 +1,8 @@
 use hotsas_core::{
-    CircuitProject, ReportModel, SimulationProfile, SimulationResult, ValueWithUnit,
+    CircuitProject, FormulaDefinition, FormulaEvaluationResult, FormulaExpressionValidationResult,
+    FormulaOutput, ReportModel, SimulationProfile, SimulationResult, ValueWithUnit,
 };
+use std::collections::BTreeMap;
 use std::fmt;
 use std::path::Path;
 
@@ -36,6 +38,49 @@ pub trait FormulaEnginePort: Send + Sync {
         resistance: &ValueWithUnit,
         capacitance: &ValueWithUnit,
     ) -> Result<ValueWithUnit, PortError>;
+
+    fn evaluate_formula(
+        &self,
+        formula: &FormulaDefinition,
+        variables: &BTreeMap<String, ValueWithUnit>,
+    ) -> Result<FormulaEvaluationResult, PortError> {
+        let equation = formula
+            .equations
+            .first()
+            .ok_or_else(|| PortError::Formula("formula has no equations".to_string()))?;
+        let outputs =
+            self.evaluate_expression(&equation.expression, variables, &formula.outputs)?;
+        Ok(FormulaEvaluationResult {
+            formula_id: formula.id.clone(),
+            equation_id: equation.id.clone(),
+            expression: equation.expression.clone(),
+            inputs: variables.clone(),
+            outputs,
+            warnings: vec![],
+        })
+    }
+
+    fn evaluate_expression(
+        &self,
+        expression: &str,
+        _variables: &BTreeMap<String, ValueWithUnit>,
+        _expected_outputs: &BTreeMap<String, FormulaOutput>,
+    ) -> Result<BTreeMap<String, ValueWithUnit>, PortError> {
+        Err(PortError::Formula(format!(
+            "unsupported expression: {expression}"
+        )))
+    }
+
+    fn validate_expression(
+        &self,
+        expression: &str,
+    ) -> Result<FormulaExpressionValidationResult, PortError> {
+        Ok(FormulaExpressionValidationResult {
+            expression: expression.to_string(),
+            supported: false,
+            reason: Some(format!("unsupported expression: {expression}")),
+        })
+    }
 }
 
 pub trait NetlistExporterPort: Send + Sync {

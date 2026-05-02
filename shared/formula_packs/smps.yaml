@@ -20,7 +20,10 @@ formulas:
       - id: duty
         latex: "D \\approx \\frac{V_{out}}{V_{in}}"
         expression: "D = Vout / Vin"
-        solve_for: ["D", "Vin", "Vout"]
+        solve_for:
+          - D
+          - Vin
+          - Vout
     outputs:
       D:
         unit: ""
@@ -41,7 +44,10 @@ formulas:
       - id: duty
         latex: "D \\approx 1 - \\frac{V_{in}}{V_{out}}"
         expression: "D = 1 - Vin / Vout"
-        solve_for: ["D", "Vin", "Vout"]
+        solve_for:
+          - D
+          - Vin
+          - Vout
     outputs:
       D:
         unit: ""

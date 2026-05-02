@@ -143,6 +143,34 @@ pub struct FormulaResultDto {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaVariableInputDto {
+    pub name: String,
+    pub value: String,
+    pub unit: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaCalculationRequestDto {
+    pub formula_id: String,
+    pub variables: Vec<FormulaVariableInputDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaOutputValueDto {
+    pub name: String,
+    pub value: ValueDto,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaEvaluationResultDto {
+    pub formula_id: String,
+    pub equation_id: String,
+    pub expression: String,
+    pub outputs: Vec<FormulaOutputValueDto>,
+    pub warnings: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FormulaPackDto {
     pub pack_id: String,
     pub title: String,

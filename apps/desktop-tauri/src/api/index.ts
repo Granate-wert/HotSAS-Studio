@@ -1,7 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   ApiErrorDto,
+  FormulaCalculationRequestDto,
   FormulaDetailsDto,
+  FormulaEvaluationResultDto,
   FormulaPackDto,
   FormulaResultDto,
   FormulaSummaryDto,
@@ -50,4 +52,6 @@ export const backend = {
   listFormulaCategories: () => invokeCommand<string[]>("list_formula_categories"),
   getFormula: (id: string) => invokeCommand<FormulaDetailsDto>("get_formula", { id }),
   getFormulaPackMetadata: () => invokeCommand<FormulaPackDto[]>("get_formula_pack_metadata"),
+  calculateFormula: (request: FormulaCalculationRequestDto) =>
+    invokeCommand<FormulaEvaluationResultDto>("calculate_formula", { request }),
 };

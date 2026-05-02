@@ -84,6 +84,13 @@ v1.1.3 adds:
 - FormulaRegistry listing, lookup, categories, metadata, duplicate detection, and binding validation;
 - API DTOs for formula packs, summaries, details, variables, equations, and outputs.
 
+v1.1.4 adds:
+
+- generic FormulaEnginePort tests;
+- generic FormulaService tests through FormulaRegistry;
+- API `calculate_formula` tests;
+- compatibility coverage for the existing RC low-pass vertical slice.
+
 ## Commands Before Commit
 
 ```bash

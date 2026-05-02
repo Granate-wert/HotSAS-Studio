@@ -233,6 +233,41 @@ pub struct FormulaOutput {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FormulaEvaluationRequest {
+    pub formula_id: String,
+    pub variables: BTreeMap<String, ValueWithUnit>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FormulaVariableValue {
+    pub name: String,
+    pub value: ValueWithUnit,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FormulaOutputValue {
+    pub name: String,
+    pub value: ValueWithUnit,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FormulaEvaluationResult {
+    pub formula_id: String,
+    pub equation_id: String,
+    pub expression: String,
+    pub inputs: BTreeMap<String, ValueWithUnit>,
+    pub outputs: BTreeMap<String, ValueWithUnit>,
+    pub warnings: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FormulaExpressionValidationResult {
+    pub expression: String,
+    pub supported: bool,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CircuitTemplate {
     pub id: String,
     pub title: String,

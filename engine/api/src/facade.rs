@@ -1,11 +1,14 @@
 use crate::{
-    ApiError, FormulaDetailsDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto,
-    PreferredValueDto, ProjectDto, SaveProjectDto, SimulationResultDto, ValueDto, VerticalSliceDto,
+    ApiError, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
+    FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, PreferredValueDto,
+    ProjectDto, SaveProjectDto, SimulationResultDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, FormulaRegistryService};
 use hotsas_core::{
-    rc_low_pass_formula, CircuitProject, EngineeringUnit, FormulaPack, ValueWithUnit,
+    rc_low_pass_formula, CircuitProject, EngineeringUnit, FormulaDefinition, FormulaPack,
+    ValueWithUnit,
 };
+use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -67,6 +70,34 @@ impl HotSasApi {
             .iter()
             .map(FormulaPackDto::from)
             .collect())
+    }
+
+    pub fn calculate_formula(
+        &self,
+        request: FormulaCalculationRequestDto,
+    ) -> Result<FormulaEvaluationResultDto, ApiError> {
+        let registry = self.formula_registry()?;
+        let formula = registry.get_formula(&request.formula_id)?;
+        let variables = Self::parse_formula_variables(&formula, request.variables)?;
+        let result = self
+            .services
+            .formula_service()
+            .calculate_formula_from_definition(&formula, variables)?;
+
+        Ok(FormulaEvaluationResultDto {
+            formula_id: result.formula_id,
+            equation_id: result.equation_id,
+            expression: result.expression,
+            outputs: result
+                .outputs
+                .iter()
+                .map(|(name, value)| FormulaOutputValueDto {
+                    name: name.clone(),
+                    value: ValueDto::from(value),
+                })
+                .collect(),
+            warnings: result.warnings,
+        })
     }
 
     pub fn create_rc_low_pass_demo_project(&self) -> Result<ProjectDto, ApiError> {
@@ -175,6 +206,42 @@ impl HotSasApi {
             value: ValueDto::from(result),
             expression: "fc = 1 / (2*pi*R*C)".to_string(),
         }
+    }
+
+    fn parse_formula_variables(
+        formula: &FormulaDefinition,
+        inputs: Vec<crate::FormulaVariableInputDto>,
+    ) -> Result<BTreeMap<String, ValueWithUnit>, ApiError> {
+        let inputs_by_name = inputs
+            .into_iter()
+            .map(|input| (input.name.clone(), input))
+            .collect::<BTreeMap<_, _>>();
+        let mut variables = BTreeMap::new();
+
+        for (name, variable) in &formula.variables {
+            let input = inputs_by_name
+                .get(name)
+                .ok_or_else(|| ApiError::InvalidInput(format!("missing variable: {name}")))?;
+            let unit = match input.unit.as_deref() {
+                Some(unit) => EngineeringUnit::parse(unit)?,
+                None => variable.unit,
+            };
+            variables.insert(
+                name.clone(),
+                ValueWithUnit::parse_with_default(&input.value, unit)?,
+            );
+        }
+
+        for name in inputs_by_name.keys() {
+            if !formula.variables.contains_key(name) {
+                return Err(ApiError::InvalidInput(format!(
+                    "unknown variable for formula {}: {name}",
+                    formula.id
+                )));
+            }
+        }
+
+        Ok(variables)
     }
 
     fn replace_current_project(&self, project: CircuitProject) -> Result<(), ApiError> {

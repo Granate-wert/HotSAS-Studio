@@ -19,7 +19,10 @@ formulas:
       - id: gain
         latex: "A_v = -\\frac{R_f}{R_{in}}"
         expression: "Av = -Rf / Rin"
-        solve_for: ["Av", "Rf", "Rin"]
+        solve_for:
+          - Av
+          - Rf
+          - Rin
     outputs:
       Av:
         unit: ""
@@ -42,7 +45,10 @@ formulas:
       - id: gain
         latex: "A_v = 1 + \\frac{R_f}{R_g}"
         expression: "Av = 1 + Rf / Rg"
-        solve_for: ["Av", "Rf", "Rg"]
+        solve_for:
+          - Av
+          - Rf
+          - Rg
     outputs:
       Av:
         unit: ""
