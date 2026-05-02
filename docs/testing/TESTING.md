@@ -224,11 +224,27 @@ This stage verifies:
 - Safe HTML escaping in `MarkdownReportExporter`
 - `cargo fmt --check` and `npm.cmd run format:check` pass
 
+### v1.1.5 — Exact E-Series Tables
+
+- **Exact static tables** (`core/src/preferred_value_tables.rs`)
+  - E3/E6/E12/E24/E48/E96/E192 base values
+  - Length correctness (3/6/12/24/48/96/192)
+  - Sorted, unique, positive, finite
+  - Known values for E48, E96, E192
+
+- **Preferred value lookup** (`core/tests/preferred_values_tests.rs`)
+  - `nearest_preferred_value` via exact tables
+  - `lower_preferred_value` inclusive behavior
+  - `higher_preferred_value` inclusive behavior
+  - `generate_decade_values` for E96 decade 10–100
+  - `calculate_error_percent` accuracy
+  - Invalid input handling (0, -1, NaN, Infinity)
+
 ---
 
 ## Test Summary
 
-As of v1.1.4-fix, the Rust workspace runs **63+ tests** across all crates with **zero failures**, and the frontend runs **12 UI tests** with **zero failures**.
+As of v1.1.5, the Rust workspace runs **71 tests** across all crates with **zero failures**, and the frontend runs **12 UI tests** with **zero failures**.
 
 ---
 

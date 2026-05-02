@@ -1,6 +1,7 @@
 pub mod circuit_query;
 pub mod error;
 pub mod models;
+pub mod preferred_value_tables;
 pub mod preferred_values;
 pub mod templates;
 pub mod value;

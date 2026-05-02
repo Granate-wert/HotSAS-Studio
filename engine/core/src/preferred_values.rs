@@ -1,4 +1,7 @@
-use crate::{CoreError, ValueWithUnit};
+use crate::{
+    preferred_value_tables::{E12_BASE, E192_BASE, E24_BASE, E3_BASE, E48_BASE, E6_BASE, E96_BASE},
+    CoreError, ValueWithUnit,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -126,7 +129,7 @@ pub fn generate_decade_values(
 
     for decade in start_decade..=end_decade {
         let multiplier = 10_f64.powi(decade);
-        for base in &bases {
+        for base in bases {
             let value = base * multiplier;
             if value >= min && value <= max {
                 values.push(value);
@@ -147,33 +150,16 @@ pub fn calculate_error_percent(requested: f64, actual: f64) -> f64 {
     }
 }
 
-fn base_values(series: PreferredValueSeries) -> Vec<f64> {
+fn base_values(series: PreferredValueSeries) -> &'static [f64] {
     match series {
-        PreferredValueSeries::E3 => vec![1.0, 2.2, 4.7],
-        PreferredValueSeries::E6 => vec![1.0, 1.5, 2.2, 3.3, 4.7, 6.8],
-        PreferredValueSeries::E12 => {
-            vec![1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2]
-        }
-        PreferredValueSeries::E24 => vec![
-            1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0, 3.3, 3.6, 3.9, 4.3, 4.7,
-            5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1,
-        ],
-        other => generated_base_values(other.count()),
+        PreferredValueSeries::E3 => E3_BASE,
+        PreferredValueSeries::E6 => E6_BASE,
+        PreferredValueSeries::E12 => E12_BASE,
+        PreferredValueSeries::E24 => E24_BASE,
+        PreferredValueSeries::E48 => E48_BASE,
+        PreferredValueSeries::E96 => E96_BASE,
+        PreferredValueSeries::E192 => E192_BASE,
     }
-}
-
-fn generated_base_values(count: usize) -> Vec<f64> {
-    (0..count)
-        .map(|index| round_significant(10_f64.powf(index as f64 / count as f64), 3))
-        .collect()
-}
-
-fn round_significant(value: f64, digits: i32) -> f64 {
-    if value == 0.0 {
-        return value;
-    }
-    let scale = 10_f64.powi(digits - 1 - value.abs().log10().floor() as i32);
-    (value * scale).round() / scale
 }
 
 #[cfg(test)]
