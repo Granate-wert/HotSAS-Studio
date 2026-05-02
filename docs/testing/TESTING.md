@@ -209,6 +209,21 @@ On this Windows PowerShell setup, `npm.ps1` can be blocked by Execution Policy. 
   - Handles null defaults gracefully
   - Handles malformed calculation results gracefully
 
+### v1.1.4-fix.2 — Hygiene, Formula Pack YAML, HTML Escaping, Verification
+
+This stage verifies:
+
+- Formula pack YAML validity and readability
+- `FormulaPackLoader` runtime loading for all builtin packs
+- `FormulaRegistry` contains `rc_low_pass_cutoff`, `ohms_law`, `voltage_divider`
+- Generic `FormulaEngine` evaluation for supported expressions
+- `FormulaService` calculation via registry
+- API `calculate_formula` end-to-end
+- Tauri command registration (`calculate_formula`, `write_log`)
+- `FormulaLibraryScreen` backend calculation (React does not compute formulas)
+- Safe HTML escaping in `MarkdownReportExporter`
+- `cargo fmt --check` and `npm.cmd run format:check` pass
+
 ---
 
 ## Test Summary
