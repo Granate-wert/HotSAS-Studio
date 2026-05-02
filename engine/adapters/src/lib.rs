@@ -122,6 +122,8 @@ fn builtin_formula_pack_candidates() -> Vec<PathBuf> {
         PathBuf::from("shared/formula_packs"),
         PathBuf::from("../shared/formula_packs"),
         PathBuf::from("../../shared/formula_packs"),
+        PathBuf::from("../../../shared/formula_packs"),
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../shared/formula_packs"),
     ]
 }
 
