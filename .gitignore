@@ -36,3 +36,12 @@ shared/test_projects/**/*.circuit/exports/
 engine/test_output.txt
 *.tmp
 *.swp
+
+# Personal / chat / prompt files
+DIALOG_*.md
+ANALYSIS_*.md
+PROMT*.txt
+roadmap.txt
+история чата.txt
+ТЗ*.txt
+тз*.txt
