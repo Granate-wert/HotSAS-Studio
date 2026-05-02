@@ -1,15 +1,15 @@
 # HotSAS Studio Architecture
 
-HotSAS Studio uses Clean Architecture / Hexagonal Architecture. The UI is a thin client. All domain behavior flows through Rust application services and ports.
+HotSAS Studio uses **Clean Architecture / Hexagonal Architecture / Ports and Adapters**. The UI is a thin client. All domain behavior flows through Rust application services and ports.
 
 ## Layers
 
-- UI Layer: Tauri + React + TypeScript. It displays DTOs and sends user actions to Tauri commands.
-- API Layer: `hotsas_api`. It owns DTO conversion and the Tauri-facing command facade.
-- Application Layer: `hotsas_application`. It owns use cases such as project creation, formula calculation, preferred value lookup, netlist generation, simulation, export, and storage.
-- Ports Layer: `hotsas_ports`. It defines contracts for storage, formula engines, netlist exporters, simulation engines, and report exporters.
-- Domain Core: `hotsas_core`. It owns pure models and domain functions.
-- Adapters Layer: `hotsas_adapters`. It implements ports for JSON storage, simple formula calculation, mock simulation, SPICE netlist export, and Markdown/HTML export.
+- **UI Layer:** Tauri + React + TypeScript. It displays DTOs and sends user actions to Tauri commands.
+- **API Layer:** `hotsas_api`. It owns DTO conversion and the Tauri-facing command facade.
+- **Application Layer:** `hotsas_application`. It owns use cases such as project creation, formula calculation, preferred value lookup, netlist generation, simulation, export, storage, and formula registry management.
+- **Ports Layer:** `hotsas_ports`. It defines contracts for storage, formula engines, netlist exporters, simulation engines, and report exporters.
+- **Domain Core:** `hotsas_core`. It owns pure models and domain functions.
+- **Adapters Layer:** `hotsas_adapters`. It implements ports for JSON storage, simple formula calculation, mock simulation, SPICE netlist export, Markdown/HTML export, and formula pack file loading.
 
 ## Dependency Direction
 
@@ -37,9 +37,24 @@ React must not:
 - calculate formulas;
 - generate SPICE netlists;
 - run simulations;
-- write directly to storage.
+- write directly to storage;
+- parse YAML formula packs.
 
-React Flow converts `CircuitDto` to visual nodes and edges only. It is not the project model.
+React Flow converts `CircuitDto` to visual nodes and edges only. It is **not** the project model.
+
+## Formula Evaluation Flow (v1.1.4)
+
+```text
+FormulaLibraryScreen (React)
+    -> backend.calculateFormula(request)
+    -> Tauri command calculate_formula
+    -> hotsas_api facade
+    -> FormulaRegistryService.get_formula(id)
+    -> FormulaService.calculate_formula_from_definition(formula, variables)
+    -> FormulaEnginePort.evaluate_formula(formula, variables)
+    -> SimpleFormulaEngine (allowlist evaluator)
+    -> Result<FormulaEvaluationResult, PortError>
+```
 
 ## Future Extraction
 

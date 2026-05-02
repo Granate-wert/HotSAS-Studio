@@ -1,80 +1,151 @@
 # HotSAS Studio
 
-**HotSAS Studio - Hardware-Oriented Schematic Analysis & Simulation Studio** is a
-desktop engineering application for schematic analysis, formula-driven circuit
-templates, SPICE-oriented simulation workflows, and report generation.
+**HotSAS Studio — Hardware-Oriented Schematic Analysis & Simulation Studio**
 
-The v1 vertical slice focuses on a single RC low-pass demo project:
+Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
-1. Create the demo project.
-2. Render the schematic from backend DTOs.
-3. Calculate `fc = 1 / (2*pi*R*C)`.
-4. Select the nearest E24 value.
-5. Generate a SPICE netlist.
-6. Run a mock AC simulation.
-7. Display a graph.
-8. Export Markdown and HTML reports.
-9. Save the project as JSON.
+**Current version: v0.1.4**
 
-## Stack
+---
 
-- Desktop: Tauri
-- UI: React, TypeScript, Vite, Mantine, Zustand
-- Schematic view adapter: React Flow / xyflow
-- Charts: Apache ECharts
-- Engine: Rust workspace
+## What Is Implemented
 
-Mantine is a pragmatic v1 UI kit only. It does not influence backend
-architecture.
+### v0.1.0 — RC Low-Pass Vertical Slice
 
-## Formula Packs
+- Create and save/load circuit projects as JSON folders.
+- Render schematics from backend DTOs via React Flow (view adapter only).
+- Calculate `fc = 1 / (2*pi*R*C)` through the backend FormulaService.
+- Select nearest E24 preferred values.
+- Generate SPICE netlist for RC low-pass.
+- Run mock AC simulation with gain/phase graph.
+- Export Markdown and HTML reports.
 
-v1.1.3 loads formula packs at runtime from `shared/formula_packs` through the
-Rust backend. The Formula Library UI receives DTOs through Tauri commands; React
-does not parse YAML or calculate formulas.
+### v0.1.1 — Architecture Hardening
 
-v1.1.4 adds generic backend formula evaluation for the supported RC low-pass,
-Ohm's Law, and voltage divider expressions.
+- Split `hotsas_application` into focused services: `ProjectService`, `FormulaService`, `PreferredValuesService`, `CircuitTemplateService`, `NetlistGenerationService`, `SimulationService`, `ExportService`.
+- Added `CircuitQueryService` in core for reusable component/parameter access.
+- Split `hotsas_api` into `dto.rs`, `error.rs`, `facade.rs`.
+- Added structured `ApiErrorDto` with `code`, `message`, `details`.
+- Refactored React frontend into `api/`, `store/`, `types/`, `screens/`, `components/`.
+
+### v0.1.2 — Backend Test Expansion
+
+- 63+ Rust tests covering all crates:
+  - `core`: EngineeringValue, PreferredValues, circuit templates, formulas
+  - `adapters`: formula engine, netlist export, report export (Markdown + HTML escaping), JSON storage, full vertical slice
+  - `application`: registry, services
+  - `api`: error DTOs, state errors, dependency boundaries
+
+### v0.1.3 — FormulaPackLoader + FormulaRegistry
+
+- Runtime loading of formula packs from `shared/formula_packs` (YAML/JSON).
+- `FormulaPackFileLoader` with validation.
+- `FormulaRegistryService`: listing, lookup, categories, metadata, duplicate detection, binding validation.
+- Formula Library UI receives formulas through backend DTOs.
+
+### v0.1.4 — Generic FormulaEnginePort
+
+- Generic `FormulaEnginePort` methods: `evaluate_formula`, `evaluate_expression`, `validate_expression`.
+- `SimpleFormulaEngine` supports an allowlist of expressions:
+  - `fc = 1 / (2*pi*R*C)`
+  - `V = I * R`
+  - `Vout = Vin * R2 / (R1 + R2)`
+- `FormulaService.calculate_formula(formula_id, variables)` via Registry.
+- API command `calculate_formula` + Tauri command.
+- Formula Library UI: variable inputs + **Calculate** button.
+- Old RC-specific commands preserved for compatibility.
+
+---
+
+## Technology Stack
+
+- **Desktop:** Tauri v2
+- **UI:** React 19, TypeScript 5.9, Vite 7, Mantine 8, Zustand 5
+- **Schematic view adapter:** React Flow / xyflow
+- **Charts:** Apache ECharts 6
+- **Engine:** Rust workspace (Clean Architecture / Hexagonal Architecture)
+
+Mantine is a pragmatic UI kit only. It does not influence backend architecture.
+
+---
+
+## Project Structure
+
+```text
+HotSAS Studio/
+├── engine/                    # Rust workspace
+│   ├── Cargo.toml
+│   ├── core/                  # hotsas_core — domain models
+│   ├── ports/                 # hotsas_ports — trait contracts
+│   ├── application/           # hotsas_application — use case services
+│   ├── adapters/              # hotsas_adapters — port implementations
+│   └── api/                   # hotsas_api — DTOs, facade, Tauri commands
+│
+├── apps/
+│   └── desktop-tauri/         # Tauri v2 + React shell
+│       ├── src/               # Frontend (api, store, types, screens, components)
+│       └── src-tauri/         # Rust Tauri composition root
+│
+├── shared/
+│   ├── formula_packs/         # YAML/JSON formula packs (runtime loaded)
+│   └── test_projects/         # Sample project fixtures
+│
+└── docs/
+    ├── architecture/
+    ├── component_library/
+    ├── export/
+    ├── formula_library/
+    └── testing/
+```
+
+---
 
 ## Architecture
 
-`engine/` is a Rust workspace:
+`engine/` is a Rust workspace with strict dependency direction:
 
 ```text
-engine/
-├── Cargo.toml
-├── core/         crate: hotsas_core
-├── ports/        crate: hotsas_ports
-├── application/  crate: hotsas_application
-├── adapters/     crate: hotsas_adapters
-└── api/          crate: hotsas_api
+React -> Tauri commands -> hotsas_api -> hotsas_application -> hotsas_ports -> hotsas_core
+                                                          ^                    ^
+                                                          |                    |
+                                                 hotsas_adapters implements ports
 ```
 
-Dependency direction:
+Rules:
 
-- `hotsas_core` is pure domain code and does not depend on application,
-  adapters, api, Tauri, React, or UI.
-- `hotsas_application` depends on `hotsas_core` and ports/interfaces.
-- `hotsas_adapters` implements ports and may depend on core/application
-  contracts.
-- `hotsas_api` depends on application and DTO contracts.
-- Tauri calls `hotsas_api`.
-- React calls only Tauri commands.
+- `hotsas_core` is pure domain code. No dependency on application, adapters, api, Tauri, React, or UI.
+- `hotsas_application` depends on `hotsas_core` and `hotsas_ports`.
+- `hotsas_adapters` implements `hotsas_ports`.
+- `hotsas_api` depends on `hotsas_application` and DTO contracts.
+- Tauri owns the composition root.
+- React calls **only** Tauri commands.
 
-React Flow is a view adapter. The source of truth for schematic state is
-`CircuitModel` / `CircuitDto`, not React Flow nodes and edges.
+React Flow is a view adapter. The source of truth for schematic state is `CircuitModel` / `CircuitDto`, not React Flow nodes and edges.
 
-## Run
+Details: `docs/architecture/ARCHITECTURE.md`.
 
-Rust must be installed first:
+---
+
+## Prerequisites
+
+- [Rust](https://rustup.rs/) (`rustup default stable`)
+- [Node.js](https://nodejs.org/) with npm
+- Windows: Build Tools for Visual Studio (C++ workload) for Tauri
+
+Verify:
 
 ```powershell
-rustup default stable
-cargo --version
 rustc --version
+cargo --version
+node --version
+npm --version
 ```
 
-Install frontend dependencies and run the desktop shell:
+---
+
+## Run (Development)
+
+Install frontend dependencies and start the desktop shell:
 
 ```powershell
 cd apps\desktop-tauri
@@ -82,49 +153,71 @@ npm.cmd install
 npm.cmd run tauri:dev
 ```
 
-Build checks:
+The dev window opens at 1440×960. The dev server runs on `http://127.0.0.1:1420` inside the Tauri WebView.
+
+---
+
+## Build (Release)
 
 ```powershell
-cd engine
-cargo test
-
-cd ..\apps\desktop-tauri
-npm.cmd run build
+cd apps\desktop-tauri
+npm.cmd run tauri:build
 ```
+
+The release executable is placed at:
+
+```text
+apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
+```
+
+It is built as a **Windows GUI** application (no background console).
+
+---
 
 ## Development Checks
 
-Rust engine:
+Run these before committing:
 
-```bash
+**Rust engine:**
+
+```powershell
 cd engine
 cargo fmt --check
 cargo test
 ```
 
-Frontend:
+**Frontend:**
 
-```bash
+```powershell
 cd apps/desktop-tauri
 npm.cmd run format:check
 npm.cmd run typecheck
 npm.cmd run build
 ```
 
-Tauri dev:
+**Full integration:**
 
-```bash
+```powershell
 cd apps/desktop-tauri
-npm.cmd run tauri:dev
+npm.cmd run tauri:build
 ```
 
 Details: `docs/testing/TESTING.md`.
 
+---
+
 ## Roadmap
 
-- v1: RC low-pass vertical slice with mock simulation and Markdown/HTML reports.
-- v2: richer formula engine, user formula packs, stronger unit model, more
-  templates.
-- v3: real ngspice adapter, SQLite storage, import/export expansion.
-- Later: KiCad-compatible symbol/footprint export and Altium workflow package.
-  No PCB editor is implemented in v1.
+- **v0.1.x (current):** RC low-pass vertical slice, generic formula evaluation for allowlisted expressions, runtime formula packs.
+- **v0.2.x:** Exact E48/E96/E192 tables, richer formula engine, stronger unit model, more circuit templates.
+- **v0.3.x:** Component Library Manager, Engineering Calculator / Notebook, canvas editing with feedback to Rust state.
+- **v1.0.0:** Real ngspice adapter, SQLite storage, import/export expansion.
+- **Later:** KiCad-compatible symbol/footprint export and Altium workflow package.
+
+A PCB editor is **not** planned for v1.
+
+---
+
+## License
+
+MIT
