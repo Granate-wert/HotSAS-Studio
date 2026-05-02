@@ -61,6 +61,20 @@ npm.cmd run tauri:dev
 11. Экспортировать HTML report.
 12. Сохранить JSON project.
 
+## Backend test coverage
+
+v1.1.2 covers:
+
+- EngineeringValue parsing;
+- Preferred E-series;
+- RC low-pass formula;
+- Circuit template and formula binding;
+- SPICE netlist export;
+- Markdown/HTML report export;
+- JSON storage;
+- API error DTO;
+- Full backend vertical slice.
+
 ## Команды перед коммитом
 
 ```bash

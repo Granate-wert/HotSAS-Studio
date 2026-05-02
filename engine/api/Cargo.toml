@@ -9,3 +9,6 @@ authors.workspace = true
 hotsas_application = { path = "../application" }
 hotsas_core = { path = "../core" }
 serde.workspace = true
+
+[dev-dependencies]
+hotsas_ports = { path = "../ports" }
