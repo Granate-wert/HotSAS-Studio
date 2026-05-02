@@ -1,6 +1,6 @@
-import { Button, Group, Stack } from '@mantine/core';
-import { FileText } from 'lucide-react';
-import { PreBlock } from './PreBlock';
+import { Button, Group, Stack } from "@mantine/core";
+import { FileText } from "lucide-react";
+import { PreBlock } from "./PreBlock";
 
 export function ReportPanel({
   markdownReport,
@@ -30,7 +30,7 @@ export function ReportPanel({
           HTML
         </Button>
       </Group>
-      <PreBlock text={markdownReport || htmlReport || 'Export report'} />
+      <PreBlock text={markdownReport || htmlReport || "Export report"} />
     </Stack>
   );
 }

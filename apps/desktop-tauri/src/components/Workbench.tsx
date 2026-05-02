@@ -1,15 +1,15 @@
-import { Button, Group, Paper, Text, TextInput } from '@mantine/core';
-import { Calculator, CircuitBoard, FileText, Play, Save, Sigma } from 'lucide-react';
-import { backend } from '../api';
-import { CalculatorScreen } from '../screens/CalculatorScreen';
-import { ComponentLibraryScreen } from '../screens/ComponentLibraryScreen';
-import { ExportScreen } from '../screens/ExportScreen';
-import { FormulaLibraryScreen } from '../screens/FormulaLibraryScreen';
-import { SchematicScreen } from '../screens/SchematicScreen';
-import { SimulationScreen } from '../screens/SimulationScreen';
-import { StartScreen } from '../screens/StartScreen';
-import { useHotSasStore } from '../store';
-import type { ScreenId } from '../screens/navigation';
+import { Button, Group, Paper, Text, TextInput } from "@mantine/core";
+import { Calculator, CircuitBoard, FileText, Play, Save, Sigma } from "lucide-react";
+import { backend } from "../api";
+import { CalculatorScreen } from "../screens/CalculatorScreen";
+import { ComponentLibraryScreen } from "../screens/ComponentLibraryScreen";
+import { ExportScreen } from "../screens/ExportScreen";
+import { FormulaLibraryScreen } from "../screens/FormulaLibraryScreen";
+import { SchematicScreen } from "../screens/SchematicScreen";
+import { SimulationScreen } from "../screens/SimulationScreen";
+import { StartScreen } from "../screens/StartScreen";
+import { useHotSasStore } from "../store";
+import type { ScreenId } from "../screens/navigation";
 
 export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
   const {
@@ -54,7 +54,11 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     selectNearestE24: () => run(backend.nearestE24ForResistor, setPreferredValue),
     generateNetlist: () => run(backend.generateSpiceNetlist, setNetlist),
     runSimulation: () => run(backend.runMockAcSimulation, setSimulation),
-    saveProject: () => run(() => backend.saveProjectJson(savePath), () => undefined),
+    saveProject: () =>
+      run(
+        () => backend.saveProjectJson(savePath),
+        () => undefined,
+      ),
     exportMarkdown: () => run(backend.exportMarkdownReport, setMarkdownReport),
     exportHtml: () => run(backend.exportHtmlReport, setHtmlReport),
   };
@@ -145,11 +149,11 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
 function renderScreen(
   activeScreen: ScreenId,
   context: {
-    project: ReturnType<typeof useHotSasStore.getState>['project'];
-    formulaResult: ReturnType<typeof useHotSasStore.getState>['formulaResult'];
-    preferredValue: ReturnType<typeof useHotSasStore.getState>['preferredValue'];
+    project: ReturnType<typeof useHotSasStore.getState>["project"];
+    formulaResult: ReturnType<typeof useHotSasStore.getState>["formulaResult"];
+    preferredValue: ReturnType<typeof useHotSasStore.getState>["preferredValue"];
     netlist: string;
-    simulation: ReturnType<typeof useHotSasStore.getState>['simulation'];
+    simulation: ReturnType<typeof useHotSasStore.getState>["simulation"];
     markdownReport: string;
     htmlReport: string;
     busy: boolean;
@@ -165,7 +169,7 @@ function renderScreen(
     };
   },
 ) {
-  if (activeScreen === 'start') {
+  if (activeScreen === "start") {
     return (
       <StartScreen
         project={context.project}
@@ -181,7 +185,7 @@ function renderScreen(
     );
   }
 
-  if (activeScreen === 'schematic') {
+  if (activeScreen === "schematic") {
     return (
       <SchematicScreen
         project={context.project}
@@ -198,19 +202,19 @@ function renderScreen(
     );
   }
 
-  if (activeScreen === 'notebook') {
+  if (activeScreen === "notebook") {
     return <CalculatorScreen />;
   }
 
-  if (activeScreen === 'formulas') {
+  if (activeScreen === "formulas") {
     return <FormulaLibraryScreen />;
   }
 
-  if (activeScreen === 'components') {
+  if (activeScreen === "components") {
     return <ComponentLibraryScreen />;
   }
 
-  if (activeScreen === 'simulation') {
+  if (activeScreen === "simulation") {
     return (
       <SimulationScreen
         simulation={context.simulation}

@@ -1,4 +1,4 @@
-import { Text } from '@mantine/core';
+import { Text } from "@mantine/core";
 
 export function Metric({ label, value }: { label: string; value: string }) {
   return (

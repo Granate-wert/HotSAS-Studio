@@ -1,5 +1,5 @@
-import { Title } from '@mantine/core';
-import { FormulaPanel } from '../components/FormulaPanel';
+import { Title } from "@mantine/core";
+import { FormulaPanel } from "../components/FormulaPanel";
 
 export function CalculatorScreen() {
   return (

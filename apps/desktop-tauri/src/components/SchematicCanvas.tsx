@@ -1,7 +1,7 @@
-import { Stack, Text } from '@mantine/core';
-import { Background, Controls, MiniMap, ReactFlow, type Edge, type Node } from '@xyflow/react';
-import { useMemo } from 'react';
-import type { ProjectDto } from '../types';
+import { Stack, Text } from "@mantine/core";
+import { Background, Controls, MiniMap, ReactFlow, type Edge, type Node } from "@xyflow/react";
+import { useMemo } from "react";
+import type { ProjectDto } from "../types";
 
 export function SchematicCanvas({ project }: { project: ProjectDto | null }) {
   const { nodes, edges } = useMemo(() => {
@@ -11,7 +11,7 @@ export function SchematicCanvas({ project }: { project: ProjectDto | null }) {
 
     const nodes: Node[] = project.schematic.components.map((component) => ({
       id: component.instance_id,
-      type: 'default',
+      type: "default",
       position: { x: component.x, y: component.y },
       data: {
         label: (
@@ -34,7 +34,7 @@ export function SchematicCanvas({ project }: { project: ProjectDto | null }) {
         source: wire.from_component_id as string,
         target: wire.to_component_id as string,
         label: wire.net_id,
-        type: 'smoothstep',
+        type: "smoothstep",
       }));
 
     return { nodes, edges };

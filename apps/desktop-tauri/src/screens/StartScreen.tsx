@@ -1,7 +1,7 @@
-import { Button, Group, Stack, Text, Title } from '@mantine/core';
-import { Calculator, CircuitBoard, Sigma } from 'lucide-react';
-import { ProjectMetrics } from '../components/ProjectMetrics';
-import type { ProjectMetricsData } from './screenTypes';
+import { Button, Group, Stack, Text, Title } from "@mantine/core";
+import { Calculator, CircuitBoard, Sigma } from "lucide-react";
+import { ProjectMetrics } from "../components/ProjectMetrics";
+import type { ProjectMetricsData } from "./screenTypes";
 
 type StartScreenProps = ProjectMetricsData & {
   busy: boolean;

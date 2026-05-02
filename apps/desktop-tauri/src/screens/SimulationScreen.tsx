@@ -1,7 +1,7 @@
-import { Button, Group, Title } from '@mantine/core';
-import { Play } from 'lucide-react';
-import { SimulationChart } from '../components/SimulationChart';
-import type { SimulationResultDto } from '../types';
+import { Button, Group, Title } from "@mantine/core";
+import { Play } from "lucide-react";
+import { SimulationChart } from "../components/SimulationChart";
+import type { SimulationResultDto } from "../types";
 
 export function SimulationScreen({
   simulation,

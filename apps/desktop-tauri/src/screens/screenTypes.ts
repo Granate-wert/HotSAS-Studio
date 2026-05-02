@@ -1,4 +1,9 @@
-import type { FormulaResultDto, PreferredValueDto, ProjectDto, SimulationResultDto } from '../types';
+import type {
+  FormulaResultDto,
+  PreferredValueDto,
+  ProjectDto,
+  SimulationResultDto,
+} from "../types";
 
 export type VerticalSliceActions = {
   onCreateDemo: () => void;

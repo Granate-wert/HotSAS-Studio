@@ -1,5 +1,5 @@
-import { Title } from '@mantine/core';
-import { LibraryPanel } from '../components/LibraryPanel';
+import { Title } from "@mantine/core";
+import { LibraryPanel } from "../components/LibraryPanel";
 
 export function ComponentLibraryScreen() {
   return (

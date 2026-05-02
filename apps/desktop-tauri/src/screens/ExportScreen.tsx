@@ -1,6 +1,6 @@
-import { Button, Group, Title } from '@mantine/core';
-import { FileText } from 'lucide-react';
-import { ReportPanel } from '../components/ReportPanel';
+import { Button, Group, Title } from "@mantine/core";
+import { FileText } from "lucide-react";
+import { ReportPanel } from "../components/ReportPanel";
 
 export function ExportScreen({
   markdownReport,

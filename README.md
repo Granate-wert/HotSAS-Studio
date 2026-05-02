@@ -77,6 +77,34 @@ cd ..\apps\desktop-tauri
 npm.cmd run build
 ```
 
+## Development checks
+
+Rust engine:
+
+```bash
+cd engine
+cargo fmt --check
+cargo test
+```
+
+Frontend:
+
+```bash
+cd apps/desktop-tauri
+npm.cmd run format:check
+npm.cmd run typecheck
+npm.cmd run build
+```
+
+Tauri dev:
+
+```bash
+cd apps/desktop-tauri
+npm.cmd run tauri:dev
+```
+
+Подробности: `docs/testing/TESTING.md`.
+
 ## Roadmap
 
 - v1: RC low-pass vertical slice with mock simulation and Markdown/HTML reports.

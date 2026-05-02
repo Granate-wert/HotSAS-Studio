@@ -1,12 +1,12 @@
-import { Tabs } from '@mantine/core';
-import { FormulaPanel } from '../components/FormulaPanel';
-import { LibraryPanel } from '../components/LibraryPanel';
-import { PreBlock } from '../components/PreBlock';
-import { ProjectMetrics } from '../components/ProjectMetrics';
-import { ReportPanel } from '../components/ReportPanel';
-import { SchematicCanvas } from '../components/SchematicCanvas';
-import { SimulationChart } from '../components/SimulationChart';
-import type { ProjectMetricsData } from './screenTypes';
+import { Tabs } from "@mantine/core";
+import { FormulaPanel } from "../components/FormulaPanel";
+import { LibraryPanel } from "../components/LibraryPanel";
+import { PreBlock } from "../components/PreBlock";
+import { ProjectMetrics } from "../components/ProjectMetrics";
+import { ReportPanel } from "../components/ReportPanel";
+import { SchematicCanvas } from "../components/SchematicCanvas";
+import { SimulationChart } from "../components/SimulationChart";
+import type { ProjectMetricsData } from "./screenTypes";
 
 type SchematicScreenProps = ProjectMetricsData & {
   netlist: string;
@@ -54,7 +54,7 @@ export function SchematicScreen({
             <Tabs.Tab value="library">Libraries</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="netlist">
-            <PreBlock text={netlist || 'Generate SPICE netlist'} />
+            <PreBlock text={netlist || "Generate SPICE netlist"} />
           </Tabs.Panel>
           <Tabs.Panel value="graph">
             <SimulationChart simulation={simulation} />

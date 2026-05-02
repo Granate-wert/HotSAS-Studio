@@ -1,4 +1,4 @@
-import { ScrollArea } from '@mantine/core';
+import { ScrollArea } from "@mantine/core";
 
 export function PreBlock({ text }: { text: string }) {
   return (

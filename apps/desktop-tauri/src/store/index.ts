@@ -1,10 +1,10 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 import type {
   FormulaResultDto,
   PreferredValueDto,
   ProjectDto,
   SimulationResultDto,
-} from '../types';
+} from "../types";
 
 type HotSasState = {
   project: ProjectDto | null;
@@ -33,11 +33,11 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   project: null,
   formulaResult: null,
   preferredValue: null,
-  netlist: '',
+  netlist: "",
   simulation: null,
-  markdownReport: '',
-  htmlReport: '',
-  savePath: 'shared/test_projects/rc_low_pass_demo.circuit/project.json',
+  markdownReport: "",
+  htmlReport: "",
+  savePath: "shared/test_projects/rc_low_pass_demo.circuit/project.json",
   busy: false,
   error: null,
   setProject: (project) => set({ project }),
