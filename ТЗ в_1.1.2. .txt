@@ -1,0 +1,1604 @@
+Ниже — расширенное ТЗ **v1.1.2** в таком же стиле, как для **v1.1.1**. Его можно отправлять Codex почти целиком.
+
+---
+
+# HotSAS Studio v1.1.2 — Backend Test Expansion + Verification
+
+```text id="xj3ltt"
+Ты работаешь над проектом HotSAS Studio — Hardware-Oriented Schematic Analysis & Simulation Studio.
+
+Текущий статус:
+- v1 vertical slice RC low-pass уже реализован.
+- v1.1.1 добавил formatting/build/test infrastructure.
+- Есть Rust workspace в engine/.
+- Есть crates:
+  - hotsas_core
+  - hotsas_ports
+  - hotsas_application
+  - hotsas_adapters
+  - hotsas_api
+- Есть Tauri + React + TypeScript frontend.
+- Есть базовая RC low-pass цепочка:
+  create project
+  → load RC template
+  → calculate fc
+  → nearest E24
+  → generate SPICE netlist
+  → mock AC simulation
+  → Markdown/HTML report
+  → save JSON.
+
+Цель v1.1.2:
+Не добавлять новые продуктовые функции.
+Не расширять функциональность программы.
+Нужно усилить backend-тесты и проверить, что текущий vertical slice устойчивый.
+
+После v1.1.2 проект должен быть проще дебажить перед следующими этапами:
+- FormulaPackLoader;
+- FormulaRegistry;
+- Generic FormulaEnginePort;
+- Project package storage;
+- UI smoke tests;
+- Component Library;
+- Selected Region Analysis.
+```
+
+---
+
+# 1. Главное правило этапа
+
+```text id="4tyffs"
+v1.1.2 — это этап тестового укрепления backend.
+
+Разрешено:
+- добавлять unit tests;
+- добавлять integration tests;
+- добавлять test helpers;
+- добавлять dev-dependencies только для тестов;
+- минимально исправлять backend-баги, которые выявлены тестами;
+- исправлять некорректный HTML escaping;
+- исправлять panic на Result::Err;
+- исправлять NaN/Infinity output;
+- обновлять docs/testing/TESTING.md.
+
+Запрещено:
+- добавлять новые пользовательские функции;
+- добавлять Formula Registry;
+- добавлять runtime-загрузку formula packs;
+- добавлять новые формулы;
+- делать generic FormulaEnginePort;
+- делать точные таблицы E48/E96/E192;
+- добавлять ngspice;
+- добавлять PCB;
+- добавлять KiCad export;
+- добавлять Altium export;
+- добавлять full symbolic solver;
+- добавлять DC-DC implementation;
+- менять React UI, кроме минимальных исправлений для build/typecheck;
+- переносить бизнес-логику во frontend;
+- менять Tauri command names;
+- менять DTO-контракты без крайней необходимости.
+```
+
+---
+
+# 2. Preflight: проверка git и результата v1.1.1
+
+Перед любыми изменениями нужно проверить текущее состояние проекта.
+
+## 2.1. Проверить git status
+
+Выполнить из корня проекта:
+
+```bash id="jx4w7z"
+cd "D:\Документы\vscode\HotSAS Studio"
+git rev-parse --show-toplevel
+git status --short
+git diff --stat
+git diff --name-only
+```
+
+## 2.2. Что нужно определить
+
+Codex должен явно проверить:
+
+```text id="4xj3sr"
+1. Есть ли незакоммиченные изменения.
+2. Какие файлы уже изменены до начала v1.1.2.
+3. Есть ли случайные изменения в:
+   - node_modules/
+   - target/
+   - dist/
+   - build/
+   - src-tauri/target/
+4. Не появились ли временные файлы.
+5. Не нужно ли дополнить .gitignore.
+```
+
+## 2.3. Жёсткие правила git
+
+```text id="s7fnex"
+Не выполнять git commit.
+Не выполнять git reset.
+Не выполнять git clean.
+Не удалять локальные пользовательские изменения.
+Не перезаписывать файлы без необходимости.
+Если найдены неожиданные изменения, сначала описать их в итоговом отчёте.
+```
+
+---
+
+# 3. Проверка состояния после v1.1.1
+
+Перед добавлением тестов нужно убедиться, что инфраструктура v1.1.1 работает.
+
+## 3.1. Rust checks
+
+```bash id="zppdt6"
+cd "D:\Документы\vscode\HotSAS Studio\engine"
+cargo fmt --check
+cargo test
+```
+
+## 3.2. Frontend checks
+
+```bash id="4cyv8z"
+cd "D:\Документы\vscode\HotSAS Studio\apps\desktop-tauri"
+npm.cmd run format:check
+npm.cmd run typecheck
+npm.cmd run build
+```
+
+## 3.3. Что делать, если проверки падают
+
+Если падает `cargo fmt --check`:
+
+```text id="vvipn4"
+- выполнить cargo fmt;
+- не менять бизнес-логику;
+- снова выполнить cargo fmt --check.
+```
+
+Если падает `cargo test`:
+
+```text id="0anbes"
+- определить, это старая ошибка или результат v1.1.1;
+- исправить минимально;
+- не добавлять новые функции.
+```
+
+Если падает `npm.cmd run format:check`:
+
+```text id="141y3n"
+- выполнить npm.cmd run format;
+- снова проверить format:check.
+```
+
+Если падает `npm.cmd run typecheck` или `build`:
+
+```text id="y2lh56"
+- исправить минимально необходимую TypeScript-ошибку;
+- не менять UI-логику;
+- не переносить расчёты во frontend.
+```
+
+---
+
+# 4. Проверить читаемость документации v1.1.1
+
+Файл:
+
+```text id="oam4th"
+docs/testing/TESTING.md
+```
+
+Нужно проверить, что он нормальный многострочный Markdown.
+
+Если он выглядит как сжатый текст в несколько строк, привести его к читаемому виду:
+
+```markdown id="9qp6v6"
+# HotSAS Studio — Testing Guide
+
+## Назначение
+
+...
+
+## Проверка Rust engine
+
+...
+
+## Проверка frontend
+
+...
+```
+
+Важно:
+
+```text id="wc0kvj"
+Не переписывать весь документ без необходимости.
+Только привести к читаемому виду и добавить раздел про v1.1.2 backend coverage.
+```
+
+---
+
+# 5. Организация тестов
+
+Не складывать всё в один файл.
+
+Желательная структура:
+
+```text id="qfubuh"
+engine/
+├── core/
+│   └── tests/
+│       ├── engineering_value_tests.rs
+│       ├── preferred_values_tests.rs
+│       ├── rc_formula_tests.rs
+│       └── circuit_template_tests.rs
+│
+├── adapters/
+│   └── tests/
+│       ├── netlist_export_tests.rs
+│       ├── report_export_tests.rs
+│       └── json_storage_tests.rs
+│
+├── application/
+│   └── tests/
+│       ├── services_tests.rs
+│       └── vertical_slice_tests.rs
+│
+└── api/
+    └── tests/
+        └── api_error_tests.rs
+```
+
+Если часть тестов уже находится внутри `#[cfg(test)] mod tests`, можно оставить, но новые integration-level тесты лучше выносить в `tests/`.
+
+## Требования к тестам
+
+```text id="2ecyq1"
+1. Тесты должны быть читаемыми.
+2. Названия тестов должны описывать поведение.
+3. Не использовать магические assert без сообщения.
+4. Для f64 использовать approximate comparison.
+5. Не проверять весь длинный output целиком, если достаточно проверить ключевые fragments.
+6. Негативные сценарии должны проверять Result::Err, а не panic.
+```
+
+---
+
+# 6. Test helper для сравнения f64
+
+Добавить helper там, где удобно: либо в каждом тестовом файле, либо в test utility module.
+
+Пример:
+
+```rust id="zluj0p"
+fn assert_approx_eq(actual: f64, expected: f64, epsilon: f64) {
+    assert!(
+        (actual - expected).abs() <= epsilon,
+        "actual={actual}, expected={expected}, epsilon={epsilon}"
+    );
+}
+```
+
+Использовать для:
+
+```text id="bbp4x6"
+- fc;
+- parsed engineering values;
+- preferred value calculations;
+- percent error;
+- graph/mock simulation values, если нужно.
+```
+
+Не сравнивать floating point через `==`, кроме случаев, где это абсолютно безопасно.
+
+---
+
+# 7. Тесты EngineeringValue / ValueWithUnit
+
+## 7.1. Цель
+
+Проверить, что базовый инженерный parser стабилен и не ломается на типовых значениях.
+
+## 7.2. Positive cases
+
+Добавить тесты:
+
+```text id="g7bzif"
+"10k"      -> 10000
+"100n"     -> 100e-9
+"1u"       -> 1e-6
+"1M"       -> 1e6
+"1.5k"     -> 1500
+"0"        -> 0, если текущий parser допускает 0
+```
+
+Проверять с разными default units:
+
+```text id="66eepn"
+"10k" with default Ohm -> 10000 Ohm
+"100n" with default F  -> 100e-9 F
+"1MHz" with default Hz -> 1e6 Hz, если поддерживается
+```
+
+## 7.3. Unit suffix cases
+
+Проверить только то, что уже поддерживает текущий parser.
+
+Возможные тесты:
+
+```text id="z0y24p"
+"100nF"  -> 100e-9 F, если поддерживается
+"10kOhm" -> 10000 Ohm, если поддерживается
+"1MHz"   -> 1e6 Hz, если поддерживается
+```
+
+Если текущий parser это не поддерживает:
+
+```text id="ljy6yp"
+- не расширять parser в v1.1.2;
+- добавить TODO-комментарий;
+- можно добавить ignored test, если это удобно.
+```
+
+Пример ignored test:
+
+```rust id="nww1b5"
+#[test]
+#[ignore = "planned for v1.4 Engineering Notebook parser"]
+fn parses_unit_suffix_10k_ohm() {
+    // future test
+}
+```
+
+## 7.4. Negative cases
+
+Добавить тесты:
+
+```text id="cl5bmi"
+""        -> error
+"abc"     -> error
+"10x"     -> error
+"k10"     -> error
+"1..5k"   -> error
+"NaN"     -> error
+"inf"     -> error
+"+inf"    -> error
+"-inf"    -> error
+```
+
+## 7.5. Важное поведение
+
+```text id="rgrzlx"
+- Не должно быть panic.
+- Ошибка должна быть контролируемой.
+- Если есть собственный error type, проверять его.
+- Если возвращается String error, проверять хотя бы is_err().
+```
+
+---
+
+# 8. Тесты Preferred Values
+
+## 8.1. Цель
+
+Убедиться, что E-ряды работают стабильно на базовом уровне.
+
+Важно: в v1.1.2 **не нужно заменять E48/E96/E192 на точные таблицы**. Это отдельная задача v1.1.5. Но базовые тесты и invalid tests нужны уже сейчас.
+
+## 8.2. Positive cases
+
+Добавить тесты:
+
+```text id="7w0i65"
+E24 nearest для 15.93k -> 16k
+E24 lower для 15.93k -> 15k
+E24 higher для 15.93k -> 16k
+E24 exact 10k -> nearest 10k
+E12 exact 8.2k -> nearest 8.2k
+E6 exact 6.8k -> nearest 6.8k
+```
+
+## 8.3. Boundary cases
+
+Добавить тесты:
+
+```text id="q6oi4v"
+- 9.9k
+- 10k
+- 10.1k
+- 100n
+- 1u
+- 10u
+- 1M
+- 10M
+```
+
+Проверить:
+
+```text id="8tasy5"
+- nearest возвращает положительное значение;
+- lower <= requested, если lower существует;
+- higher >= requested, если higher существует;
+- no NaN;
+- no Infinity.
+```
+
+## 8.4. Invalid input
+
+Добавить тесты:
+
+```text id="rrcaed"
+0
+-1
+NaN
+Infinity
+-Infinity
+```
+
+Ожидаемое поведение:
+
+```text id="22bu6w"
+Result::Err
+```
+
+Если текущий код panic-ует или возвращает бессмысленное значение, исправить минимально:
+
+```text id="0k86j7"
+- добавить проверку value.is_finite()
+- добавить проверку value > 0.0
+- вернуть error вместо panic.
+```
+
+## 8.5. generate_decade_values
+
+Добавить тест:
+
+```text id="fol97x"
+generate_decade_values должен возвращать:
+- отсортированный список;
+- уникальные значения;
+- только positive finite values;
+- значения в ожидаемом диапазоне.
+```
+
+Не проверять точность E96/E192 здесь. Только структурную корректность.
+
+---
+
+# 9. Тесты RC low-pass formula
+
+## 9.1. Positive case
+
+Проверить:
+
+```text id="ltmmqw"
+R = 10k Ohm
+C = 100n F
+fc ≈ 159.154943 Hz
+```
+
+Формула:
+
+```text id="5zkco5"
+fc = 1 / (2*pi*R*C)
+```
+
+Допуск:
+
+```text id="2s5kpw"
+epsilon = 1e-6 или 1e-3
+```
+
+Выбрать реалистичный epsilon под текущую реализацию.
+
+## 9.2. Invalid cases
+
+Добавить тесты:
+
+```text id="90pzie"
+R = 0       -> error
+C = 0       -> error
+R < 0       -> error
+C < 0       -> error
+missing R   -> error
+missing C   -> error
+```
+
+Если unit validation уже есть:
+
+```text id="9ue2tp"
+R with F unit -> error
+C with Ohm unit -> error
+```
+
+Если unit validation пока нет, не делать большой unit system. Добавить TODO.
+
+## 9.3. Минимальное исправление backend
+
+Если сейчас `FormulaService` или `SimpleFormulaEngine` считает при `R <= 0` или `C <= 0`, нужно добавить проверку:
+
+```text id="wczkxt"
+if R <= 0 or C <= 0:
+    return invalid input / formula error
+```
+
+Это не новая функция, а базовая защита от некорректного расчёта.
+
+---
+
+# 10. Тесты Circuit Template + Formula Binding
+
+## 10.1. Цель
+
+Зафиксировать, что RC-шаблон не сломается при будущих изменениях Formula Registry и CircuitTemplateService.
+
+## 10.2. Проверить компоненты
+
+Тест должен проверить, что RC low-pass demo project/template содержит:
+
+```text id="bzshws"
+V1
+R1
+C1
+```
+
+## 10.3. Проверить nets
+
+Проверить наличие:
+
+```text id="kn3l90"
+net_in
+net_out
+gnd
+```
+
+## 10.4. Проверить соединения
+
+Проверить логически:
+
+```text id="wg8av8"
+V1 подключён между net_in и gnd
+R1 подключён между net_in и net_out
+C1 подключён между net_out и gnd
+```
+
+В зависимости от текущей модели, проверять через:
+
+```text id="awf63n"
+- wires;
+- nets.connected_pins;
+- component.connected_nets;
+- DTO-like model.
+```
+
+Не обязательно требовать новый формат модели.
+
+## 10.5. Проверить named nodes
+
+Если в модели уже есть named nodes / named nets:
+
+```text id="1iez8q"
+Vin -> net_in
+Vout -> net_out
+GND/reference -> gnd
+```
+
+Если GND явно не хранится как named node, проверить хотя бы наличие `gnd`.
+
+## 10.6. Проверить formula definition
+
+Тест:
+
+```text id="mihm3r"
+rc_low_pass_formula:
+- id == "rc_low_pass_cutoff"
+- title не пустой
+- category не пустая
+- variables contains R and C
+- outputs contains fc
+- linked_circuit_template_id == "rc_low_pass_template"
+- equation expression contains "fc"
+- equation expression contains "R"
+- equation expression contains "C"
+```
+
+## 10.7. Проверить template ↔ formula связь
+
+Тест:
+
+```text id="17638g"
+rc_low_pass_template.compatible_formula_ids contains "rc_low_pass_cutoff"
+```
+
+---
+
+# 11. Тесты SPICE Netlist Export
+
+## 11.1. Positive case
+
+Тест должен создать RC low-pass project и сгенерировать netlist.
+
+Проверить fragments:
+
+```text id="yaxvtv"
+"V1"
+"R1"
+"C1"
+"net_in"
+"net_out"
+"0"
+".ac"
+```
+
+Если exporter добавляет `.end`, проверить:
+
+```text id="abh1za"
+".end"
+```
+
+Не сравнивать весь netlist целиком, потому что форматирование может немного измениться.
+
+## 11.2. Проверить отсутствие мусора
+
+Netlist не должен содержать:
+
+```text id="9glyvr"
+NaN
+inf
+Infinity
+undefined
+null
+```
+
+Тест должен быть case-sensitive или case-insensitive — лучше проверить несколько вариантов:
+
+```rust id="7fhtf2"
+let lower = netlist.to_lowercase();
+assert!(!lower.contains("nan"));
+assert!(!lower.contains("inf"));
+assert!(!lower.contains("undefined"));
+assert!(!lower.contains("null"));
+```
+
+## 11.3. Negative cases
+
+Сделать копию проекта и удалить:
+
+```text id="tcvp63"
+R1.resistance
+```
+
+Ожидание:
+
+```text id="d5m4mu"
+generate netlist returns error
+```
+
+Удалить:
+
+```text id="cutmlh"
+C1.capacitance
+```
+
+Ожидание:
+
+```text id="bdqz54"
+generate netlist returns error
+```
+
+Удалить компонент:
+
+```text id="pqxec0"
+R1
+```
+
+Ожидание:
+
+```text id="9lpc71"
+generate netlist returns error
+```
+
+Удалить компонент:
+
+```text id="533xqk"
+C1
+```
+
+Ожидание:
+
+```text id="3miu4r"
+generate netlist returns error
+```
+
+Если сейчас exporter подставляет default значения — исправить на явную ошибку.
+
+---
+
+# 12. Тесты Markdown Report Export
+
+## 12.1. Positive case
+
+Создать report для RC low-pass и экспортировать Markdown.
+
+Проверить, что Markdown содержит:
+
+```text id="oec6vy"
+- название проекта;
+- Formula или Calculations;
+- fc;
+- Preferred Value;
+- SPICE Netlist;
+- Simulation;
+- BOM;
+- R1;
+- C1.
+```
+
+Не сравнивать весь Markdown целиком.
+
+## 12.2. Проверить fenced block для netlist
+
+Если Markdown report включает SPICE netlist, желательно проверить:
+
+````text id="4f3iax"
+```spice
+````
+
+или хотя бы:
+
+```text id="y7rr8q"
+SPICE Netlist
+V1
+R1
+C1
+```
+
+Не требовать точного оформления, если текущий exporter другой.
+
+---
+
+# 13. Тесты HTML Report Export
+
+## 13.1. Цель
+
+Проверить, что HTML export безопасно экранирует пользовательский/отчётный текст.
+
+## 13.2. Critical escaping test
+
+Создать report section или markdown body с содержимым:
+
+```html id="mitqpr"
+<script>alert(1)</script>
+```
+
+HTML output не должен содержать активный тег:
+
+```html id="wy79c7"
+<script>alert(1)</script>
+```
+
+HTML output должен содержать escaped text:
+
+```html id="i5uayd"
+&lt;script&gt;alert(1)&lt;/script&gt;
+```
+
+## 13.3. Проверить символы
+
+Добавить тесты:
+
+```text id="n8exib"
+"&" -> "&amp;"
+"<" -> "&lt;"
+">" -> "&gt;"
+```
+
+Порядок escaping важен:
+
+```text id="t6sv5k"
+1. Сначала заменить & на &amp;
+2. Потом < на &lt;
+3. Потом > на &gt;
+```
+
+Если сделать наоборот, можно получить двойное или некорректное экранирование.
+
+## 13.4. Минимальное исправление exporter
+
+Если текущий `export_html` неправильный, исправить минимально.
+
+Пример допустимой реализации:
+
+```rust id="ktv0ut"
+fn escape_html(input: &str) -> String {
+    input
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+}
+```
+
+Не добавлять полноценный Markdown-to-HTML renderer.
+На v1.1.2 достаточно безопасного `<pre>` или простого HTML wrapper.
+
+---
+
+# 14. Тесты JSON Storage
+
+## 14.1. Добавить dev dependency
+
+Если нужно работать с временной директорией, добавить в соответствующий crate dev-dependency:
+
+```toml id="d0zv9t"
+[dev-dependencies]
+tempfile = "3"
+```
+
+Добавлять только там, где реально используется.
+
+## 14.2. Save/load roundtrip
+
+Тест:
+
+```text id="q7rdtu"
+1. Создать RC low-pass project.
+2. Сохранить через JsonProjectStorage во временный файл.
+3. Загрузить обратно.
+4. Проверить:
+   - project id;
+   - project name;
+   - format version;
+   - количество компонентов;
+   - количество nets;
+   - наличие R1;
+   - наличие C1;
+   - наличие R1.resistance;
+   - наличие C1.capacitance.
+```
+
+## 14.3. Parent directory
+
+Тест:
+
+```text id="dbd2ho"
+save в path с несуществующей parent directory.
+```
+
+Ожидание:
+
+```text id="t4py5t"
+- либо adapter создаёт parent dirs;
+- либо возвращает понятную storage error.
+```
+
+Лучше поведение:
+
+```text id="vsbghf"
+создавать parent dirs автоматически.
+```
+
+Это допустимое минимальное улучшение.
+
+## 14.4. Invalid load
+
+Тесты:
+
+```text id="jkf65e"
+- load non-existing file -> error
+- load invalid JSON -> error
+- load empty file -> error
+```
+
+Не должно быть panic.
+
+---
+
+# 15. Тесты API Errors
+
+## 15.1. Проверить структуру ApiErrorDto
+
+Тест:
+
+```text id="q2yigm"
+ApiErrorDto содержит:
+- code
+- message
+- details
+```
+
+## 15.2. Stable error codes
+
+Проверить существующие коды. Если коды уже есть — не переименовывать без необходимости.
+
+Желательные категории:
+
+```text id="k4tw3d"
+invalid_input
+state_error
+missing_project_state
+port_error
+core_error
+storage_error
+internal_error
+not_found
+```
+
+Если текущая модель ошибок проще, тестировать текущие реальные коды, но сделать их стабильными.
+
+## 15.3. Facade state errors
+
+Добавить тесты:
+
+```text id="3ha8m2"
+- calculate_rc_low_pass before project created -> state error
+- nearest_e24_for_resistor before project created -> state error
+- generate_spice_netlist before project created -> state error
+- export_markdown_report before project created -> state error
+- save_project_json before project created -> state error
+```
+
+## 15.4. Invalid input errors
+
+Добавить тест:
+
+```text id="hzwpzd"
+invalid value/unit -> invalid_input
+```
+
+Если сейчас API не принимает произвольный invalid input, достаточно проверить ошибку через доступный facade method.
+
+---
+
+# 16. Full Backend Vertical Slice Integration Test
+
+## 16.1. Цель
+
+Один тест должен проверить всю backend-цепочку без React UI.
+
+## 16.2. Сценарий
+
+Создать `AppServices` с текущими адаптерами:
+
+```text id="dqmpc0"
+- JsonProjectStorage
+- SimpleFormulaEngine
+- SpiceNetlistExporter
+- MockSimulationEngine
+- MarkdownReportExporter
+```
+
+Затем выполнить:
+
+```text id="1e4c80"
+1. create_rc_low_pass_demo_project
+2. calculate_rc_low_pass_cutoff
+3. nearest_e24_for_resistor
+4. generate_spice_netlist
+5. run_mock_ac_simulation
+6. build_report_model
+7. export_markdown_report
+8. export_html_report
+9. save_project_json to temp dir
+10. load project back, если load API доступен
+```
+
+## 16.3. Проверки
+
+```text id="v8r73b"
+- project.id не пустой;
+- project.name не пустой;
+- cutoff.value > 0;
+- cutoff.unit == Hz;
+- nearest.value > 0;
+- netlist содержит V1/R1/C1/.ac;
+- simulation.status == Completed или аналогичный success-status;
+- simulation.graph_series не пустой;
+- markdown report не пустой;
+- html report не пустой;
+- сохранённый файл существует;
+- loaded project id == original project id, если load доступен.
+```
+
+## 16.4. Почему это важно
+
+Этот тест нужен, чтобы будущие изменения в FormulaRegistry/FormulaEngine/ProjectStorage сразу показывали, что сломали базовый сценарий.
+
+---
+
+# 17. Обновить docs/testing/TESTING.md
+
+В файл:
+
+```text id="pydxga"
+docs/testing/TESTING.md
+```
+
+Добавить раздел:
+
+````markdown id="ukzgox"
+## Backend test coverage
+
+v1.1.2 расширяет backend-покрытие:
+
+- EngineeringValue parsing;
+- Preferred E-series;
+- RC low-pass formula;
+- Circuit template and formula binding;
+- SPICE netlist export;
+- Markdown/HTML report export;
+- JSON storage;
+- API error DTO;
+- Full backend vertical slice.
+
+Основная команда:
+
+```bash
+cd "D:\Документы\vscode\HotSAS Studio\engine"
+cargo test
+````
+
+````id="8h2lh8"
+
+Документ должен остаться читаемым Markdown.
+
+Не делать его одной строкой.
+
+---
+
+# 18. Команды проверки после v1.1.2
+
+После изменений обязательно выполнить.
+
+## Rust
+
+```bash id="65o9bb"
+cd "D:\Документы\vscode\HotSAS Studio\engine"
+cargo fmt --check
+cargo test
+````
+
+## Frontend
+
+```bash id="vlp3cw"
+cd "D:\Документы\vscode\HotSAS Studio\apps\desktop-tauri"
+npm.cmd run format:check
+npm.cmd run typecheck
+npm.cmd run build
+```
+
+Даже если frontend почти не менялся, проверки нужны, потому что backend DTO/API могут повлиять на сборку.
+
+Если команда не выполнена, Codex должен написать:
+
+```text id="2t069d"
+- какая команда;
+- почему не выполнена;
+- что нужно сделать пользователю;
+- какие изменения всё равно были внесены.
+```
+
+---
+
+# 19. Что считается допустимым исправлением бага
+
+Разрешены только минимальные исправления.
+
+## Допустимо
+
+```text id="9qb2lu"
+- добавить проверку value.is_finite();
+- добавить проверку value > 0.0;
+- вернуть Result::Err вместо panic;
+- исправить HTML escaping;
+- создать parent dirs при save;
+- сделать error message яснее;
+- убрать NaN/Infinity из output;
+- исправить тестовый helper;
+- добавить dev-dependency tempfile.
+```
+
+## Недопустимо
+
+```text id="vp2cpd"
+- переписать FormulaEngine;
+- добавить FormulaRegistry;
+- добавить YAML runtime loading;
+- расширить UI;
+- добавить реальные component libraries;
+- добавить ngspice;
+- добавить новые circuit templates;
+- добавить DC-DC;
+- добавить selected region analysis.
+```
+
+---
+
+# 20. Acceptance criteria
+
+v1.1.2 считается готовой только если:
+
+```text id="x5xul1"
+1. Перед началом проверен git status/diff.
+2. Не удалены пользовательские изменения.
+3. Проверена инфраструктура v1.1.1.
+4. Добавлены EngineeringValue tests.
+5. Добавлены Preferred Values tests.
+6. Добавлены RC low-pass formula tests.
+7. Добавлены CircuitTemplate/FormalBinding tests.
+8. Добавлены SPICE netlist tests.
+9. Добавлены Markdown report tests.
+10. Добавлены HTML report escaping tests.
+11. Исправлен HTML escaping, если был некорректен.
+12. Добавлены JSON storage tests.
+13. Добавлены API error DTO tests.
+14. Добавлен full backend vertical slice integration test.
+15. docs/testing/TESTING.md обновлён и читаемый.
+16. cargo fmt --check проходит.
+17. cargo test проходит.
+18. npm.cmd run format:check проходит.
+19. npm.cmd run typecheck проходит.
+20. npm.cmd run build проходит.
+21. Новые продуктовые функции не добавлены.
+22. RC low-pass vertical slice не изменён по поведению.
+```
+
+---
+
+# 21. Итоговый промт для Codex
+
+Ниже цельный промт, который можно отправить Codex.
+
+```text id="b8ks3a"
+Выполни HotSAS Studio v1.1.2 — Backend Test Expansion + v1.1.1 Verification.
+
+Контекст:
+HotSAS Studio уже содержит:
+- v1 RC low-pass vertical slice;
+- Rust workspace в engine/;
+- crates hotsas_core, hotsas_ports, hotsas_application, hotsas_adapters, hotsas_api;
+- Tauri + React frontend;
+- RC demo project;
+- расчёт fc;
+- E24 preferred value;
+- SPICE netlist;
+- mock AC simulation;
+- Markdown/HTML report;
+- JSON save.
+
+v1.1.1 добавил:
+- Prettier;
+- format/typecheck scripts;
+- docs/testing/TESTING.md;
+- README Development checks;
+- .gitignore/.prettierrc/.prettierignore.
+
+Цель v1.1.2:
+Не добавлять новые функции.
+Расширить backend-тесты и минимально исправить выявленные баги.
+
+============================================================
+0. Preflight
+============================================================
+
+Из корня проекта выполнить:
+
+git rev-parse --show-toplevel
+git status --short
+git diff --stat
+git diff --name-only
+
+Правила:
+- Не выполнять git commit.
+- Не выполнять git reset.
+- Не выполнять git clean.
+- Не удалять пользовательские изменения.
+- Если есть неожиданные изменения, описать их в итоговом отчёте.
+
+Проверить v1.1.1:
+
+cd "D:\Документы\vscode\HotSAS Studio\engine"
+cargo fmt --check
+cargo test
+
+cd "D:\Документы\vscode\HotSAS Studio\apps\desktop-tauri"
+npm.cmd run format:check
+npm.cmd run typecheck
+npm.cmd run build
+
+Если падает форматирование, исправить форматирование.
+Если падает test/build, исправить минимально, не меняя продуктовую логику.
+
+Проверить, что docs/testing/TESTING.md читаемый многострочный Markdown.
+
+============================================================
+1. Test organization
+============================================================
+
+Не складывать все тесты в один файл.
+
+Желательная структура:
+
+engine/core/tests/
+  engineering_value_tests.rs
+  preferred_values_tests.rs
+  rc_formula_tests.rs
+  circuit_template_tests.rs
+
+engine/adapters/tests/
+  netlist_export_tests.rs
+  report_export_tests.rs
+  json_storage_tests.rs
+
+engine/application/tests/
+  services_tests.rs
+  vertical_slice_tests.rs
+
+engine/api/tests/
+  api_error_tests.rs
+
+Если часть тестов удобнее оставить в #[cfg(test)], можно, но integration-level тесты лучше вынести в tests/.
+
+Добавить helper для f64 approximate comparison:
+fn assert_approx_eq(actual: f64, expected: f64, epsilon: f64)
+
+============================================================
+2. EngineeringValue tests
+============================================================
+
+Добавить positive tests:
+- "10k" -> 10000
+- "100n" -> 100e-9
+- "1u" -> 1e-6
+- "1M" -> 1e6
+- "1.5k" -> 1500
+- "0" -> 0, если parser допускает 0
+- "1MHz" -> 1e6 Hz, если поддерживается
+- "100nF" -> 100e-9 F, если поддерживается
+- "10kOhm" -> 10000 Ohm, если поддерживается
+
+Если unit suffix не поддерживается, не расширять parser в этой задаче. Добавить TODO или ignored test.
+
+Добавить negative tests:
+- "" -> error
+- "abc" -> error
+- "10x" -> error
+- "k10" -> error
+- "1..5k" -> error
+- "NaN" -> error
+- "inf" -> error
+- "+inf" -> error
+- "-inf" -> error
+
+Не должно быть panic.
+
+============================================================
+3. Preferred Values tests
+============================================================
+
+Добавить tests:
+- E24 nearest 15.93k -> 16k
+- E24 lower 15.93k -> 15k
+- E24 higher 15.93k -> 16k
+- E24 exact 10k -> 10k
+- E12 exact 8.2k -> 8.2k
+- E6 exact 6.8k -> 6.8k
+
+Boundary:
+- 9.9k
+- 10k
+- 10.1k
+- 100n
+- 1u
+- 10u
+- 1M
+- 10M
+
+Invalid:
+- 0
+- -1
+- NaN
+- Infinity
+- -Infinity
+
+Expected:
+- controlled Result::Err
+- no panic
+
+generate_decade_values:
+- sorted ascending
+- unique
+- all positive
+- all finite
+- no NaN
+- no Infinity
+
+Не заменять E48/E96/E192 на точные таблицы в этой задаче.
+
+============================================================
+4. RC low-pass formula tests
+============================================================
+
+Positive:
+- R=10k Ohm, C=100n F -> fc ≈ 159.154943 Hz.
+
+Invalid:
+- R=0 -> error
+- C=0 -> error
+- R<0 -> error
+- C<0 -> error
+- missing R -> error
+- missing C -> error
+- wrong unit -> error, если unit validation уже есть
+
+Если R<=0 или C<=0 сейчас считаются без ошибки, добавить минимальную проверку в backend.
+
+============================================================
+5. Circuit template and formula binding tests
+============================================================
+
+Проверить:
+- rc_low_pass_template contains V1, R1, C1
+- project contains net_in, net_out, gnd
+- V1 connects net_in and gnd
+- R1 connects net_in and net_out
+- C1 connects net_out and gnd
+- Vin -> net_in
+- Vout -> net_out
+- rc_low_pass_formula id == "rc_low_pass_cutoff"
+- rc_low_pass_formula linked_circuit_template_id == "rc_low_pass_template"
+- formula variables contain R and C
+- outputs contain fc
+- expression contains fc/R/C
+- template compatible_formula_ids contains rc_low_pass_cutoff
+
+============================================================
+6. SPICE netlist tests
+============================================================
+
+Positive:
+- netlist contains V1
+- netlist contains R1
+- netlist contains C1
+- netlist contains net_in
+- netlist contains net_out
+- netlist contains 0 ground/reference
+- netlist contains .ac
+- netlist contains .end if exporter uses it
+
+Do not compare entire netlist. Check fragments.
+
+Garbage check:
+netlist must not contain:
+- NaN
+- inf
+- Infinity
+- undefined
+- null
+
+Negative:
+- remove R1.resistance -> error
+- remove C1.capacitance -> error
+- remove R1 component -> error
+- remove C1 component -> error
+
+If exporter uses defaults silently, change to explicit error.
+
+============================================================
+7. Markdown/HTML report tests
+============================================================
+
+Markdown must contain:
+- project title
+- Formula or Calculations
+- fc
+- Preferred Value
+- SPICE Netlist
+- Simulation
+- BOM
+- R1
+- C1
+
+HTML:
+- contains title/content
+- escapes &, <, >
+
+Critical:
+Input report content:
+<script>alert(1)</script>
+
+HTML output must not contain active:
+<script>alert(1)</script>
+
+HTML output must contain:
+&lt;script&gt;alert(1)&lt;/script&gt;
+
+If HTML escaping is wrong, fix minimally.
+Do not add full Markdown renderer.
+A safe <pre> wrapper is acceptable.
+
+============================================================
+8. JSON storage tests
+============================================================
+
+Use tempfile dev-dependency if needed.
+
+Tests:
+- save/load roundtrip with RC project
+- saved/loaded project preserves id/name/format_version
+- component count preserved
+- net count preserved
+- R1/C1 parameters preserved
+- save creates parent dirs if feasible
+- load non-existing file -> error
+- load invalid JSON -> error
+- load empty file -> error
+
+No panic.
+
+============================================================
+9. API error tests
+============================================================
+
+ApiErrorDto:
+- has code
+- has message
+- has details
+
+Check stable codes for:
+- invalid_input
+- state_error / missing_project_state
+- port_error
+- storage_error if available
+
+Facade state tests:
+- calculate before project created -> state error
+- nearest E24 before project created -> state error
+- generate netlist before project created -> state error
+- export markdown before project created -> state error
+- save project before project created -> state error
+
+Do not redesign Tauri boundary in v1.1.2.
+
+============================================================
+10. Full backend vertical slice integration test
+============================================================
+
+Create AppServices with current adapters:
+- JsonProjectStorage
+- SimpleFormulaEngine
+- SpiceNetlistExporter
+- MockSimulationEngine
+- MarkdownReportExporter
+
+Scenario:
+1. create_rc_low_pass_demo_project
+2. calculate_rc_low_pass_cutoff
+3. nearest_e24_for_resistor
+4. generate_spice_netlist
+5. run_mock_ac_simulation
+6. build_report_model
+7. export_markdown_report
+8. export_html_report
+9. save_project_json to temp dir
+10. load project back if load API exists
+
+Checks:
+- project id not empty
+- project name not empty
+- cutoff > 0
+- cutoff unit == Hz
+- nearest value > 0
+- netlist contains V1/R1/C1/.ac
+- simulation graph_series is not empty
+- markdown not empty
+- html not empty
+- saved file exists
+- loaded project id equals original id if load available
+
+============================================================
+11. Update docs/testing/TESTING.md
+============================================================
+
+Add section:
+
+## Backend test coverage
+
+v1.1.2 covers:
+- EngineeringValue parsing;
+- Preferred E-series;
+- RC low-pass formula;
+- Circuit template and formula binding;
+- SPICE netlist export;
+- Markdown/HTML report export;
+- JSON storage;
+- API error DTO;
+- Full backend vertical slice.
+
+Keep the file readable multi-line Markdown.
+
+============================================================
+12. Final checks
+============================================================
+
+Run:
+
+cd "D:\Документы\vscode\HotSAS Studio\engine"
+cargo fmt --check
+cargo test
+
+cd "D:\Документы\vscode\HotSAS Studio\apps\desktop-tauri"
+npm.cmd run format:check
+npm.cmd run typecheck
+npm.cmd run build
+
+If any command cannot run, report exact command and reason.
+
+============================================================
+13. Acceptance criteria
+============================================================
+
+v1.1.2 is complete only if:
+1. Git state was checked before changes.
+2. No user changes were deleted.
+3. v1.1.1 infrastructure was verified.
+4. EngineeringValue tests added.
+5. Preferred Values tests added.
+6. RC low-pass formula tests added.
+7. Circuit template/binding tests added.
+8. SPICE netlist tests added.
+9. Markdown report tests added.
+10. HTML escaping tests added.
+11. HTML escaping fixed if needed.
+12. JSON storage tests added.
+13. API error tests expanded.
+14. Full backend vertical slice integration test added.
+15. docs/testing/TESTING.md updated.
+16. cargo fmt --check passes.
+17. cargo test passes.
+18. npm.cmd run format:check passes.
+19. npm.cmd run typecheck passes.
+20. npm.cmd run build passes.
+21. No new product features added.
+22. RC low-pass vertical slice behavior unchanged.
+
+After completion output:
+1. What git status/diff showed before changes.
+2. Files changed.
+3. Tests added.
+4. Bugs fixed.
+5. Commands executed.
+6. Commands passed.
+7. Commands failed and why, if any.
+8. Confirmation that scope was not expanded.
+9. Confirmation that RC vertical slice behavior remains unchanged.
+```
+
+---
+
+# 22. Что v1.1.2 должна дать в итоге
+
+После выполнения этого этапа у тебя должна появиться нормальная тестовая сетка вокруг текущего backend:
+
+```text id="szhcve"
+EngineeringValue → проверен
+Preferred Values → проверены
+RC formula → проверена
+CircuitTemplate → проверен
+SPICE netlist → проверен
+Report export → проверен
+HTML escaping → проверен
+JSON storage → проверен
+API errors → проверены
+Vertical slice → проверен целиком
+```
+
+Это нужно, чтобы дальше безопасно идти в:
+
+```text id="gnc4hy"
+v1.1.3 — FormulaPackLoader + FormulaRegistry
+```
+
+Без v1.1.2 следующий этап будет рискованным: Codex может внедрить FormulaRegistry и случайно сломать RC-сценарий, а ты это заметишь только глазами в UI. После v1.1.2 такие поломки должен ловить `cargo test`.

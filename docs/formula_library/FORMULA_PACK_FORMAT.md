@@ -114,19 +114,16 @@ mapping:
 The registry can validate known template ids, but full template-driven formula
 evaluation remains out of scope for v1.1.3.
 
-## Formula Evaluation in v1.1.4
+## Formula Evaluation in v1.1.4-fix
 
-Formula packs are loaded at runtime. `FormulaRegistryService` stores formula
-definitions, and `FormulaEnginePort` can evaluate a limited set of allowlisted
-expressions.
+At this stage HotSAS supports limited backend formula evaluation through `FormulaEnginePort`.
 
-Supported v1.1.4 expressions:
+Supported expressions:
 
 - `fc = 1 / (2*pi*R*C)`
 - `V = I * R`
 - `Vout = Vin * R2 / (R1 + R2)`
 
-The v1.1.4 evaluator validates required variables and units, then returns typed
-`FormulaEvaluationResult` output values. It is intentionally not a full symbolic
-parser. A Math.js, SymPy, or Lcapy-style bridge can be added later behind the
-same port.
+The frontend does not evaluate formulas. React sends variable strings to the Rust backend. The backend parses units, validates inputs, evaluates the formula, and returns outputs.
+
+Full symbolic parser is out of scope. Math.js / SymPy / Lcapy integration is planned later.

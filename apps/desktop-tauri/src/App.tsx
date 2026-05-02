@@ -1,5 +1,16 @@
-import { AppShell, Divider, MantineProvider, NavLink, Stack, Text, Title } from "@mantine/core";
+import {
+  AppShell,
+  Divider,
+  Group,
+  MantineProvider,
+  NavLink,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { useState } from "react";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { DebugLogPanel } from "./components/DebugLogPanel";
 import { Workbench } from "./components/Workbench";
 import { navigationItems, type ScreenId } from "./screens/navigation";
 
@@ -11,7 +22,10 @@ export default function App() {
       <AppShell navbar={{ width: 250, breakpoint: "sm" }} padding={0}>
         <AppShell.Navbar className="navbar">
           <Stack gap="xs" p="md">
-            <Title order={3}>HotSAS Studio</Title>
+            <Group justify="space-between" align="center">
+              <Title order={3}>HotSAS Studio</Title>
+              <DebugLogPanel />
+            </Group>
             <Text size="xs" c="dimmed">
               Hardware-Oriented Schematic Analysis & Simulation Studio
             </Text>
@@ -28,7 +42,9 @@ export default function App() {
           ))}
         </AppShell.Navbar>
         <AppShell.Main className="main">
-          <Workbench activeScreen={activeScreen} />
+          <ErrorBoundary>
+            <Workbench activeScreen={activeScreen} />
+          </ErrorBoundary>
         </AppShell.Main>
       </AppShell>
     </MantineProvider>

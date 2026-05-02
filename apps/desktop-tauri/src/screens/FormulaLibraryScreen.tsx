@@ -14,12 +14,17 @@ import {
 import { RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { backend } from "../api";
+import { logger } from "../utils/logger";
 import type {
   FormulaDetailsDto,
   FormulaEvaluationResultDto,
   FormulaPackDto,
   FormulaSummaryDto,
 } from "../types";
+
+function isNonEmptyArray<T>(value: unknown): value is T[] {
+  return Array.isArray(value) && value.length > 0;
+}
 
 export function FormulaLibraryScreen() {
   const [packs, setPacks] = useState<FormulaPackDto[]>([]);
@@ -41,6 +46,7 @@ export function FormulaLibraryScreen() {
   );
 
   useEffect(() => {
+    logger.info("FormulaLibraryScreen mounted");
     void loadRegistry();
   }, []);
 
@@ -50,28 +56,30 @@ export function FormulaLibraryScreen() {
       return;
     }
 
+    logger.info(`Selected formula: ${selectedFormula.id}`);
     let active = true;
     backend
       .getFormula(selectedFormula.id)
       .then((formulaDetails) => {
-        if (active) {
-          setDetails(formulaDetails);
-          setSelectedId(formulaDetails.id);
-          setCalculationResult(null);
-          setVariableInputs(
-            Object.fromEntries(
-              formulaDetails.variables.map((variable) => [
-                variable.name,
-                variable.default?.original ?? "",
-              ]),
-            ),
-          );
-        }
+        if (!active) return;
+        logger.info(`Loaded formula details: ${formulaDetails.id}`);
+        setDetails(formulaDetails);
+        setSelectedId(formulaDetails.id);
+        setCalculationResult(null);
+        setVariableInputs(
+          Object.fromEntries(
+            (formulaDetails.variables ?? []).map((variable) => [
+              variable.name,
+              variable.default?.original ?? "",
+            ]),
+          ),
+        );
       })
       .catch((loadError: unknown) => {
-        if (active) {
-          setError(loadError instanceof Error ? loadError.message : String(loadError));
-        }
+        if (!active) return;
+        const msg = loadError instanceof Error ? loadError.message : String(loadError);
+        logger.error(`getFormula failed: ${msg}`);
+        setError(msg);
       });
 
     return () => {
@@ -80,20 +88,27 @@ export function FormulaLibraryScreen() {
   }, [selectedFormula]);
 
   async function loadRegistry() {
+    logger.info("loadRegistry started");
     setLoading(true);
     setError(null);
     try {
       const loadedPacks = await backend.loadFormulaPacks();
+      logger.info(`loadRegistry: loaded ${loadedPacks.length} pack(s)`);
       const [loadedCategories, loadedFormulas] = await Promise.all([
         backend.listFormulaCategories(),
         backend.listFormulas(),
       ]);
+      logger.info(
+        `loadRegistry: ${loadedFormulas.length} formula(s), ${loadedCategories.length} categorie(s)`,
+      );
       setPacks(loadedPacks);
       setCategories(loadedCategories);
       setFormulas(loadedFormulas);
       setSelectedId(loadedFormulas[0]?.id ?? null);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : String(loadError));
+      const msg = loadError instanceof Error ? loadError.message : String(loadError);
+      logger.error(`loadRegistry failed: ${msg}`);
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -104,27 +119,42 @@ export function FormulaLibraryScreen() {
       return;
     }
 
+    logger.info(`Calculate started for formula: ${details.id}`);
+    for (const variable of details.variables ?? []) {
+      logger.info(`  Input ${variable.name} = ${variableInputs[variable.name] ?? ""}`);
+    }
+
     setCalculating(true);
     setError(null);
     try {
       const result = await backend.calculateFormula({
         formula_id: details.id,
-        variables: details.variables.map((variable) => ({
+        variables: (details.variables ?? []).map((variable) => ({
           name: variable.name,
           value: variableInputs[variable.name] ?? "",
           unit: variable.unit || null,
         })),
       });
+      logger.info(
+        `Calculate succeeded. Outputs: ${result.outputs.map((o) => `${o.name}=${o.value.display}`).join(", ")}`,
+      );
       setCalculationResult(result);
     } catch (calculationError) {
+      const msg =
+        calculationError instanceof Error ? calculationError.message : String(calculationError);
+      logger.error(`Calculate failed: ${msg}`);
       setCalculationResult(null);
-      setError(
-        calculationError instanceof Error ? calculationError.message : String(calculationError),
-      );
+      setError(msg);
     } finally {
       setCalculating(false);
     }
   }
+
+  const safeOutputs = isNonEmptyArray(calculationResult?.outputs) ? calculationResult.outputs : [];
+  const safeWarnings = Array.isArray(calculationResult?.warnings) ? calculationResult.warnings : [];
+  const safeVariables = Array.isArray(details?.variables) ? details.variables : [];
+  const safeEquations = Array.isArray(details?.equations) ? details.equations : [];
+  const safeDetailsOutputs = Array.isArray(details?.outputs) ? details.outputs : [];
 
   return (
     <section className="screen-panel">
@@ -193,62 +223,80 @@ export function FormulaLibraryScreen() {
                   ) : null}
                 </Group>
                 <Text size="sm">{details.description}</Text>
-                <Code block>
-                  {details.equations.map((equation) => equation.expression).join("\n")}
-                </Code>
+                {safeEquations.length > 0 ? (
+                  <Code block>
+                    {safeEquations.map((equation) => equation.expression).join("\n")}
+                  </Code>
+                ) : null}
 
-                <Table>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Name</Table.Th>
-                      <Table.Th>Unit</Table.Th>
-                      <Table.Th>Default</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {details.variables.map((variable) => (
-                      <Table.Tr key={variable.name}>
-                        <Table.Td>{variable.name}</Table.Td>
-                        <Table.Td>{variable.unit || "-"}</Table.Td>
-                        <Table.Td>
-                          <TextInput
-                            aria-label={`${variable.name} value`}
-                            value={variableInputs[variable.name] ?? ""}
-                            placeholder={variable.default?.original ?? "value"}
-                            onChange={(event) =>
-                              setVariableInputs((current) => ({
-                                ...current,
-                                [variable.name]: event.currentTarget.value,
-                              }))
-                            }
-                          />
-                        </Table.Td>
+                {safeVariables.length > 0 ? (
+                  <Table>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>Name</Table.Th>
+                        <Table.Th>Unit</Table.Th>
+                        <Table.Th>Default</Table.Th>
                       </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {safeVariables.map((variable) => (
+                        <Table.Tr key={variable.name}>
+                          <Table.Td>{variable.name}</Table.Td>
+                          <Table.Td>{variable.unit || "-"}</Table.Td>
+                          <Table.Td>
+                            <TextInput
+                              aria-label={`${variable.name} value`}
+                              value={variableInputs[variable.name] ?? ""}
+                              placeholder={variable.default?.original ?? "value"}
+                              onChange={(event) => {
+                                const value = event.currentTarget?.value ?? "";
+                                logger.debug(`Input ${variable.name} changed to: ${value}`);
+                                setVariableInputs((current) => ({
+                                  ...current,
+                                  [variable.name]: value,
+                                }));
+                              }}
+                            />
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                ) : (
+                  <Text size="sm" c="dimmed">
+                    No variables defined.
+                  </Text>
+                )}
 
                 <Button loading={calculating} onClick={() => void calculateSelectedFormula()}>
                   Calculate
                 </Button>
 
-                <Group gap="xs">
-                  {details.outputs.map((output) => (
-                    <Badge key={output.name} variant="light">
-                      {output.name} {output.unit}
-                    </Badge>
-                  ))}
-                </Group>
+                {safeDetailsOutputs.length > 0 ? (
+                  <Group gap="xs">
+                    {safeDetailsOutputs.map((output) => (
+                      <Badge key={output.name} variant="light">
+                        {output.name} {output.unit}
+                      </Badge>
+                    ))}
+                  </Group>
+                ) : null}
 
                 {calculationResult ? (
                   <Stack gap="xs">
                     <Title order={5}>Result</Title>
-                    {calculationResult.outputs.map((output) => (
-                      <Text key={output.name} size="sm">
-                        {output.name}: {output.value.display}
+                    {safeOutputs.length > 0 ? (
+                      safeOutputs.map((output) => (
+                        <Text key={output.name} size="sm">
+                          {output.name}: {output.value?.display ?? "—"}
+                        </Text>
+                      ))
+                    ) : (
+                      <Text size="sm" c="dimmed">
+                        No outputs returned.
                       </Text>
-                    ))}
-                    {calculationResult.warnings.map((warning) => (
+                    )}
+                    {safeWarnings.map((warning) => (
                       <Alert key={warning} color="yellow" variant="light">
                         {warning}
                       </Alert>

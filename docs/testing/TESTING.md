@@ -191,11 +191,29 @@ On this Windows PowerShell setup, `npm.ps1` can be blocked by Execution Policy. 
   - `calculate_formula` for Ohm's law
   - Missing formula, missing variable, unsupported expression errors
 
+### v1.1.4-fix — Generic Formula Engine Completion Gate
+
+- **ErrorBoundary** (`src/components/ErrorBoundary.test.tsx`)
+  - Renders children when healthy
+  - Catches render errors and displays fallback UI
+  - Supports custom fallback
+  - Allows reset after error
+
+- **FormulaLibraryScreen UI workflows** (`src/screens/FormulaLibraryScreen.test.tsx`)
+  - Loads and displays packs, categories, formulas
+  - Shows formula details on selection
+  - Allows changing variable inputs without crashing
+  - Calls `calculateFormula` and displays results
+  - Switches between formulas
+  - Displays backend error alerts
+  - Handles null defaults gracefully
+  - Handles malformed calculation results gracefully
+
 ---
 
 ## Test Summary
 
-As of v1.1.4, the Rust workspace runs **63+ tests** across all crates with **zero failures**.
+As of v1.1.4-fix, the Rust workspace runs **63+ tests** across all crates with **zero failures**, and the frontend runs **12 UI tests** with **zero failures**.
 
 ---
 
@@ -210,4 +228,5 @@ cd "D:\Документы\vscode\HotSAS Studio\apps\desktop-tauri"
 npm.cmd run format:check
 npm.cmd run typecheck
 npm.cmd run build
+npm.cmd run test
 ```

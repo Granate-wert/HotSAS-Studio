@@ -1,0 +1,2570 @@
+Ты выступаешь в роли senior software architect + senior full-stack desktop engineer + EDA/simulation systems engineer.
+
+Нужно спроектировать и начать реализацию десктопной инженерной программы для расчёта, симуляции и документирования электрических схем.
+
+Название проекта условное: HotSAS Studio (Hot Schematic Analysis & Simulation Studio)
+
+
+Главная цель:
+Создать модульную десктопную программу для схемотехники, где пользователь может:
+- собирать электрические схемы в удобном UI;
+- использовать встроенный инженерный калькулятор;
+- работать с библиотекой формул;
+- создавать схемные заготовки из формул;
+- подбирать номиналы по E-рядам E12/E24/E48/E96/E192;
+- использовать реальные компоненты с параметрами, SPICE-моделями, symbol и footprint;
+- запускать SPICE-симуляцию;
+- смотреть графики токов, напряжений, фаз, усиления, импедансов;
+- анализировать выделенный участок цепи с указанием входа и выхода;
+- экспортировать расчёты, отчёты, BOM, netlist, схемы и библиотеки;
+- в будущем экспортировать symbol+footprint данные для удобной работы с Altium/KiCad.
+
+ВАЖНО:
+На первом этапе НЕ нужно реализовывать PCB-редактор.
+Но архитектурно нужно заложить поддержку symbol+footprint, чтобы в будущем можно было экспортировать библиотеки посадочных мест и данные компонентов для EDA-систем.
+
+============================================================
+1. Технологический стек
+============================================================
+
+Первая основная реализация:
+
+Frontend / Desktop UI:
+- Tauri
+- React
+- TypeScript
+- Vite
+- UI components: можно использовать shadcn/ui, Radix UI или Mantine
+- State management: Zustand или Redux Toolkit
+- Schematic canvas: сначала можно использовать React Flow / xyflow или собственный canvas-адаптер
+- Charts: Plotly.js или Apache ECharts
+- Formula rendering: KaTeX
+- Tables: TanStack Table
+
+Backend / Core:
+- Rust
+- Clean Architecture / Hexagonal Architecture
+- SQLite для локального хранения
+- ngspice как основной симуляционный движок
+- адаптеры для SPICE netlist, Touchstone, PDF/HTML/CSV/SVG/BOM export
+- подготовка к будущему engine-server и CLI
+
+ВАЖНО:
+UI не должен содержать бизнес-логику и расчётную логику.
+UI — это тонкий клиент:
+- отображает состояние;
+- принимает действия пользователя;
+- отправляет команды в backend/application layer;
+- показывает DTO, полученные от backend.
+
+Запрещено размещать в UI:
+- расчёт E-рядов;
+- генерацию SPICE netlist;
+- запуск ngspice;
+- парсинг SPICE-моделей;
+- парсинг Touchstone;
+- валидацию схемы;
+- расчёт формул;
+- формирование отчётов;
+- прямой доступ к SQLite.
+
+Вся предметная логика должна быть в Rust backend/core/application services.
+
+============================================================
+2. Главный архитектурный стиль
+============================================================
+
+Использовать Clean Architecture / Hexagonal Architecture / Ports and Adapters.
+
+Слои:
+
+1. UI Layer
+   - Tauri + React + TypeScript.
+   - Только отображение и пользовательский ввод.
+
+2. Application Layer
+   - use cases / application services.
+   - Команды: createProject, addComponent, connectPins, updateParameter, runSimulation, exportReport, importModel и т.д.
+
+3. Domain Core
+   - чистая предметная модель:
+     Circuit, Component, Net, Wire, Formula, PreferredValueSeries, SimulationProfile, Report, Symbol, Footprint.
+
+4. Ports
+   - интерфейсы к внешним системам:
+     StoragePort, SimulationEnginePort, ExporterPort, ImporterPort, ModelParserPort, FormulaEnginePort.
+
+5. Adapters
+   - конкретные реализации:
+     SQLiteStorageAdapter, NgspiceSimulationAdapter, SpiceNetlistExporter, PdfReportExporter, KicadExporter и т.д.
+
+Backend/core не должен знать о React, Tauri, HTML, CSS, Qt, Avalonia, egui и т.д.
+
+============================================================
+3. Структура проекта
+============================================================
+
+Создай monorepo примерно такой структуры:
+
+circuit-studio/
+│
+├── engine/
+│   ├── core/
+│   │   ├── circuit/
+│   │   ├── components/
+│   │   ├── symbols/
+│   │   ├── footprints/
+│   │   ├── formulas/
+│   │   ├── preferred_values/
+│   │   ├── simulation/
+│   │   ├── reports/
+│   │   ├── validation/
+│   │   └── selected_region/
+│   │
+│   ├── application/
+│   │   ├── project_service/
+│   │   ├── circuit_service/
+│   │   ├── component_service/
+│   │   ├── formula_service/
+│   │   ├── calculator_service/
+│   │   ├── simulation_service/
+│   │   ├── export_service/
+│   │   ├── library_service/
+│   │   └── selected_region_analysis_service/
+│   │
+│   ├── ports/
+│   │   ├── storage_port/
+│   │   ├── simulation_engine_port/
+│   │   ├── exporter_port/
+│   │   ├── importer_port/
+│   │   ├── model_parser_port/
+│   │   ├── formula_engine_port/
+│   │   └── library_port/
+│   │
+│   ├── adapters/
+│   │   ├── sqlite/
+│   │   ├── ngspice/
+│   │   ├── spice_parser/
+│   │   ├── touchstone_parser/
+│   │   ├── pdf_exporter/
+│   │   ├── html_exporter/
+│   │   ├── csv_exporter/
+│   │   ├── svg_exporter/
+│   │   ├── bom_exporter/
+│   │   ├── kicad_exporter/
+│   │   └── altium_workflow_exporter/
+│   │
+│   └── api/
+│       ├── dto/
+│       ├── commands/
+│       ├── errors/
+│       └── schemas/
+│
+├── apps/
+│   ├── desktop-tauri/
+│   │   ├── src/
+│   │   └── src-tauri/
+│   │
+│   ├── desktop-lite/
+│   │   └── reserved_for_future_egui_or_slint_ui/
+│   │
+│   ├── desktop-native/
+│   │   └── reserved_for_future_qt_or_avalonia_ui/
+│   │
+│   └── cli/
+│       └── reserved_for_future_cli_client/
+│
+├── shared/
+│   ├── project_format/
+│   ├── library_format/
+│   ├── formula_packs/
+│   ├── api_contracts/
+│   └── test_projects/
+│
+├── docs/
+│   ├── architecture/
+│   ├── user_manual/
+│   ├── formula_library/
+│   ├── component_library/
+│   ├── simulation/
+│   └── export/
+│
+└── README.md
+
+Если текущий инструмент не может сразу создать весь monorepo, создай сначала:
+- README.md;
+- docs/architecture/ARCHITECTURE.md;
+- engine/core с доменными моделями;
+- engine/application с сервисными интерфейсами;
+- apps/desktop-tauri с базовым UI-каркасом;
+- shared/formula_packs с примерами формул.
+
+============================================================
+4. Backend как библиотека / процесс / CLI
+============================================================
+
+На первом этапе реализуй backend как Rust-модули внутри Tauri-приложения.
+
+Но архитектурно предусмотри:
+- возможность вынести backend в отдельный локальный process: circuit-engine.exe;
+- возможность подключить другие UI:
+  1. Qt Quick/QML + C++;
+  2. Avalonia + C#;
+  3. egui + Rust для lite-версии;
+- возможность сделать CLI-клиент.
+
+CLI в будущем должен уметь:
+- validate project;
+- simulate project;
+- generate SPICE netlist;
+- export PDF/HTML/CSV/BOM;
+- run parameter sweep;
+- import SPICE/Touchstone models;
+- check component libraries;
+- run formula calculations.
+
+Примеры будущего CLI:
+circuit-cli validate ./filter.circuit
+circuit-cli simulate ./filter.circuit --profile ac-sweep
+circuit-cli netlist ./filter.circuit --out filter.cir
+circuit-cli export ./filter.circuit --format pdf --out report.pdf
+circuit-cli library check ./my-library
+
+============================================================
+5. Внутренний формат проекта
+============================================================
+
+Проект хранится как проектная папка, а не как один закрытый бинарный файл.
+
+Пример:
+
+my_project.circuit/
+├── project.json
+├── schematic.json
+├── components.json
+├── formulas.json
+├── simulation_profiles.json
+├── library_links.json
+├── reports/
+├── results/
+├── models/
+│   ├── spice/
+│   └── touchstone/
+├── datasheets/
+├── symbols/
+├── footprints/
+└── exports/
+
+Каждый проект должен иметь версию формата:
+
+{
+  "formatVersion": "1.0.0",
+  "engineVersion": "0.1.0",
+  "projectType": "schematic-simulation",
+  "createdAt": "...",
+  "updatedAt": "..."
+}
+
+Нужно предусмотреть будущие миграции формата проекта.
+
+============================================================
+6. Основные доменные сущности
+============================================================
+
+Реализуй базовые модели в Rust.
+
+CircuitProject:
+- id
+- name
+- format_version
+- created_at
+- updated_at
+- schematic
+- simulation_profiles
+- linked_libraries
+- reports
+
+Circuit:
+- components
+- wires
+- nets
+- labels
+- probes
+- annotations
+
+ComponentDefinition:
+- id
+- name
+- category
+- manufacturer
+- part_number
+- description
+- parameters
+- ratings
+- symbol_ids
+- footprint_ids
+- simulation_models
+- datasheets
+- tags
+- metadata
+
+ComponentInstance:
+- instance_id: R1, C1, U1, etc.
+- definition_id
+- selected_symbol_id
+- selected_footprint_id
+- selected_simulation_model_id
+- position
+- rotation
+- connected_nets
+- overridden_parameters
+- notes
+
+SymbolDefinition:
+- id
+- name
+- component_category
+- graphical_primitives
+- pins
+- metadata
+
+SymbolPin:
+- pin_number
+- pin_name
+- electrical_type
+- position
+- orientation
+
+FootprintDefinition:
+- id
+- name
+- package_name
+- standard
+- pads
+- courtyard
+- silkscreen
+- assembly_outline
+- body_size
+- pitch
+- height
+- model_3d_path
+- metadata
+
+Pad:
+- pad_number
+- pad_type
+- shape
+- position
+- size
+- drill
+- layers
+
+Net:
+- id
+- name
+- connected_pins
+
+Wire:
+- id
+- from
+- to
+- net_id
+
+Probe:
+- id
+- type: voltage/current/power/differential
+- target
+- reference_node
+
+FormulaDefinition:
+- id
+- title
+- category
+- description
+- equations
+- variables
+- outputs
+- assumptions
+- limitations
+- linked_circuit_template_id
+- default_simulation_profile
+- examples
+
+CircuitTemplate:
+- id
+- title
+- components
+- wires
+- named_nodes
+- input_ports
+- output_ports
+- probes
+- default_parameters
+- compatible_formula_ids
+- simulation_profiles
+
+FormulaCircuitBinding:
+- formula_id
+- circuit_template_id
+- variable_mapping
+- input_mapping
+- output_mapping
+- probe_mapping
+- graph_mapping
+
+SelectedCircuitRegion:
+- component_ids
+- internal_nets
+- boundary_nets
+- input_port
+- output_port
+- reference_node
+- analysis_direction
+- analysis_mode
+
+SimulationProfile:
+- id
+- type: operating_point, dc_sweep, ac_sweep, transient
+- parameters
+- requested_outputs
+
+SimulationResult:
+- id
+- profile_id
+- status
+- graph_series
+- measurements
+- warnings
+- errors
+- raw_data_path
+
+GraphSeries:
+- name
+- x_unit
+- y_unit
+- points
+- metadata
+
+PreferredValueResult:
+- requested_value
+- series
+- lower
+- nearest
+- higher
+- error_percent
+
+ReportModel:
+- id
+- title
+- sections
+- included_schematic_images
+- included_formulas
+- included_simulation_results
+- included_bom
+- export_settings
+
+============================================================
+7. E-ряды
+============================================================
+
+Реализуй модуль preferred_values.
+
+Поддержать:
+- E3
+- E6
+- E12
+- E24
+- E48
+- E96
+- E192
+
+Функции:
+- nearest_preferred_value(value, series)
+- lower_preferred_value(value, series)
+- higher_preferred_value(value, series)
+- generate_decade_values(series, min, max)
+- calculate_error_percent(requested, actual)
+- optimize_rc_for_target_frequency(target_fc, allowed_r_series, allowed_c_series, ranges)
+- optimize_divider_for_ratio(target_ratio, series, ranges)
+- optimize_gain_resistors(target_gain, topology, series, ranges)
+
+UI должен только вызывать backend-команды и отображать результат.
+
+============================================================
+8. Инженерный калькулятор
+============================================================
+
+Нужно заложить калькулятор как Engineering Notebook.
+
+Калькулятор должен поддерживать:
+- обычный ввод выражений;
+- инженерные приставки: k, M, m, u, n, p;
+- единицы измерения;
+- комплексные числа;
+- dB, dBm;
+- импедансы;
+- переменные;
+- историю;
+- прямую запись формул;
+- LaTeX-like ввод;
+- Wolfram-like команды;
+- графики;
+- связь результата с компонентом схемы;
+- добавление расчёта в отчёт;
+- пользовательские формулы.
+
+Режимы ввода:
+
+1. Expression mode:
+R = 10k
+C = 100n
+fc = 1 / (2*pi*R*C)
+
+2. LaTeX-like mode:
+f_c = \frac{1}{2\pi R C}
+R = 10\,k\Omega
+C = 100\,nF
+
+3. Wolfram-like command mode:
+solve(fc = 1/(2*pi*R*C), R)
+nearestE(15.93k, E24)
+sweep(R, E24, 1k..100k, fc = 1/(2*pi*R*C))
+bode(H = 1/(1+s*R*C), f=10..1e6)
+
+На первом этапе можно сделать:
+- parser interface;
+- заглушку/простую реализацию expression evaluator;
+- сохранение notebook blocks;
+- UI-панель ввода;
+- отображение результата;
+- историю расчётов.
+
+Позже можно подключить:
+- math.js;
+- SymPy bridge;
+- Lcapy bridge.
+
+ВАЖНО:
+Даже если вычислительный движок сначала простой, архитектурно нужен FormulaEnginePort.
+
+============================================================
+9. Библиотека формул
+============================================================
+
+Формулы должны быть расширяемыми пользователем.
+
+Формулы хранить не только в коде, а в JSON/YAML formula packs.
+
+Пример YAML-формулы:
+
+id: rc_low_pass_cutoff
+title: RC Low-Pass Cutoff Frequency
+category: filters/passive
+description: Cutoff frequency of first-order RC low-pass filter
+
+variables:
+  R:
+    unit: Ohm
+    description: Resistance
+    default: 10k
+  C:
+    unit: F
+    description: Capacitance
+    default: 100n
+
+equations:
+  - id: cutoff
+    latex: "f_c = \\frac{1}{2\\pi R C}"
+    expression: "fc = 1 / (2*pi*R*C)"
+    solve_for: ["fc", "R", "C"]
+
+outputs:
+  fc:
+    unit: Hz
+
+linkedCircuitTemplateId: rc_low_pass_template
+
+mapping:
+  R: R1.resistance
+  C: C1.capacitance
+  Vin: net_in
+  Vout: net_out
+
+defaultSimulation:
+  type: ac_sweep
+  start: 10 Hz
+  stop: 1 MHz
+  pointsPerDecade: 100
+
+Формула должна быть связана со схемной заготовкой.
+Пользователь должен иметь возможность:
+- открыть формулу;
+- ввести параметры;
+- рассчитать;
+- подобрать E-ряды;
+- создать схемную заготовку;
+- запустить симуляцию;
+- добавить расчёт в отчёт.
+
+============================================================
+10. Список категорий формул
+============================================================
+
+Создай базовую структуру formula packs.
+
+Категории:
+
+1. Базовые DC-цепи:
+- закон Ома;
+- мощность;
+- делитель напряжения;
+- делитель тока;
+- последовательное/параллельное соединение R/C/L;
+- звезда-треугольник;
+- теорема Тевенина;
+- теорема Нортона;
+- максимальная передача мощности.
+
+2. AC, комплексные числа, импедансы:
+- Z_R;
+- Z_C;
+- Z_L;
+- последовательные RC/RL/RLC;
+- параллельные RC/RL/RLC;
+- модуль;
+- фаза;
+- проводимость;
+- полная/активная/реактивная мощность;
+- коэффициент мощности;
+- резонанс;
+- Q;
+- bandwidth.
+
+3. Переходные процессы:
+- заряд RC;
+- разряд RC;
+- время до порога;
+- rise time 10–90%;
+- RL current rise/fall;
+- RLC response;
+- энергия конденсатора;
+- энергия индуктивности.
+
+4. Фильтры:
+- RC low-pass;
+- RC high-pass;
+- RL low-pass;
+- RL high-pass;
+- RLC band-pass;
+- RLC notch;
+- Twin-T notch;
+- LC filters;
+- Sallen-Key;
+- Multiple Feedback;
+- Butterworth;
+- Bessel;
+- Chebyshev;
+- Linkwitz-Riley.
+
+5. Операционные усилители:
+- инвертирующий;
+- неинвертирующий;
+- буфер;
+- сумматор;
+- дифференциальный;
+- инструментальный;
+- интегратор;
+- дифференциатор;
+- активный выпрямитель;
+- компаратор с гистерезисом;
+- noise gain;
+- GBW limit;
+- slew rate limit;
+- output swing check;
+- common mode check;
+- offset error;
+- bias current error.
+
+6. Транзисторы и MOSFET:
+- BJT bias;
+- common emitter;
+- emitter follower;
+- common base;
+- small-signal gain;
+- load line;
+- MOSFET conduction losses;
+- MOSFET switching losses;
+- gate charge;
+- gate resistor;
+- Miller plateau;
+- body diode losses;
+- SOA/thermal checks.
+
+7. Источники питания:
+- half-wave rectifier;
+- full-wave bridge;
+- ripple capacitor;
+- RC/LC/pi filters;
+- Zener regulator;
+- LM317/LM337;
+- LDO dropout;
+- regulator dissipation;
+- hold-up capacitor;
+- inrush current.
+
+8. DC-DC преобразователи:
+- Buck;
+- Boost;
+- inverting buck-boost;
+- non-inverting 4-switch buck-boost;
+- SEPIC;
+- Cuk;
+- Flyback;
+- Forward;
+- Push-pull;
+- Half-bridge;
+- Full-bridge;
+- Charge pump;
+- LED driver buck/boost.
+
+Для DC-DC нужны формулы:
+- duty cycle;
+- inductor ripple current;
+- minimum inductance;
+- output capacitor ripple;
+- input capacitor RMS current;
+- peak switch current;
+- diode/MOSFET stress;
+- CCM/DCM boundary;
+- conduction losses;
+- switching losses;
+- efficiency estimate;
+- thermal estimate.
+
+9. АЦП/ЦАП:
+- LSB;
+- quantization error;
+- ideal ADC SNR;
+- ENOB;
+- sampling theorem;
+- anti-aliasing filter;
+- ADC input settling;
+- DAC output settling;
+- reference noise;
+- divider for ADC input.
+
+10. Цифровые интерфейсы:
+- I2C pull-up;
+- pull-down;
+- RC debounce;
+- SPI line RC delay;
+- UART baud tolerance;
+- CMOS dynamic power;
+- level shifter divider;
+- open-drain rise time;
+- termination resistor.
+
+11. ВЧ и линии передачи:
+- wavelength;
+- propagation delay;
+- characteristic impedance;
+- reflection coefficient;
+- VSWR;
+- return loss;
+- insertion loss;
+- L-network matching;
+- pi/T matching;
+- LC resonance;
+- Q;
+- bandwidth;
+- skin depth;
+- coax delay.
+
+12. Шумы:
+- thermal noise;
+- RC noise bandwidth;
+- op-amp voltage noise;
+- op-amp current noise;
+- noise gain;
+- shot noise;
+- flicker approximation;
+- SNR;
+- noise figure;
+- Friis formula.
+
+13. Тепловые расчёты:
+- junction temperature;
+- thermal resistance chain;
+- required heatsink;
+- MOSFET thermal;
+- diode thermal;
+- regulator dissipation;
+- electrolytic capacitor lifetime;
+- copper trace heating estimate.
+
+14. Защита и надёжность:
+- TVS selection;
+- fuse current;
+- PTC fuse;
+- reverse polarity protection;
+- clamp current;
+- RC snubber;
+- flyback diode energy;
+- MOV rough sizing.
+
+15. Генераторы, таймеры, PWM:
+- 555 astable;
+- 555 monostable;
+- RC oscillator;
+- Wien bridge;
+- relaxation oscillator;
+- PWM duty cycle;
+- dead time;
+- timer prescaler/frequency.
+
+============================================================
+11. Связь формула ↔ схемная заготовка
+============================================================
+
+Каждая важная формула должна иметь возможность быть связанной с CircuitTemplate.
+
+Пример:
+Formula: rc_low_pass_cutoff
+CircuitTemplate: rc_low_pass_template
+
+Схема:
+Vin -- R1 -- node_out
+              |
+              C1
+              |
+             GND
+
+Mapping:
+R -> R1.resistance
+C -> C1.capacitance
+Vin -> net_in
+Vout -> net_out
+
+Действия:
+- calculate;
+- apply nearest E-series;
+- create schematic;
+- run AC sweep;
+- plot gain/phase;
+- add to report.
+
+Реализуй несколько стартовых шаблонов:
+1. Voltage divider.
+2. RC low-pass.
+3. RC high-pass.
+4. Inverting op-amp.
+5. Non-inverting op-amp.
+6. Basic buck converter placeholder.
+7. Basic boost converter placeholder.
+
+Если невозможно реализовать полноценную схему сразу, создай структуру данных и seed JSON/YAML templates.
+
+============================================================
+12. Анализ выделенного участка цепи
+============================================================
+
+Нужно заложить возможность расчёта только выделенного участка схемы.
+
+Пользовательский сценарий:
+1. Пользователь выделяет часть схемы.
+2. Нажимает Analyze Selection.
+3. Программа подсвечивает внешние узлы.
+4. Пользователь выбирает:
+   - input+;
+   - input- или GND;
+   - output+;
+   - output- или GND;
+   - reference node;
+   - positive analysis direction.
+5. Программа предлагает режим:
+   - symbolic linear analysis;
+   - numeric SPICE analysis;
+   - template-based explanation;
+   - all available.
+6. Программа выводит:
+   - формулы;
+   - промежуточные расчёты;
+   - equivalent circuit;
+   - transfer function, если возможно;
+   - графики;
+   - warnings;
+   - SPICE netlist fragment;
+   - возможность добавить в отчёт.
+
+Важно:
+Не обещать аналитическую формулу для любой схемы.
+Правила:
+- если участок линейный, вывести H(s), Zin, Zout, poles/zeros, Bode;
+- если участок похож на известный template, вывести стандартные инженерные формулы;
+- если участок нелинейный, вывести численную SPICE-симуляцию и приближённые формулы;
+- если участок слишком сложный, вывести графики, netlist и предупреждение, что аналитический вывод недоступен.
+
+Нужен модуль:
+SelectedRegionAnalysisService
+
+DTO:
+SelectedCircuitRegion
+- component_ids
+- internal_nets
+- boundary_nets
+- input_port
+- output_port
+- reference_node
+- analysis_direction
+- analysis_mode
+
+Графики для участка:
+- Vin(t), Vout(t);
+- Iin(t), Iout(t);
+- gain;
+- phase;
+- Zin(f);
+- Zout(f);
+- power;
+- ripple;
+- group delay.
+
+============================================================
+13. Симуляция
+============================================================
+
+Основной движок: ngspice.
+
+Но через порт:
+SimulationEnginePort
+
+Методы:
+- run_operating_point
+- run_dc_sweep
+- run_ac_sweep
+- run_transient
+- stop_simulation
+- get_result
+
+Адаптер:
+NgspiceSimulationAdapter
+
+На первом этапе допустимо:
+- сделать mock simulation adapter;
+- сделать генерацию SPICE netlist для простых R/C/L/V/GND схем;
+- подготовить интеграцию ngspice.
+
+UI не должен запускать ngspice напрямую.
+
+============================================================
+14. Библиотека компонентов
+============================================================
+
+Нужен Component Library Manager.
+
+Компонент включает:
+- schematic symbol;
+- footprint;
+- simulation model;
+- real electrical parameters;
+- datasheet;
+- BOM fields;
+- notes.
+
+Поддержать категории:
+- resistors;
+- capacitors;
+- inductors;
+- diodes;
+- BJTs;
+- MOSFETs;
+- op-amps;
+- comparators;
+- voltage regulators;
+- DC-DC controllers;
+- transformers;
+- mixers;
+- RF components;
+- user components.
+
+Импорт:
+- ручной ввод параметров;
+- SPICE .lib/.mod/.subckt/.cir;
+- Touchstone .s1p/.s2p/.s3p/.s4p;
+- CSV/JSON/YAML component data;
+- datasheet attachment.
+
+Для SPICE import:
+- прочитать файл;
+- найти .model и .subckt;
+- показать найденные модели;
+- определить тип компонента;
+- выполнить pin mapping;
+- сохранить модель;
+- проверить тестовым netlist, если возможно.
+
+Для Touchstone:
+- определить число портов;
+- считать частотные точки;
+- сохранить S-parameters;
+- построить S11/S21/S12/S22 позже.
+
+============================================================
+15. Symbol + Footprint + Altium/KiCad workflow
+============================================================
+
+PCB-редактор пока НЕ реализовывать.
+
+Но нужно хранить:
+- SymbolDefinition;
+- FootprintDefinition;
+- связь pin ↔ pad;
+- selected footprint у component instance;
+- metadata для будущего экспорта.
+
+Экспорт на первом этапе:
+- internal component library JSON;
+- BOM CSV/XLSX/JSON;
+- SPICE models;
+- datasheets;
+- symbol metadata;
+- footprint metadata;
+- SVG/PDF schematic;
+- SPICE netlist.
+
+Позже:
+- KiCad .kicad_sym export;
+- KiCad .kicad_mod export;
+- KiCad project/schematic export;
+- Altium workflow package:
+  - BOM;
+  - component DB CSV/SQLite;
+  - KiCad-compatible symbols/footprints;
+  - SPICE models;
+  - datasheets;
+  - mapping report;
+  - README for import.
+
+Не пытаться генерировать проприетарные Altium-файлы напрямую на первом этапе.
+Лучший путь:
+internal model -> KiCad-compatible export -> Altium Import Wizard / database workflow.
+
+============================================================
+16. Экспорт
+============================================================
+
+Реализовать архитектуру export service.
+
+Экспортёры:
+- SpiceNetlistExporter
+- PdfReportExporter
+- HtmlReportExporter
+- CsvSimulationExporter
+- SvgSchematicExporter
+- BomCsvExporter
+- BomJsonExporter
+- ComponentLibraryJsonExporter
+- KicadSymbolExporter placeholder
+- KicadFootprintExporter placeholder
+- AltiumWorkflowPackageExporter placeholder
+
+Отчёт должен включать:
+- project info;
+- schematic image;
+- component list;
+- formulas;
+- calculations;
+- E-series selection;
+- real components;
+- SPICE netlist;
+- simulation results;
+- graphs;
+- warnings;
+- BOM;
+- selected region analysis.
+
+============================================================
+17. UI экраны
+============================================================
+
+Создай базовый UI-каркас с экранами:
+
+1. Start Page
+- New Project
+- Open Project
+- Recent Projects
+- Formula Library
+- Component Library
+
+2. Main Schematic Editor
+- top menu;
+- left component palette;
+- central schematic canvas;
+- right property panel;
+- bottom panel:
+  - errors;
+  - console;
+  - netlist;
+  - measurements;
+  - formula output.
+
+3. Engineering Calculator / Notebook
+- text input;
+- result output;
+- history;
+- variables;
+- buttons:
+  - assign to component;
+  - create schematic;
+  - add to report.
+
+4. Formula Library
+- categories;
+- formula details;
+- input variables;
+- output;
+- linked circuit template;
+- create schematic;
+- run simulation;
+- add to report.
+
+5. Component Library
+- categories;
+- parts table;
+- details panel;
+- symbol preview placeholder;
+- footprint preview placeholder;
+- simulation model info;
+- datasheet info.
+
+6. Simulation Results
+- signals list;
+- graph area;
+- measurements;
+- cursors placeholder;
+- export CSV;
+- add to report.
+
+7. Export Center
+- report export;
+- schematic export;
+- simulation export;
+- BOM export;
+- library export;
+- Altium/KiCad workflow placeholders.
+
+UI может быть заглушечным, но архитектурно чистым.
+
+============================================================
+18. Первый минимальный вертикальный срез
+============================================================
+
+Не пытайся реализовать всю программу сразу.
+
+Сначала реализуй минимальный рабочий vertical slice:
+
+1. Создание проекта.
+2. Добавление простой схемы RC low-pass из шаблона.
+3. Отображение схемы в UI.
+4. Расчёт fc = 1/(2*pi*R*C) через FormulaService.
+5. Подбор ближайшего E24 значения для R или C.
+6. Генерация простого SPICE netlist.
+7. Mock simulation result или базовая ngspice integration, если доступно.
+8. Отображение графика mock AC response.
+9. Экспорт простого HTML или Markdown отчёта.
+10. Сохранение проекта в JSON.
+
+Обязательно добавить:
+- тесты для E-series;
+- тесты для формулы RC low-pass;
+- тесты для netlist generation;
+- docs/architecture/ARCHITECTURE.md;
+- docs/formula_library/FORMULA_PACK_FORMAT.md;
+- docs/component_library/COMPONENT_MODEL.md;
+- docs/export/EXPORT_STRATEGY.md.
+
+============================================================
+19. Качество кода
+============================================================
+
+Требования:
+- строгая типизация;
+- чистое разделение слоёв;
+- никакой бизнес-логики в React;
+- Rust domain core должен быть тестируемым без UI;
+- использовать DTO между backend и UI;
+- использовать Result/Error types;
+- не паниковать в production paths;
+- покрыть core юнит-тестами;
+- документация в Markdown;
+- seed data для formula packs и circuit templates;
+- код должен быть расширяемым.
+
+============================================================
+20. Что нужно выдать в результате первой итерации
+============================================================
+
+В результате первой итерации создай:
+
+1. README.md
+   - описание проекта;
+   - стек;
+   - архитектура;
+   - как запускать;
+   - этапы развития.
+
+2. docs/architecture/ARCHITECTURE.md
+   - Clean/Hexagonal Architecture;
+   - слои;
+   - почему UI тонкий;
+   - как потом заменить UI;
+   - как потом вынести engine-server.
+
+3. docs/formula_library/FORMULA_PACK_FORMAT.md
+   - JSON/YAML формат формул;
+   - связь формул со схемными шаблонами;
+   - примеры.
+
+4. docs/component_library/COMPONENT_MODEL.md
+   - ComponentDefinition;
+   - ComponentInstance;
+   - SymbolDefinition;
+   - FootprintDefinition;
+   - SPICE/Touchstone models;
+   - Altium/KiCad workflow.
+
+5. docs/export/EXPORT_STRATEGY.md
+   - SPICE;
+   - PDF/HTML;
+   - CSV;
+   - BOM;
+   - KiCad;
+   - Altium workflow;
+   - почему PCB/Gerber пока не реализуются.
+
+6. engine/core
+   - базовые Rust models;
+   - preferred values engine;
+   - formula definitions;
+   - circuit template definitions.
+
+7. engine/application
+   - сервисы и команды;
+   - ProjectService;
+   - FormulaService;
+   - PreferredValuesService;
+   - CircuitTemplateService;
+   - NetlistGenerationService.
+
+8. adapters placeholders
+   - SQLite placeholder;
+   - ngspice placeholder/mock;
+   - exporters placeholder.
+
+9. apps/desktop-tauri
+   - базовый Tauri + React UI;
+   - экраны-заглушки;
+   - Formula Library screen;
+   - Calculator screen;
+   - Schematic screen;
+   - Component Library screen.
+
+10. shared/formula_packs
+   - basic electronics pack;
+   - filters pack;
+   - op-amp pack;
+   - smps pack with buck/boost placeholders.
+
+11. tests
+   - preferred values;
+   - RC low-pass formula;
+   - circuit template mapping;
+   - basic netlist generation.
+
+Начни с архитектуры и минимального вертикального среза, а не с полной реализации всех функций.
+
+PROMPT — ENGLISH VERSION
+
+You are acting as a senior software architect, senior full-stack desktop engineer, and EDA/simulation systems engineer.
+
+Design and start implementing a desktop engineering application for electrical circuit calculation, simulation, documentation, and component-library management.
+
+Working project name: HotSAS Studio (Hot Schematic Analysis & Simulation Studio)
+
+Main goal:
+Create a modular desktop application for electronics engineering where the user can:
+- build electrical schematics in a convenient UI;
+- use an integrated engineering calculator;
+- work with an extensible formula library;
+- generate schematic templates from formulas;
+- select real component values using E-series E12/E24/E48/E96/E192;
+- use real components with parameters, SPICE models, symbols, and footprints;
+- run SPICE simulations;
+- view voltage, current, phase, gain, impedance, and power graphs;
+- analyze only a selected region of a circuit by explicitly defining input and output ports;
+- export calculations, reports, BOM, netlists, schematics, and libraries;
+- later export symbol+footprint data for Altium/KiCad workflows.
+
+IMPORTANT:
+Do NOT implement a PCB editor in the first version.
+However, the architecture must already support symbols and footprints so that footprint libraries and EDA workflow exports can be added later.
+
+============================================================
+1. Technology stack
+============================================================
+
+Primary implementation:
+
+Frontend / Desktop UI:
+- Tauri
+- React
+- TypeScript
+- Vite
+- UI components: shadcn/ui, Radix UI, or Mantine are acceptable
+- State management: Zustand or Redux Toolkit
+- Schematic canvas: React Flow / xyflow or a custom canvas adapter
+- Charts: Plotly.js or Apache ECharts
+- Formula rendering: KaTeX
+- Tables: TanStack Table
+
+Backend / Core:
+- Rust
+- Clean Architecture / Hexagonal Architecture
+- SQLite for local storage
+- ngspice as the primary simulation engine
+- adapters for SPICE netlist, Touchstone, PDF/HTML/CSV/SVG/BOM export
+- future support for engine-server and CLI
+
+IMPORTANT:
+The UI must not contain business logic or calculation logic.
+The UI is a thin client:
+- renders state;
+- collects user actions;
+- sends commands to backend/application services;
+- displays DTOs returned from the backend.
+
+The UI must NOT:
+- calculate E-series values;
+- generate SPICE netlists;
+- run ngspice;
+- parse SPICE models;
+- parse Touchstone files;
+- validate circuits;
+- evaluate engineering formulas;
+- generate reports;
+- access SQLite directly.
+
+All domain logic must live inside the Rust backend/core/application services.
+
+============================================================
+2. Architecture style
+============================================================
+
+Use Clean Architecture / Hexagonal Architecture / Ports and Adapters.
+
+Layers:
+
+1. UI Layer
+   - Tauri + React + TypeScript.
+   - Rendering and user input only.
+
+2. Application Layer
+   - use cases / application services.
+   - Commands: createProject, addComponent, connectPins, updateParameter, runSimulation, exportReport, importModel, etc.
+
+3. Domain Core
+   - pure domain model:
+     Circuit, Component, Net, Wire, Formula, PreferredValueSeries, SimulationProfile, Report, Symbol, Footprint.
+
+4. Ports
+   - interfaces to external systems:
+     StoragePort, SimulationEnginePort, ExporterPort, ImporterPort, ModelParserPort, FormulaEnginePort.
+
+5. Adapters
+   - concrete implementations:
+     SQLiteStorageAdapter, NgspiceSimulationAdapter, SpiceNetlistExporter, PdfReportExporter, KicadExporter, etc.
+
+The backend/core must not know anything about React, Tauri, HTML, CSS, Qt, Avalonia, egui, or any UI framework.
+
+============================================================
+3. Project structure
+============================================================
+
+Create a monorepo with approximately this structure:
+
+circuit-studio/
+│
+├── engine/
+│   ├── core/
+│   │   ├── circuit/
+│   │   ├── components/
+│   │   ├── symbols/
+│   │   ├── footprints/
+│   │   ├── formulas/
+│   │   ├── preferred_values/
+│   │   ├── simulation/
+│   │   ├── reports/
+│   │   ├── validation/
+│   │   └── selected_region/
+│   │
+│   ├── application/
+│   │   ├── project_service/
+│   │   ├── circuit_service/
+│   │   ├── component_service/
+│   │   ├── formula_service/
+│   │   ├── calculator_service/
+│   │   ├── simulation_service/
+│   │   ├── export_service/
+│   │   ├── library_service/
+│   │   └── selected_region_analysis_service/
+│   │
+│   ├── ports/
+│   │   ├── storage_port/
+│   │   ├── simulation_engine_port/
+│   │   ├── exporter_port/
+│   │   ├── importer_port/
+│   │   ├── model_parser_port/
+│   │   ├── formula_engine_port/
+│   │   └── library_port/
+│   │
+│   ├── adapters/
+│   │   ├── sqlite/
+│   │   ├── ngspice/
+│   │   ├── spice_parser/
+│   │   ├── touchstone_parser/
+│   │   ├── pdf_exporter/
+│   │   ├── html_exporter/
+│   │   ├── csv_exporter/
+│   │   ├── svg_exporter/
+│   │   ├── bom_exporter/
+│   │   ├── kicad_exporter/
+│   │   └── altium_workflow_exporter/
+│   │
+│   └── api/
+│       ├── dto/
+│       ├── commands/
+│       ├── errors/
+│       └── schemas/
+│
+├── apps/
+│   ├── desktop-tauri/
+│   │   ├── src/
+│   │   └── src-tauri/
+│   │
+│   ├── desktop-lite/
+│   │   └── reserved_for_future_egui_or_slint_ui/
+│   │
+│   ├── desktop-native/
+│   │   └── reserved_for_future_qt_or_avalonia_ui/
+│   │
+│   └── cli/
+│       └── reserved_for_future_cli_client/
+│
+├── shared/
+│   ├── project_format/
+│   ├── library_format/
+│   ├── formula_packs/
+│   ├── api_contracts/
+│   └── test_projects/
+│
+├── docs/
+│   ├── architecture/
+│   ├── user_manual/
+│   ├── formula_library/
+│   ├── component_library/
+│   ├── simulation/
+│   └── export/
+│
+└── README.md
+
+If the environment cannot create the full monorepo immediately, start by creating:
+- README.md;
+- docs/architecture/ARCHITECTURE.md;
+- engine/core domain models;
+- engine/application service interfaces;
+- apps/desktop-tauri base UI shell;
+- shared/formula_packs with sample formulas.
+
+============================================================
+4. Backend as library / process / CLI
+============================================================
+
+For the first version, implement the backend as Rust modules inside the Tauri application.
+
+However, the architecture must allow future extraction into:
+- a local backend process: circuit-engine.exe;
+- alternative UI clients:
+  1. Qt Quick/QML + C++;
+  2. Avalonia + C#;
+  3. egui + Rust for a lite version;
+- a CLI client.
+
+Future CLI capabilities:
+- validate project;
+- simulate project;
+- generate SPICE netlist;
+- export PDF/HTML/CSV/BOM;
+- run parameter sweep;
+- import SPICE/Touchstone models;
+- check component libraries;
+- run formula calculations.
+
+Future CLI examples:
+circuit-cli validate ./filter.circuit
+circuit-cli simulate ./filter.circuit --profile ac-sweep
+circuit-cli netlist ./filter.circuit --out filter.cir
+circuit-cli export ./filter.circuit --format pdf --out report.pdf
+circuit-cli library check ./my-library
+
+============================================================
+5. Internal project format
+============================================================
+
+A project should be stored as a project folder, not as a closed binary file.
+
+Example:
+
+my_project.circuit/
+├── project.json
+├── schematic.json
+├── components.json
+├── formulas.json
+├── simulation_profiles.json
+├── library_links.json
+├── reports/
+├── results/
+├── models/
+│   ├── spice/
+│   └── touchstone/
+├── datasheets/
+├── symbols/
+├── footprints/
+└── exports/
+
+Every project must include a format version:
+
+{
+  "formatVersion": "1.0.0",
+  "engineVersion": "0.1.0",
+  "projectType": "schematic-simulation",
+  "createdAt": "...",
+  "updatedAt": "..."
+}
+
+Plan for future project format migrations.
+
+============================================================
+6. Core domain entities
+============================================================
+
+Implement basic Rust models.
+
+CircuitProject:
+- id
+- name
+- format_version
+- created_at
+- updated_at
+- schematic
+- simulation_profiles
+- linked_libraries
+- reports
+
+Circuit:
+- components
+- wires
+- nets
+- labels
+- probes
+- annotations
+
+ComponentDefinition:
+- id
+- name
+- category
+- manufacturer
+- part_number
+- description
+- parameters
+- ratings
+- symbol_ids
+- footprint_ids
+- simulation_models
+- datasheets
+- tags
+- metadata
+
+ComponentInstance:
+- instance_id: R1, C1, U1, etc.
+- definition_id
+- selected_symbol_id
+- selected_footprint_id
+- selected_simulation_model_id
+- position
+- rotation
+- connected_nets
+- overridden_parameters
+- notes
+
+SymbolDefinition:
+- id
+- name
+- component_category
+- graphical_primitives
+- pins
+- metadata
+
+SymbolPin:
+- pin_number
+- pin_name
+- electrical_type
+- position
+- orientation
+
+FootprintDefinition:
+- id
+- name
+- package_name
+- standard
+- pads
+- courtyard
+- silkscreen
+- assembly_outline
+- body_size
+- pitch
+- height
+- model_3d_path
+- metadata
+
+Pad:
+- pad_number
+- pad_type
+- shape
+- position
+- size
+- drill
+- layers
+
+Net:
+- id
+- name
+- connected_pins
+
+Wire:
+- id
+- from
+- to
+- net_id
+
+Probe:
+- id
+- type: voltage/current/power/differential
+- target
+- reference_node
+
+FormulaDefinition:
+- id
+- title
+- category
+- description
+- equations
+- variables
+- outputs
+- assumptions
+- limitations
+- linked_circuit_template_id
+- default_simulation_profile
+- examples
+
+CircuitTemplate:
+- id
+- title
+- components
+- wires
+- named_nodes
+- input_ports
+- output_ports
+- probes
+- default_parameters
+- compatible_formula_ids
+- simulation_profiles
+
+FormulaCircuitBinding:
+- formula_id
+- circuit_template_id
+- variable_mapping
+- input_mapping
+- output_mapping
+- probe_mapping
+- graph_mapping
+
+SelectedCircuitRegion:
+- component_ids
+- internal_nets
+- boundary_nets
+- input_port
+- output_port
+- reference_node
+- analysis_direction
+- analysis_mode
+
+SimulationProfile:
+- id
+- type: operating_point, dc_sweep, ac_sweep, transient
+- parameters
+- requested_outputs
+
+SimulationResult:
+- id
+- profile_id
+- status
+- graph_series
+- measurements
+- warnings
+- errors
+- raw_data_path
+
+GraphSeries:
+- name
+- x_unit
+- y_unit
+- points
+- metadata
+
+PreferredValueResult:
+- requested_value
+- series
+- lower
+- nearest
+- higher
+- error_percent
+
+ReportModel:
+- id
+- title
+- sections
+- included_schematic_images
+- included_formulas
+- included_simulation_results
+- included_bom
+- export_settings
+
+============================================================
+7. Preferred value E-series
+============================================================
+
+Implement a preferred_values module.
+
+Support:
+- E3
+- E6
+- E12
+- E24
+- E48
+- E96
+- E192
+
+Functions:
+- nearest_preferred_value(value, series)
+- lower_preferred_value(value, series)
+- higher_preferred_value(value, series)
+- generate_decade_values(series, min, max)
+- calculate_error_percent(requested, actual)
+- optimize_rc_for_target_frequency(target_fc, allowed_r_series, allowed_c_series, ranges)
+- optimize_divider_for_ratio(target_ratio, series, ranges)
+- optimize_gain_resistors(target_gain, topology, series, ranges)
+
+The UI must only call backend commands and display results.
+
+============================================================
+8. Engineering calculator
+============================================================
+
+Implement the calculator as an Engineering Notebook.
+
+The calculator must support:
+- normal expression input;
+- engineering prefixes: k, M, m, u, n, p;
+- units;
+- complex numbers;
+- dB, dBm;
+- impedances;
+- variables;
+- history;
+- direct formula writing;
+- LaTeX-like input;
+- Wolfram-like commands;
+- plots;
+- linking a result to a schematic component;
+- adding a calculation to a report;
+- user-defined formulas.
+
+Input modes:
+
+1. Expression mode:
+R = 10k
+C = 100n
+fc = 1 / (2*pi*R*C)
+
+2. LaTeX-like mode:
+f_c = \frac{1}{2\pi R C}
+R = 10\,k\Omega
+C = 100\,nF
+
+3. Wolfram-like command mode:
+solve(fc = 1/(2*pi*R*C), R)
+nearestE(15.93k, E24)
+sweep(R, E24, 1k..100k, fc = 1/(2*pi*R*C))
+bode(H = 1/(1+s*R*C), f=10..1e6)
+
+For the first stage, it is acceptable to implement:
+- parser interface;
+- simple expression evaluator or placeholder;
+- notebook block persistence;
+- UI input panel;
+- result display;
+- calculation history.
+
+Later integrations may include:
+- math.js;
+- SymPy bridge;
+- Lcapy bridge.
+
+IMPORTANT:
+Even if the first calculation engine is simple, the architecture must contain a FormulaEnginePort.
+
+============================================================
+9. Formula library
+============================================================
+
+Formulas must be user-extensible.
+
+Do not store formulas only in code. Use JSON/YAML formula packs.
+
+Example YAML formula:
+
+id: rc_low_pass_cutoff
+title: RC Low-Pass Cutoff Frequency
+category: filters/passive
+description: Cutoff frequency of first-order RC low-pass filter
+
+variables:
+  R:
+    unit: Ohm
+    description: Resistance
+    default: 10k
+  C:
+    unit: F
+    description: Capacitance
+    default: 100n
+
+equations:
+  - id: cutoff
+    latex: "f_c = \\frac{1}{2\\pi R C}"
+    expression: "fc = 1 / (2*pi*R*C)"
+    solve_for: ["fc", "R", "C"]
+
+outputs:
+  fc:
+    unit: Hz
+
+linkedCircuitTemplateId: rc_low_pass_template
+
+mapping:
+  R: R1.resistance
+  C: C1.capacitance
+  Vin: net_in
+  Vout: net_out
+
+defaultSimulation:
+  type: ac_sweep
+  start: 10 Hz
+  stop: 1 MHz
+  pointsPerDecade: 100
+
+A formula can be linked to a schematic template.
+The user must be able to:
+- open a formula;
+- enter parameters;
+- calculate;
+- select E-series values;
+- create a schematic template;
+- run simulation;
+- add the calculation to a report.
+
+============================================================
+10. Formula categories
+============================================================
+
+Create a base formula pack structure.
+
+Categories:
+
+1. Basic DC circuits:
+- Ohm’s law;
+- power;
+- voltage divider;
+- current divider;
+- series/parallel R/C/L;
+- star-delta;
+- Thévenin theorem;
+- Norton theorem;
+- maximum power transfer.
+
+2. AC, complex numbers, impedances:
+- Z_R;
+- Z_C;
+- Z_L;
+- series RC/RL/RLC;
+- parallel RC/RL/RLC;
+- magnitude;
+- phase;
+- admittance;
+- apparent/active/reactive power;
+- power factor;
+- resonance;
+- Q;
+- bandwidth.
+
+3. Transient processes:
+- RC charge;
+- RC discharge;
+- time to threshold;
+- 10–90% rise time;
+- RL current rise/fall;
+- RLC response;
+- capacitor energy;
+- inductor energy.
+
+4. Filters:
+- RC low-pass;
+- RC high-pass;
+- RL low-pass;
+- RL high-pass;
+- RLC band-pass;
+- RLC notch;
+- Twin-T notch;
+- LC filters;
+- Sallen-Key;
+- Multiple Feedback;
+- Butterworth;
+- Bessel;
+- Chebyshev;
+- Linkwitz-Riley.
+
+5. Operational amplifiers:
+- inverting;
+- non-inverting;
+- buffer;
+- summing amplifier;
+- differential amplifier;
+- instrumentation amplifier;
+- integrator;
+- differentiator;
+- precision rectifier;
+- Schmitt trigger comparator;
+- noise gain;
+- GBW limit;
+- slew rate limit;
+- output swing check;
+- common mode check;
+- offset error;
+- bias current error.
+
+6. Transistors and MOSFETs:
+- BJT bias;
+- common emitter;
+- emitter follower;
+- common base;
+- small-signal gain;
+- load line;
+- MOSFET conduction losses;
+- MOSFET switching losses;
+- gate charge;
+- gate resistor;
+- Miller plateau;
+- body diode losses;
+- SOA/thermal checks.
+
+7. Power supplies:
+- half-wave rectifier;
+- full-wave bridge;
+- ripple capacitor;
+- RC/LC/pi filters;
+- Zener regulator;
+- LM317/LM337;
+- LDO dropout;
+- regulator dissipation;
+- hold-up capacitor;
+- inrush current.
+
+8. DC-DC converters:
+- Buck;
+- Boost;
+- inverting buck-boost;
+- non-inverting 4-switch buck-boost;
+- SEPIC;
+- Cuk;
+- Flyback;
+- Forward;
+- Push-pull;
+- Half-bridge;
+- Full-bridge;
+- Charge pump;
+- LED driver buck/boost.
+
+DC-DC formula requirements:
+- duty cycle;
+- inductor ripple current;
+- minimum inductance;
+- output capacitor ripple;
+- input capacitor RMS current;
+- peak switch current;
+- diode/MOSFET stress;
+- CCM/DCM boundary;
+- conduction losses;
+- switching losses;
+- efficiency estimate;
+- thermal estimate.
+
+9. ADC/DAC:
+- LSB;
+- quantization error;
+- ideal ADC SNR;
+- ENOB;
+- sampling theorem;
+- anti-aliasing filter;
+- ADC input settling;
+- DAC output settling;
+- reference noise;
+- divider for ADC input.
+
+10. Digital interfaces:
+- I2C pull-up;
+- pull-down;
+- RC debounce;
+- SPI line RC delay;
+- UART baud tolerance;
+- CMOS dynamic power;
+- level shifter divider;
+- open-drain rise time;
+- termination resistor.
+
+11. RF and transmission lines:
+- wavelength;
+- propagation delay;
+- characteristic impedance;
+- reflection coefficient;
+- VSWR;
+- return loss;
+- insertion loss;
+- L-network matching;
+- pi/T matching;
+- LC resonance;
+- Q;
+- bandwidth;
+- skin depth;
+- coax delay.
+
+12. Noise:
+- thermal noise;
+- RC noise bandwidth;
+- op-amp voltage noise;
+- op-amp current noise;
+- noise gain;
+- shot noise;
+- flicker approximation;
+- SNR;
+- noise figure;
+- Friis formula.
+
+13. Thermal calculations:
+- junction temperature;
+- thermal resistance chain;
+- required heatsink;
+- MOSFET thermal;
+- diode thermal;
+- regulator dissipation;
+- electrolytic capacitor lifetime;
+- copper trace heating estimate.
+
+14. Protection and reliability:
+- TVS selection;
+- fuse current;
+- PTC fuse;
+- reverse polarity protection;
+- clamp current;
+- RC snubber;
+- flyback diode energy;
+- MOV rough sizing.
+
+15. Oscillators, timers, PWM:
+- 555 astable;
+- 555 monostable;
+- RC oscillator;
+- Wien bridge;
+- relaxation oscillator;
+- PWM duty cycle;
+- dead time;
+- timer prescaler/frequency.
+
+============================================================
+11. Formula ↔ schematic template binding
+============================================================
+
+Each important formula must be able to link to a CircuitTemplate.
+
+Example:
+Formula: rc_low_pass_cutoff
+CircuitTemplate: rc_low_pass_template
+
+Schematic:
+Vin -- R1 -- node_out
+              |
+              C1
+              |
+             GND
+
+Mapping:
+R -> R1.resistance
+C -> C1.capacitance
+Vin -> net_in
+Vout -> net_out
+
+Actions:
+- calculate;
+- apply nearest E-series;
+- create schematic;
+- run AC sweep;
+- plot gain/phase;
+- add to report.
+
+Implement several starter templates:
+1. Voltage divider.
+2. RC low-pass.
+3. RC high-pass.
+4. Inverting op-amp.
+5. Non-inverting op-amp.
+6. Basic buck converter placeholder.
+7. Basic boost converter placeholder.
+
+If full schematic rendering is not possible immediately, create the data structures and seed JSON/YAML templates.
+
+============================================================
+12. Selected circuit region analysis
+============================================================
+
+The application must support analysis of only a selected region of the circuit.
+
+User scenario:
+1. User selects a region of the schematic.
+2. User clicks Analyze Selection.
+3. The app highlights boundary nodes.
+4. User selects:
+   - input+;
+   - input- or GND;
+   - output+;
+   - output- or GND;
+   - reference node;
+   - positive analysis direction.
+5. The app offers analysis modes:
+   - symbolic linear analysis;
+   - numeric SPICE analysis;
+   - template-based explanation;
+   - all available.
+6. The app outputs:
+   - formulas;
+   - intermediate calculations;
+   - equivalent circuit;
+   - transfer function if available;
+   - graphs;
+   - warnings;
+   - SPICE netlist fragment;
+   - option to add the analysis to a report.
+
+Important:
+Do not promise symbolic formulas for arbitrary circuits.
+Rules:
+- if the region is linear, output H(s), Zin, Zout, poles/zeros, Bode;
+- if the region matches a known template, output standard engineering formulas;
+- if the region is nonlinear, output numerical SPICE results and approximate formulas;
+- if the region is too complex, output graphs, netlist, and a warning that symbolic derivation is unavailable.
+
+Required module:
+SelectedRegionAnalysisService
+
+DTO:
+SelectedCircuitRegion
+- component_ids
+- internal_nets
+- boundary_nets
+- input_port
+- output_port
+- reference_node
+- analysis_direction
+- analysis_mode
+
+Graphs for selected region:
+- Vin(t), Vout(t);
+- Iin(t), Iout(t);
+- gain;
+- phase;
+- Zin(f);
+- Zout(f);
+- power;
+- ripple;
+- group delay.
+
+============================================================
+13. Simulation
+============================================================
+
+Primary engine: ngspice.
+
+Use a port:
+SimulationEnginePort
+
+Methods:
+- run_operating_point
+- run_dc_sweep
+- run_ac_sweep
+- run_transient
+- stop_simulation
+- get_result
+
+Adapter:
+NgspiceSimulationAdapter
+
+For the first stage it is acceptable to:
+- create a mock simulation adapter;
+- generate SPICE netlists for simple R/C/L/V/GND circuits;
+- prepare the ngspice integration.
+
+The UI must not run ngspice directly.
+
+============================================================
+14. Component library
+============================================================
+
+Implement a Component Library Manager.
+
+Each component includes:
+- schematic symbol;
+- footprint;
+- simulation model;
+- real electrical parameters;
+- datasheet;
+- BOM fields;
+- notes.
+
+Supported categories:
+- resistors;
+- capacitors;
+- inductors;
+- diodes;
+- BJTs;
+- MOSFETs;
+- op-amps;
+- comparators;
+- voltage regulators;
+- DC-DC controllers;
+- transformers;
+- mixers;
+- RF components;
+- user components.
+
+Import:
+- manual parameter entry;
+- SPICE .lib/.mod/.subckt/.cir;
+- Touchstone .s1p/.s2p/.s3p/.s4p;
+- CSV/JSON/YAML component data;
+- datasheet attachment.
+
+For SPICE import:
+- read file;
+- find .model and .subckt;
+- display detected models;
+- determine component type;
+- perform pin mapping;
+- save model;
+- run a test netlist if possible.
+
+For Touchstone:
+- detect number of ports;
+- read frequency points;
+- store S-parameters;
+- later plot S11/S21/S12/S22.
+
+============================================================
+15. Symbol + Footprint + Altium/KiCad workflow
+============================================================
+
+Do NOT implement a PCB editor yet.
+
+But store:
+- SymbolDefinition;
+- FootprintDefinition;
+- pin-to-pad mapping;
+- selected footprint in component instance;
+- metadata for future exports.
+
+Initial exports:
+- internal component library JSON;
+- BOM CSV/XLSX/JSON;
+- SPICE models;
+- datasheets;
+- symbol metadata;
+- footprint metadata;
+- SVG/PDF schematic;
+- SPICE netlist.
+
+Future exports:
+- KiCad .kicad_sym export;
+- KiCad .kicad_mod export;
+- KiCad project/schematic export;
+- Altium workflow package:
+  - BOM;
+  - component DB CSV/SQLite;
+  - KiCad-compatible symbols/footprints;
+  - SPICE models;
+  - datasheets;
+  - mapping report;
+  - README for import.
+
+Do not attempt to generate proprietary Altium files directly in the first version.
+Preferred path:
+internal model -> KiCad-compatible export -> Altium Import Wizard / database workflow.
+
+============================================================
+16. Export
+============================================================
+
+Implement export service architecture.
+
+Exporters:
+- SpiceNetlistExporter
+- PdfReportExporter
+- HtmlReportExporter
+- CsvSimulationExporter
+- SvgSchematicExporter
+- BomCsvExporter
+- BomJsonExporter
+- ComponentLibraryJsonExporter
+- KicadSymbolExporter placeholder
+- KicadFootprintExporter placeholder
+- AltiumWorkflowPackageExporter placeholder
+
+Reports should include:
+- project info;
+- schematic image;
+- component list;
+- formulas;
+- calculations;
+- E-series selection;
+- real components;
+- SPICE netlist;
+- simulation results;
+- graphs;
+- warnings;
+- BOM;
+- selected region analysis.
+
+============================================================
+17. UI screens
+============================================================
+
+Create a basic UI shell with these screens:
+
+1. Start Page
+- New Project
+- Open Project
+- Recent Projects
+- Formula Library
+- Component Library
+
+2. Main Schematic Editor
+- top menu;
+- left component palette;
+- central schematic canvas;
+- right property panel;
+- bottom panel:
+  - errors;
+  - console;
+  - netlist;
+  - measurements;
+  - formula output.
+
+3. Engineering Calculator / Notebook
+- text input;
+- result output;
+- history;
+- variables;
+- buttons:
+  - assign to component;
+  - create schematic;
+  - add to report.
+
+4. Formula Library
+- categories;
+- formula details;
+- input variables;
+- output;
+- linked circuit template;
+- create schematic;
+- run simulation;
+- add to report.
+
+5. Component Library
+- categories;
+- parts table;
+- details panel;
+- symbol preview placeholder;
+- footprint preview placeholder;
+- simulation model info;
+- datasheet info.
+
+6. Simulation Results
+- signals list;
+- graph area;
+- measurements;
+- cursors placeholder;
+- export CSV;
+- add to report.
+
+7. Export Center
+- report export;
+- schematic export;
+- simulation export;
+- BOM export;
+- library export;
+- Altium/KiCad workflow placeholders.
+
+The UI can be partially stubbed, but it must respect the clean architecture boundaries.
+
+============================================================
+18. First minimal vertical slice
+============================================================
+
+Do not attempt to implement the whole product at once.
+
+Start with a minimal working vertical slice:
+
+1. Create project.
+2. Add a simple RC low-pass schematic from a template.
+3. Display the schematic in the UI.
+4. Calculate fc = 1/(2*pi*R*C) through FormulaService.
+5. Select the nearest E24 value for R or C.
+6. Generate a simple SPICE netlist.
+7. Use a mock simulation result or basic ngspice integration if available.
+8. Display a mock AC response graph.
+9. Export a simple HTML or Markdown report.
+10. Save the project as JSON.
+
+Mandatory:
+- tests for E-series;
+- tests for RC low-pass formula;
+- tests for netlist generation;
+- docs/architecture/ARCHITECTURE.md;
+- docs/formula_library/FORMULA_PACK_FORMAT.md;
+- docs/component_library/COMPONENT_MODEL.md;
+- docs/export/EXPORT_STRATEGY.md.
+
+============================================================
+19. Code quality requirements
+============================================================
+
+Requirements:
+- strict typing;
+- clean layer separation;
+- no business logic in React;
+- Rust domain core must be testable without UI;
+- DTOs between backend and UI;
+- Result/Error types;
+- no panics in production paths;
+- unit tests for core;
+- Markdown documentation;
+- seed data for formula packs and circuit templates;
+- extensible code.
+
+============================================================
+20. First iteration deliverables
+============================================================
+
+For the first iteration, create:
+
+1. README.md
+   - project description;
+   - stack;
+   - architecture;
+   - how to run;
+   - development roadmap.
+
+2. docs/architecture/ARCHITECTURE.md
+   - Clean/Hexagonal Architecture;
+   - layers;
+   - why the UI is thin;
+   - how to replace the UI later;
+   - how to extract engine-server later.
+
+3. docs/formula_library/FORMULA_PACK_FORMAT.md
+   - JSON/YAML formula format;
+   - formula-to-schematic-template binding;
+   - examples.
+
+4. docs/component_library/COMPONENT_MODEL.md
+   - ComponentDefinition;
+   - ComponentInstance;
+   - SymbolDefinition;
+   - FootprintDefinition;
+   - SPICE/Touchstone models;
+   - Altium/KiCad workflow.
+
+5. docs/export/EXPORT_STRATEGY.md
+   - SPICE;
+   - PDF/HTML;
+   - CSV;
+   - BOM;
+   - KiCad;
+   - Altium workflow;
+   - why PCB/Gerber are not implemented yet.
+
+6. engine/core
+   - basic Rust models;
+   - preferred values engine;
+   - formula definitions;
+   - circuit template definitions.
+
+7. engine/application
+   - services and commands;
+   - ProjectService;
+   - FormulaService;
+   - PreferredValuesService;
+   - CircuitTemplateService;
+   - NetlistGenerationService.
+
+8. adapter placeholders
+   - SQLite placeholder;
+   - ngspice placeholder/mock;
+   - exporter placeholders.
+
+9. apps/desktop-tauri
+   - basic Tauri + React UI;
+   - stub screens;
+   - Formula Library screen;
+   - Calculator screen;
+   - Schematic screen;
+   - Component Library screen.
+
+10. shared/formula_packs
+   - basic electronics pack;
+   - filters pack;
+   - op-amp pack;
+   - SMPS pack with buck/boost placeholders.
+
+11. tests
+   - preferred values;
+   - RC low-pass formula;
+   - circuit template mapping;
+   - basic netlist generation.
+
+Start with the architecture and minimal vertical slice, not with the full implementation of every feature.

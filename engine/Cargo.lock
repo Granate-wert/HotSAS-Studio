@@ -16,7 +16,7 @@ checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
 
 [[package]]
 name = "hotsas_adapters"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "hotsas_application",
  "hotsas_core",
@@ -28,7 +28,7 @@ dependencies = [
 
 [[package]]
 name = "hotsas_api"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "hotsas_application",
  "hotsas_core",
@@ -38,7 +38,7 @@ dependencies = [
 
 [[package]]
 name = "hotsas_application"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "hotsas_core",
  "hotsas_ports",
@@ -46,14 +46,14 @@ dependencies = [
 
 [[package]]
 name = "hotsas_core"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "hotsas_ports"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "hotsas_core",
 ]

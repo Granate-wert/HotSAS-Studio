@@ -2,6 +2,32 @@
 
 All notable changes to HotSAS Studio are documented in this file.
 
+## [0.1.4-fix] — Generic Formula Engine Completion Gate
+
+### Added
+- `ErrorBoundary` React component (`src/components/ErrorBoundary.tsx`) to catch render errors and prevent black screen crashes.
+- UI workflow tests with Vitest + React Testing Library + jsdom:
+  - `src/components/ErrorBoundary.test.tsx` — 4 tests (render, error catch, reset, custom fallback).
+  - `src/screens/FormulaLibraryScreen.test.tsx` — 8 tests (load, select, input, calculate, switch, errors, null defaults, malformed results).
+  - Test utilities: `src/test-setup.ts`, `src/test-utils.tsx`, `src/api/__mocks__/index.ts`.
+- `npm.cmd run test` / `npm.cmd run test:watch` scripts in `package.json`.
+- **Debug logging system** for diagnosing runtime issues:
+  - Rust backend: `log` + `simplelog` (`TermLogger` + `WriteLogger`) writing to console and `%APPDATA%/HotSAS Studio/logs/hotsas.log`.
+  - Frontend logger (`src/utils/logger.ts`) with levels (trace/debug/info/warn/error), in-memory ring buffer (2000 entries), and forwarding to backend via `write_log` Tauri command.
+  - `DebugLogPanel` component (`src/components/DebugLogPanel.tsx`) — modal window for viewing, copying, and clearing logs.
+  - All Tauri commands instrumented with entry/exit logging (`create_rc_low_pass_demo_project`, `calculate_formula`, `load_formula_packs`, etc.).
+  - `FormulaLibraryScreen` logs user actions: formula selection, input changes, calculate requests, success/failure.
+
+### Fixed
+- Black screen crash in `FormulaLibraryScreen` when modifying variable inputs.
+- Defensive null/undefined checks for all arrays (`variables`, `equations`, `outputs`, `calculationResult.outputs`, `calculationResult.warnings`).
+- Safe `event.currentTarget?.value` access in variable input `onChange` handlers.
+- Wrapped `Workbench` in `ErrorBoundary` inside `App.tsx`.
+
+### Changed
+- `docs/testing/TESTING.md` — added v1.1.4-fix test section, updated test count to 63+ Rust + 12 frontend tests, added `npm.cmd run test` to pre-commit commands.
+- `docs/formula_library/FORMULA_PACK_FORMAT.md` — clarified that frontend does not evaluate formulas; evaluation happens in Rust backend.
+
 ## [0.1.4] — Generic FormulaEnginePort
 
 ### Added

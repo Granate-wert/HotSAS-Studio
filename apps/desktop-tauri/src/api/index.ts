@@ -54,4 +54,6 @@ export const backend = {
   getFormulaPackMetadata: () => invokeCommand<FormulaPackDto[]>("get_formula_pack_metadata"),
   calculateFormula: (request: FormulaCalculationRequestDto) =>
     invokeCommand<FormulaEvaluationResultDto>("calculate_formula", { request }),
+  writeLog: (level: string, message: string) =>
+    invokeCommand<void>("write_log", { level, message }),
 };

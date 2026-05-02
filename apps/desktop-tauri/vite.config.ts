@@ -9,4 +9,10 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 1420,
   },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test-setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
+  },
 });
