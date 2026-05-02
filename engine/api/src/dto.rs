@@ -1,6 +1,7 @@
 use hotsas_core::{
     CircuitProject, FormulaDefinition, FormulaEquation, FormulaOutput, FormulaPackMetadata,
-    FormulaVariable, GraphSeries, PreferredValueResult, SimulationResult, ValueWithUnit,
+    FormulaVariable, GraphSeries, PreferredValueResult, ProjectPackageManifest,
+    ProjectPackageValidationReport, SimulationResult, ValueWithUnit,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -404,4 +405,75 @@ pub struct VerticalSliceDto {
     pub simulation: SimulationResultDto,
     pub markdown_report: String,
     pub html_report: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectPackageFilesDto {
+    pub schematic: String,
+    pub components: String,
+    pub formulas: String,
+    pub simulation_profiles: String,
+    pub reports_index: String,
+    pub results_index: String,
+}
+
+impl From<&hotsas_core::ProjectPackageFiles> for ProjectPackageFilesDto {
+    fn from(files: &hotsas_core::ProjectPackageFiles) -> Self {
+        Self {
+            schematic: files.schematic.clone(),
+            components: files.components.clone(),
+            formulas: files.formulas.clone(),
+            simulation_profiles: files.simulation_profiles.clone(),
+            reports_index: files.reports_index.clone(),
+            results_index: files.results_index.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectPackageManifestDto {
+    pub format_version: String,
+    pub engine_version: String,
+    pub project_id: String,
+    pub project_name: String,
+    pub project_type: String,
+    pub created_at: String,
+    pub updated_at: String,
+    pub files: ProjectPackageFilesDto,
+}
+
+impl From<&ProjectPackageManifest> for ProjectPackageManifestDto {
+    fn from(manifest: &ProjectPackageManifest) -> Self {
+        Self {
+            format_version: manifest.format_version.clone(),
+            engine_version: manifest.engine_version.clone(),
+            project_id: manifest.project_id.clone(),
+            project_name: manifest.project_name.clone(),
+            project_type: format!("{:?}", manifest.project_type),
+            created_at: manifest.created_at.clone(),
+            updated_at: manifest.updated_at.clone(),
+            files: ProjectPackageFilesDto::from(&manifest.files),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectPackageValidationReportDto {
+    pub valid: bool,
+    pub package_dir: String,
+    pub missing_files: Vec<String>,
+    pub warnings: Vec<String>,
+    pub errors: Vec<String>,
+}
+
+impl From<&ProjectPackageValidationReport> for ProjectPackageValidationReportDto {
+    fn from(report: &ProjectPackageValidationReport) -> Self {
+        Self {
+            valid: report.valid,
+            package_dir: report.package_dir.clone(),
+            missing_files: report.missing_files.clone(),
+            warnings: report.warnings.clone(),
+            errors: report.errors.clone(),
+        }
+    }
 }

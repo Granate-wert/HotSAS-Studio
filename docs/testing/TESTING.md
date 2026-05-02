@@ -240,11 +240,40 @@ This stage verifies:
   - `calculate_error_percent` accuracy
   - Invalid input handling (0, -1, NaN, Infinity)
 
+### v1.2 — Project Package Storage `.circuit`
+
+- **Core models** (`core/tests/project_package_tests.rs`)
+  - `ProjectPackageManifest` serialization/deserialization
+  - `ProjectPackageFiles` default paths
+  - `ProjectPackageValidationReport` missing files representation
+
+- **Package Storage Adapter** (`adapters/tests/project_package_storage_tests.rs`)
+  - Save creates `.circuit` folder and required files
+  - Save creates subdirectories (`reports`, `results`, `models/spice`, etc.)
+  - Load roundtrip preserves project id, name, components
+  - Validation reports valid for complete package
+  - Validation reports missing `project.json`
+  - Package dir without `.circuit` extension returns error
+
+- **Project Package Service** (`application/tests/project_package_service_tests.rs`)
+  - `ProjectPackageService` save/load roundtrip
+  - `AppServices` exposes project package service
+
+- **Project Package API** (`api/tests/project_package_api_tests.rs`)
+  - `save_project_package` without project → state error
+  - `create_rc_low_pass_demo_project` then save → manifest
+  - `validate_project_package` returns valid report
+
+- **Frontend** (`src/components/Workbench.tsx`)
+  - Save `.circuit` package button
+  - Load `.circuit` package button
+  - Package path input and result display
+
 ---
 
 ## Test Summary
 
-As of v1.1.5, the Rust workspace runs **71 tests** across all crates with **zero failures**, and the frontend runs **12 UI tests** with **zero failures**.
+As of v1.2, the Rust workspace runs **85 tests** across all crates with **zero failures**, and the frontend runs **12 UI tests** with **zero failures**.
 
 ---
 

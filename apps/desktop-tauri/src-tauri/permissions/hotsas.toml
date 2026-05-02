@@ -11,6 +11,9 @@ commands.allow = [
   "export_markdown_report",
   "export_html_report",
   "save_project_json",
+  "save_project_package",
+  "load_project_package",
+  "validate_project_package",
   "run_vertical_slice_preview",
   "load_formula_packs",
   "list_formulas",
@@ -18,4 +21,5 @@ commands.allow = [
   "get_formula",
   "get_formula_pack_metadata",
   "calculate_formula",
+  "write_log",
 ]

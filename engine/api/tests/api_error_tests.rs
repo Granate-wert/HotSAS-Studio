@@ -3,9 +3,10 @@ use hotsas_application::{AppServices, ApplicationError};
 use hotsas_core::{
     CircuitProject, ReportModel, SimulationProfile, SimulationResult, ValueWithUnit,
 };
+use hotsas_core::{ProjectPackageManifest, ProjectPackageValidationReport};
 use hotsas_ports::{
-    FormulaEnginePort, NetlistExporterPort, PortError, ReportExporterPort, SimulationEnginePort,
-    StoragePort,
+    FormulaEnginePort, NetlistExporterPort, PortError, ProjectPackageStoragePort,
+    ReportExporterPort, SimulationEnginePort, StoragePort,
 };
 use std::path::Path;
 use std::sync::Arc;
@@ -64,9 +65,45 @@ fn facade_returns_state_errors_before_project_is_created() {
     }
 }
 
+#[derive(Debug, Default)]
+struct FakeProjectPackageStorage;
+
+impl ProjectPackageStoragePort for FakeProjectPackageStorage {
+    fn save_project_package(
+        &self,
+        _package_dir: &Path,
+        project: &CircuitProject,
+    ) -> Result<ProjectPackageManifest, PortError> {
+        Ok(ProjectPackageManifest::new(
+            project.id.clone(),
+            project.name.clone(),
+            "2024-01-01T00:00:00Z".to_string(),
+            "2024-01-01T00:00:00Z".to_string(),
+        ))
+    }
+
+    fn load_project_package(&self, _package_dir: &Path) -> Result<CircuitProject, PortError> {
+        Err(PortError::Storage("not implemented".to_string()))
+    }
+
+    fn validate_project_package(
+        &self,
+        _package_dir: &Path,
+    ) -> Result<ProjectPackageValidationReport, PortError> {
+        Ok(ProjectPackageValidationReport {
+            valid: true,
+            package_dir: "".to_string(),
+            missing_files: vec![],
+            warnings: vec![],
+            errors: vec![],
+        })
+    }
+}
+
 fn fake_services() -> AppServices {
     AppServices::new(
         Arc::new(FakeStorage),
+        Arc::new(FakeProjectPackageStorage::default()),
         Arc::new(FakeFormulaEngine),
         Arc::new(FakeNetlistExporter),
         Arc::new(FakeSimulationEngine),

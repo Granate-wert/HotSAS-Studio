@@ -1,6 +1,7 @@
 use hotsas_core::{
     CircuitProject, FormulaDefinition, FormulaEvaluationResult, FormulaExpressionValidationResult,
-    FormulaOutput, ReportModel, SimulationProfile, SimulationResult, ValueWithUnit,
+    FormulaOutput, ProjectPackageManifest, ProjectPackageValidationReport, ReportModel,
+    SimulationProfile, SimulationResult, ValueWithUnit,
 };
 use std::collections::BTreeMap;
 use std::fmt;
@@ -98,4 +99,19 @@ pub trait SimulationEnginePort: Send + Sync {
 pub trait ReportExporterPort: Send + Sync {
     fn export_markdown(&self, report: &ReportModel) -> Result<String, PortError>;
     fn export_html(&self, report: &ReportModel) -> Result<String, PortError>;
+}
+
+pub trait ProjectPackageStoragePort: Send + Sync {
+    fn save_project_package(
+        &self,
+        package_dir: &Path,
+        project: &CircuitProject,
+    ) -> Result<ProjectPackageManifest, PortError>;
+
+    fn load_project_package(&self, package_dir: &Path) -> Result<CircuitProject, PortError>;
+
+    fn validate_project_package(
+        &self,
+        package_dir: &Path,
+    ) -> Result<ProjectPackageValidationReport, PortError>;
 }

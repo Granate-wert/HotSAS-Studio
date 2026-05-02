@@ -1,7 +1,8 @@
 use crate::{
     ApiError, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
     FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, PreferredValueDto,
-    ProjectDto, SaveProjectDto, SimulationResultDto, ValueDto, VerticalSliceDto,
+    ProjectDto, ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
+    SimulationResultDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, FormulaRegistryService};
 use hotsas_core::{
@@ -162,6 +163,35 @@ impl HotSasApi {
         let project = self.current_project()?;
         self.services.save_project(Path::new(&path), &project)?;
         Ok(SaveProjectDto { path })
+    }
+
+    pub fn save_project_package(
+        &self,
+        package_dir: String,
+    ) -> Result<ProjectPackageManifestDto, ApiError> {
+        let project = self.current_project()?;
+        let manifest = self
+            .services
+            .save_project_package(Path::new(&package_dir), &project)?;
+        Ok(ProjectPackageManifestDto::from(&manifest))
+    }
+
+    pub fn load_project_package(&self, package_dir: String) -> Result<ProjectDto, ApiError> {
+        let project = self
+            .services
+            .load_project_package(Path::new(&package_dir))?;
+        self.replace_current_project(project.clone())?;
+        Ok(ProjectDto::from(&project))
+    }
+
+    pub fn validate_project_package(
+        &self,
+        package_dir: String,
+    ) -> Result<ProjectPackageValidationReportDto, ApiError> {
+        let report = self
+            .services
+            .validate_project_package(Path::new(&package_dir))?;
+        Ok(ProjectPackageValidationReportDto::from(&report))
     }
 
     pub fn run_vertical_slice_preview(&self) -> Result<VerticalSliceDto, ApiError> {

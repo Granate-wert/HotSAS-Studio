@@ -1,5 +1,14 @@
 import { Button, Group, Paper, Text, TextInput } from "@mantine/core";
-import { Calculator, CircuitBoard, FileText, Play, Save, Sigma } from "lucide-react";
+import {
+  Calculator,
+  CircuitBoard,
+  FileText,
+  FolderOpen,
+  Package,
+  Play,
+  Save,
+  Sigma,
+} from "lucide-react";
 import { backend } from "../api";
 import { CalculatorScreen } from "../screens/CalculatorScreen";
 import { ComponentLibraryScreen } from "../screens/ComponentLibraryScreen";
@@ -21,6 +30,8 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     markdownReport,
     htmlReport,
     savePath,
+    packagePath,
+    packageResult,
     busy,
     error,
     setProject,
@@ -31,6 +42,8 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     setMarkdownReport,
     setHtmlReport,
     setSavePath,
+    setPackagePath,
+    setPackageResult,
     setBusy,
     setError,
   } = useHotSasStore();
@@ -61,6 +74,27 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
       ),
     exportMarkdown: () => run(backend.exportMarkdownReport, setMarkdownReport),
     exportHtml: () => run(backend.exportHtmlReport, setHtmlReport),
+    saveProjectPackage: () =>
+      run(
+        () => backend.saveProjectPackage(packagePath),
+        (manifest) => setPackageResult(`Saved package: ${manifest.project_name}`),
+      ),
+    loadProjectPackage: () =>
+      run(
+        () => backend.loadProjectPackage(packagePath),
+        (project) => {
+          setProject(project);
+          setPackageResult(`Loaded package: ${project.name}`);
+        },
+      ),
+    validateProjectPackage: () =>
+      run(
+        () => backend.validateProjectPackage(packagePath),
+        (report) =>
+          setPackageResult(
+            report.valid ? `Package is valid` : `Invalid: ${report.errors.join(", ")}`,
+          ),
+      ),
   };
   const hasProject = Boolean(project);
 
@@ -115,13 +149,41 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
           >
             Save JSON
           </Button>
+          <Button
+            variant="light"
+            leftSection={<Package size={16} />}
+            onClick={actions.saveProjectPackage}
+            disabled={!hasProject}
+          >
+            Save .circuit
+          </Button>
+          <Button
+            variant="light"
+            leftSection={<FolderOpen size={16} />}
+            onClick={actions.loadProjectPackage}
+          >
+            Load .circuit
+          </Button>
         </Group>
-        <TextInput
-          className="save-path"
-          value={savePath}
-          onChange={(event) => setSavePath(event.currentTarget.value)}
-          aria-label="Project save path"
-        />
+        <Group gap="xs">
+          <TextInput
+            className="save-path"
+            value={savePath}
+            onChange={(event) => setSavePath(event.currentTarget.value)}
+            aria-label="Project save path"
+          />
+          <TextInput
+            className="save-path"
+            value={packagePath}
+            onChange={(event) => setPackagePath(event.currentTarget.value)}
+            aria-label="Package path"
+          />
+        </Group>
+        {packageResult && (
+          <Text size="xs" c="dimmed">
+            {packageResult}
+          </Text>
+        )}
       </header>
 
       {error && (
@@ -166,6 +228,9 @@ function renderScreen(
       runSimulation: () => void;
       exportMarkdown: () => void;
       exportHtml: () => void;
+      saveProjectPackage: () => void;
+      loadProjectPackage: () => void;
+      validateProjectPackage: () => void;
     };
   },
 ) {

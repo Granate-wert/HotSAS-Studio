@@ -3,9 +3,10 @@ use hotsas_core::{
     rc_low_pass_formula, CircuitProject, EngineeringUnit, FormulaDefinition, FormulaOutput,
     FormulaPack, ReportModel, SimulationProfile, SimulationResult, ValueWithUnit,
 };
+use hotsas_core::{ProjectPackageManifest, ProjectPackageValidationReport};
 use hotsas_ports::{
-    FormulaEnginePort, NetlistExporterPort, PortError, ReportExporterPort, SimulationEnginePort,
-    StoragePort,
+    FormulaEnginePort, NetlistExporterPort, PortError, ProjectPackageStoragePort,
+    ReportExporterPort, SimulationEnginePort, StoragePort,
 };
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -71,9 +72,45 @@ fn value(input: &str, unit: EngineeringUnit) -> ValueWithUnit {
     ValueWithUnit::parse_with_default(input, unit).unwrap()
 }
 
+#[derive(Debug, Default)]
+struct FakeProjectPackageStorage;
+
+impl ProjectPackageStoragePort for FakeProjectPackageStorage {
+    fn save_project_package(
+        &self,
+        _package_dir: &Path,
+        project: &CircuitProject,
+    ) -> Result<ProjectPackageManifest, PortError> {
+        Ok(ProjectPackageManifest::new(
+            project.id.clone(),
+            project.name.clone(),
+            "2024-01-01T00:00:00Z".to_string(),
+            "2024-01-01T00:00:00Z".to_string(),
+        ))
+    }
+
+    fn load_project_package(&self, _package_dir: &Path) -> Result<CircuitProject, PortError> {
+        Err(PortError::Storage("not implemented".to_string()))
+    }
+
+    fn validate_project_package(
+        &self,
+        _package_dir: &Path,
+    ) -> Result<ProjectPackageValidationReport, PortError> {
+        Ok(ProjectPackageValidationReport {
+            valid: true,
+            package_dir: "".to_string(),
+            missing_files: vec![],
+            warnings: vec![],
+            errors: vec![],
+        })
+    }
+}
+
 fn fake_services() -> AppServices {
     AppServices::new(
         Arc::new(FakeStorage),
+        Arc::new(FakeProjectPackageStorage::default()),
         Arc::new(FakeFormulaEngine),
         Arc::new(FakeNetlistExporter),
         Arc::new(FakeSimulationEngine),

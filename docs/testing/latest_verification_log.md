@@ -2,7 +2,7 @@
 
 ## Version / Task
 
-v1.1.5 — Exact E-Series Tables
+v1.2 — Project Package Storage `.circuit`
 
 ## Date
 
@@ -11,18 +11,30 @@ v1.1.5 — Exact E-Series Tables
 ## Git
 
 Branch: main
-Commit before changes: 3331b78
+Commit before changes: 2dfe9b5
 Commit after changes: TBD
 Git status before: clean (untracked files only)
 Git status after: clean
 
 ## Summary of changes
 
-- Added exact E48/E96/E192 static tables in `engine/core/src/preferred_value_tables.rs`.
-- Removed approximate generation (`generated_base_values`, `round_significant`) from production path.
-- Updated `base_values` to return `&'static [f64]` via static tables.
-- Added preferred value tests: length, quality, known values, nearest/lower/higher, error percent.
-- Added documentation `docs/formula_library/PREFERRED_VALUES.md`.
+- Added `ProjectPackageManifest`, `ProjectPackageFiles`, `ProjectPackageType`, `ReportIndex`, `ResultIndex`, `ProjectPackageValidationReport` to `hotsas_core`.
+- Added `ProjectPackageStoragePort` to `hotsas_ports`.
+- Implemented `CircuitProjectPackageStorage` adapter in `hotsas_adapters`.
+- Added `ProjectPackageService` in `hotsas_application`.
+- Added `save_project_package`, `load_project_package`, `validate_project_package` to `HotSasApi` facade.
+- Added Tauri commands: `save_project_package`, `load_project_package`, `validate_project_package`.
+- Updated permissions (`hotsas.toml`) to include new commands and `write_log`.
+- Added frontend API methods and types for project package storage.
+- Added UI controls in `Workbench` for save/load `.circuit` package.
+- Added tests:
+  - `core/tests/project_package_tests.rs` (3 tests)
+  - `adapters/tests/project_package_storage_tests.rs` (6 tests)
+  - `application/tests/project_package_service_tests.rs` (2 tests)
+  - `api/tests/project_package_api_tests.rs` (3 tests)
+- Added documentation `docs/project_format/CIRCUIT_PACKAGE_FORMAT.md`.
+- Updated `docs/testing/TESTING.md` with v1.2 coverage.
+- Old `JsonProjectStorage` preserved; no breaking changes to RC vertical slice.
 
 ## Rust checks
 
@@ -32,7 +44,7 @@ Status: PASS
 
 ### cargo test
 
-Status: PASS (71 tests, 0 failures)
+Status: PASS (85 tests, 0 failures)
 
 ## Frontend checks
 
@@ -60,17 +72,24 @@ Check:
 
 - RC vertical slice still works.
 - Formula Library still loads.
-- E24 nearest still works.
+- Save `.circuit` package button appears.
+- Load `.circuit` package button appears.
 - No frontend regressions.
 
 ## Agent self-check
 
-- E48 table length: PASS
-- E96 table length: PASS
-- E192 table length: PASS
-- generated_base_values not used in production: PASS
-- invalid values return errors: PASS
-- docs updated: PASS
+- Core models compile and serialize: PASS
+- Adapter creates `.circuit` folder and files: PASS
+- Adapter rejects non-`.circuit` paths: PASS
+- Load roundtrip preserves project data: PASS
+- Validation reports missing files: PASS
+- Application service wires correctly: PASS
+- API facade exposes package methods: PASS
+- Tauri commands registered and permitted: PASS
+- Frontend API bridge updated: PASS
+- Frontend UI controls added: PASS
+- All existing tests still pass: PASS
+- Documentation added: PASS
 
 ## Final result
 

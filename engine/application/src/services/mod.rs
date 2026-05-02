@@ -6,6 +6,7 @@ mod formula_registry;
 mod netlist_generation;
 mod preferred_values;
 mod project;
+mod project_package;
 mod simulation;
 
 pub use app_services::AppServices;
@@ -16,4 +17,5 @@ pub use formula_registry::FormulaRegistryService;
 pub use netlist_generation::NetlistGenerationService;
 pub use preferred_values::{parse_requested_e24_value, PreferredValuesService};
 pub use project::ProjectService;
+pub use project_package::ProjectPackageService;
 pub use simulation::SimulationService;

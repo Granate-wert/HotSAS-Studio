@@ -3,6 +3,7 @@ pub mod error;
 pub mod models;
 pub mod preferred_value_tables;
 pub mod preferred_values;
+pub mod project_package;
 pub mod templates;
 pub mod value;
 
@@ -10,5 +11,6 @@ pub use circuit_query::CircuitQueryService;
 pub use error::CoreError;
 pub use models::*;
 pub use preferred_values::*;
+pub use project_package::*;
 pub use templates::*;
 pub use value::*;

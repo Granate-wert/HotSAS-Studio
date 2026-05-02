@@ -1,12 +1,15 @@
 use crate::{
     ApplicationError, CircuitTemplateService, ExportService, FormulaService,
-    NetlistGenerationService, PreferredValuesService, ProjectService, SimulationService,
+    NetlistGenerationService, PreferredValuesService, ProjectPackageService, ProjectService,
+    SimulationService,
 };
 use hotsas_core::{
-    CircuitProject, PreferredValueResult, ReportModel, SimulationResult, ValueWithUnit,
+    CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
+    ReportModel, SimulationResult, ValueWithUnit,
 };
 use hotsas_ports::{
-    FormulaEnginePort, NetlistExporterPort, ReportExporterPort, SimulationEnginePort, StoragePort,
+    FormulaEnginePort, NetlistExporterPort, ProjectPackageStoragePort, ReportExporterPort,
+    SimulationEnginePort, StoragePort,
 };
 use std::path::Path;
 use std::sync::Arc;
@@ -14,6 +17,7 @@ use std::sync::Arc;
 #[derive(Clone)]
 pub struct AppServices {
     project_service: ProjectService,
+    project_package_service: ProjectPackageService,
     formula_service: FormulaService,
     preferred_values_service: PreferredValuesService,
     circuit_template_service: CircuitTemplateService,
@@ -25,6 +29,7 @@ pub struct AppServices {
 impl AppServices {
     pub fn new(
         storage: Arc<dyn StoragePort>,
+        project_package_storage: Arc<dyn ProjectPackageStoragePort>,
         formula_engine: Arc<dyn FormulaEnginePort>,
         netlist_exporter: Arc<dyn NetlistExporterPort>,
         simulation_engine: Arc<dyn SimulationEnginePort>,
@@ -32,6 +37,7 @@ impl AppServices {
     ) -> Self {
         Self {
             project_service: ProjectService::new(storage),
+            project_package_service: ProjectPackageService::new(project_package_storage),
             formula_service: FormulaService::new(formula_engine),
             preferred_values_service: PreferredValuesService,
             circuit_template_service: CircuitTemplateService,
@@ -43,6 +49,10 @@ impl AppServices {
 
     pub fn project_service(&self) -> &ProjectService {
         &self.project_service
+    }
+
+    pub fn project_package_service(&self) -> &ProjectPackageService {
+        &self.project_package_service
     }
 
     pub fn formula_service(&self) -> &FormulaService {
@@ -146,5 +156,30 @@ impl AppServices {
 
     pub fn load_project(&self, path: &Path) -> Result<CircuitProject, ApplicationError> {
         self.project_service.load_project(path)
+    }
+
+    pub fn save_project_package(
+        &self,
+        package_dir: &Path,
+        project: &CircuitProject,
+    ) -> Result<ProjectPackageManifest, ApplicationError> {
+        self.project_package_service
+            .save_project_package(package_dir, project)
+    }
+
+    pub fn load_project_package(
+        &self,
+        package_dir: &Path,
+    ) -> Result<CircuitProject, ApplicationError> {
+        self.project_package_service
+            .load_project_package(package_dir)
+    }
+
+    pub fn validate_project_package(
+        &self,
+        package_dir: &Path,
+    ) -> Result<ProjectPackageValidationReport, ApplicationError> {
+        self.project_package_service
+            .validate_project_package(package_dir)
     }
 }

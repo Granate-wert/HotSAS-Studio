@@ -15,6 +15,8 @@ type HotSasState = {
   markdownReport: string;
   htmlReport: string;
   savePath: string;
+  packagePath: string;
+  packageResult: string | null;
   busy: boolean;
   error: string | null;
   setProject: (project: ProjectDto) => void;
@@ -25,6 +27,8 @@ type HotSasState = {
   setMarkdownReport: (report: string) => void;
   setHtmlReport: (report: string) => void;
   setSavePath: (path: string) => void;
+  setPackagePath: (path: string) => void;
+  setPackageResult: (result: string | null) => void;
   setBusy: (busy: boolean) => void;
   setError: (error: string | null) => void;
 };
@@ -38,6 +42,8 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   markdownReport: "",
   htmlReport: "",
   savePath: "shared/test_projects/rc_low_pass_demo.circuit/project.json",
+  packagePath: "shared/test_projects/rc_low_pass_demo.circuit",
+  packageResult: null,
   busy: false,
   error: null,
   setProject: (project) => set({ project }),
@@ -48,6 +54,8 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setMarkdownReport: (markdownReport) => set({ markdownReport }),
   setHtmlReport: (htmlReport) => set({ htmlReport }),
   setSavePath: (savePath) => set({ savePath }),
+  setPackagePath: (packagePath) => set({ packagePath }),
+  setPackageResult: (packageResult) => set({ packageResult }),
   setBusy: (busy) => set({ busy }),
   setError: (error) => set({ error }),
 }));

@@ -167,6 +167,34 @@ export type VerticalSliceDto = {
   html_report: string;
 };
 
+export type ProjectPackageFilesDto = {
+  schematic: string;
+  components: string;
+  formulas: string;
+  simulation_profiles: string;
+  reports_index: string;
+  results_index: string;
+};
+
+export type ProjectPackageManifestDto = {
+  format_version: string;
+  engine_version: string;
+  project_id: string;
+  project_name: string;
+  project_type: string;
+  created_at: string;
+  updated_at: string;
+  files: ProjectPackageFilesDto;
+};
+
+export type ProjectPackageValidationReportDto = {
+  valid: boolean;
+  package_dir: string;
+  missing_files: string[];
+  warnings: string[];
+  errors: string[];
+};
+
 export type ApiErrorDto = {
   code: string;
   message: string;

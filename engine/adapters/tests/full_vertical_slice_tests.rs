@@ -1,6 +1,6 @@
 use hotsas_adapters::{
-    JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine, SimpleFormulaEngine,
-    SpiceNetlistExporter,
+    CircuitProjectPackageStorage, JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine,
+    SimpleFormulaEngine, SpiceNetlistExporter,
 };
 use hotsas_application::AppServices;
 use hotsas_core::EngineeringUnit;
@@ -12,6 +12,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 fn backend_vertical_slice_runs_end_to_end_with_current_adapters() {
     let services = AppServices::new(
         Arc::new(JsonProjectStorage),
+        Arc::new(CircuitProjectPackageStorage::default()),
         Arc::new(SimpleFormulaEngine),
         Arc::new(SpiceNetlistExporter),
         Arc::new(MockSimulationEngine),

@@ -13,6 +13,9 @@ use std::f64::consts::PI;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+pub mod project_package_storage;
+pub use project_package_storage::CircuitProjectPackageStorage;
+
 #[derive(Debug, Default)]
 pub struct FormulaPackFileLoader;
 

@@ -9,6 +9,8 @@ import type {
   FormulaSummaryDto,
   PreferredValueDto,
   ProjectDto,
+  ProjectPackageManifestDto,
+  ProjectPackageValidationReportDto,
   SaveProjectDto,
   SimulationResultDto,
   VerticalSliceDto,
@@ -46,6 +48,12 @@ export const backend = {
   exportMarkdownReport: () => invokeCommand<string>("export_markdown_report"),
   exportHtmlReport: () => invokeCommand<string>("export_html_report"),
   saveProjectJson: (path: string) => invokeCommand<SaveProjectDto>("save_project_json", { path }),
+  saveProjectPackage: (packageDir: string) =>
+    invokeCommand<ProjectPackageManifestDto>("save_project_package", { packageDir }),
+  loadProjectPackage: (packageDir: string) =>
+    invokeCommand<ProjectDto>("load_project_package", { packageDir }),
+  validateProjectPackage: (packageDir: string) =>
+    invokeCommand<ProjectPackageValidationReportDto>("validate_project_package", { packageDir }),
   runVerticalSlicePreview: () => invokeCommand<VerticalSliceDto>("run_vertical_slice_preview"),
   loadFormulaPacks: () => invokeCommand<FormulaPackDto[]>("load_formula_packs"),
   listFormulas: () => invokeCommand<FormulaSummaryDto[]>("list_formulas"),

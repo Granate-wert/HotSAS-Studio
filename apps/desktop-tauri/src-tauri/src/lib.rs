@@ -1,11 +1,12 @@
 use hotsas_adapters::{
-    FormulaPackFileLoader, JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine,
-    SimpleFormulaEngine, SpiceNetlistExporter,
+    CircuitProjectPackageStorage, FormulaPackFileLoader, JsonProjectStorage, MarkdownReportExporter,
+    MockSimulationEngine, SimpleFormulaEngine, SpiceNetlistExporter,
 };
 use hotsas_api::{
     ApiError, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
     FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi, PreferredValueDto, ProjectDto,
-    SaveProjectDto, SimulationResultDto, VerticalSliceDto,
+    ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
+    SimulationResultDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -143,6 +144,39 @@ fn save_project_json(api: State<'_, HotSasApi>, path: String) -> Result<SaveProj
 }
 
 #[tauri::command]
+fn save_project_package(
+    api: State<'_, HotSasApi>,
+    package_dir: String,
+) -> Result<ProjectPackageManifestDto, String> {
+    log::info!("COMMAND save_project_package package_dir={package_dir}");
+    let result = api.save_project_package(package_dir).map_err(tauri_error);
+    log_command_result("save_project_package", &result);
+    result
+}
+
+#[tauri::command]
+fn load_project_package(
+    api: State<'_, HotSasApi>,
+    package_dir: String,
+) -> Result<ProjectDto, String> {
+    log::info!("COMMAND load_project_package package_dir={package_dir}");
+    let result = api.load_project_package(package_dir).map_err(tauri_error);
+    log_command_result("load_project_package", &result);
+    result
+}
+
+#[tauri::command]
+fn validate_project_package(
+    api: State<'_, HotSasApi>,
+    package_dir: String,
+) -> Result<ProjectPackageValidationReportDto, String> {
+    log::info!("COMMAND validate_project_package package_dir={package_dir}");
+    let result = api.validate_project_package(package_dir).map_err(tauri_error);
+    log_command_result("validate_project_package", &result);
+    result
+}
+
+#[tauri::command]
 fn run_vertical_slice_preview(api: State<'_, HotSasApi>) -> Result<VerticalSliceDto, String> {
     log::info!("COMMAND run_vertical_slice_preview");
     let result = api.run_vertical_slice_preview().map_err(tauri_error);
@@ -228,6 +262,7 @@ fn tauri_error(error: ApiError) -> String {
 fn build_api() -> HotSasApi {
     HotSasApi::new(AppServices::new(
         Arc::new(JsonProjectStorage),
+        Arc::new(CircuitProjectPackageStorage::default()),
         Arc::new(SimpleFormulaEngine),
         Arc::new(SpiceNetlistExporter),
         Arc::new(MockSimulationEngine),
@@ -253,6 +288,9 @@ pub fn run() {
             export_markdown_report,
             export_html_report,
             save_project_json,
+            save_project_package,
+            load_project_package,
+            validate_project_package,
             run_vertical_slice_preview,
             load_formula_packs,
             list_formulas,
