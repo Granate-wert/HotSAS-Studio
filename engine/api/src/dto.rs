@@ -1,7 +1,9 @@
 use hotsas_core::{
-    CircuitProject, GraphSeries, PreferredValueResult, SimulationResult, ValueWithUnit,
+    CircuitProject, FormulaDefinition, FormulaEquation, FormulaOutput, FormulaPackMetadata,
+    FormulaVariable, GraphSeries, PreferredValueResult, SimulationResult, ValueWithUnit,
 };
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectDto {
@@ -138,6 +140,149 @@ pub struct FormulaResultDto {
     pub output_name: String,
     pub value: ValueDto,
     pub expression: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaPackDto {
+    pub pack_id: String,
+    pub title: String,
+    pub version: String,
+    pub formula_count: usize,
+    pub categories: Vec<String>,
+}
+
+impl From<&FormulaPackMetadata> for FormulaPackDto {
+    fn from(metadata: &FormulaPackMetadata) -> Self {
+        Self {
+            pack_id: metadata.pack_id.clone(),
+            title: metadata.title.clone(),
+            version: metadata.version.clone(),
+            formula_count: metadata.formula_count,
+            categories: metadata.categories.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaSummaryDto {
+    pub id: String,
+    pub title: String,
+    pub category: String,
+    pub description: String,
+    pub linked_circuit_template_id: Option<String>,
+}
+
+impl From<&FormulaDefinition> for FormulaSummaryDto {
+    fn from(formula: &FormulaDefinition) -> Self {
+        Self {
+            id: formula.id.clone(),
+            title: formula.title.clone(),
+            category: formula.category.clone(),
+            description: formula.description.clone(),
+            linked_circuit_template_id: formula.linked_circuit_template_id.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaDetailsDto {
+    pub id: String,
+    pub title: String,
+    pub category: String,
+    pub description: String,
+    pub variables: Vec<FormulaVariableDto>,
+    pub equations: Vec<FormulaEquationDto>,
+    pub outputs: Vec<FormulaOutputDto>,
+    pub linked_circuit_template_id: Option<String>,
+    pub mapping: Option<BTreeMap<String, String>>,
+    pub default_simulation: Option<String>,
+}
+
+impl From<&FormulaDefinition> for FormulaDetailsDto {
+    fn from(formula: &FormulaDefinition) -> Self {
+        Self {
+            id: formula.id.clone(),
+            title: formula.title.clone(),
+            category: formula.category.clone(),
+            description: formula.description.clone(),
+            variables: formula
+                .variables
+                .iter()
+                .map(|(name, variable)| FormulaVariableDto::from_pair(name, variable))
+                .collect(),
+            equations: formula
+                .equations
+                .iter()
+                .map(FormulaEquationDto::from)
+                .collect(),
+            outputs: formula
+                .outputs
+                .iter()
+                .map(|(name, output)| FormulaOutputDto::from_pair(name, output))
+                .collect(),
+            linked_circuit_template_id: formula.linked_circuit_template_id.clone(),
+            mapping: formula.mapping.clone(),
+            default_simulation: formula
+                .default_simulation_profile
+                .as_ref()
+                .map(|profile| format!("{:?}", profile.simulation_type)),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaVariableDto {
+    pub name: String,
+    pub unit: String,
+    pub description: String,
+    pub default: Option<ValueDto>,
+}
+
+impl FormulaVariableDto {
+    fn from_pair(name: &str, variable: &FormulaVariable) -> Self {
+        Self {
+            name: name.to_string(),
+            unit: variable.unit.symbol().to_string(),
+            description: variable.description.clone(),
+            default: variable.default.as_ref().map(ValueDto::from),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaEquationDto {
+    pub id: String,
+    pub latex: String,
+    pub expression: String,
+    pub solve_for: Vec<String>,
+}
+
+impl From<&FormulaEquation> for FormulaEquationDto {
+    fn from(equation: &FormulaEquation) -> Self {
+        Self {
+            id: equation.id.clone(),
+            latex: equation.latex.clone(),
+            expression: equation.expression.clone(),
+            solve_for: equation.solve_for.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaOutputDto {
+    pub name: String,
+    pub unit: String,
+    pub description: String,
+}
+
+impl FormulaOutputDto {
+    fn from_pair(name: &str, output: &FormulaOutput) -> Self {
+        Self {
+            name: name.to_string(),
+            unit: output.unit.symbol().to_string(),
+            description: output.description.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,15 +1,18 @@
 use crate::{
-    ApiError, FormulaResultDto, PreferredValueDto, ProjectDto, SaveProjectDto, SimulationResultDto,
-    ValueDto, VerticalSliceDto,
+    ApiError, FormulaDetailsDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto,
+    PreferredValueDto, ProjectDto, SaveProjectDto, SimulationResultDto, ValueDto, VerticalSliceDto,
 };
-use hotsas_application::AppServices;
-use hotsas_core::{CircuitProject, EngineeringUnit, ValueWithUnit};
+use hotsas_application::{AppServices, FormulaRegistryService};
+use hotsas_core::{
+    rc_low_pass_formula, CircuitProject, EngineeringUnit, FormulaPack, ValueWithUnit,
+};
 use std::path::Path;
 use std::sync::Mutex;
 
 pub struct HotSasApi {
     services: AppServices,
     current_project: Mutex<Option<CircuitProject>>,
+    formula_registry: Mutex<FormulaRegistryService>,
 }
 
 impl HotSasApi {
@@ -17,7 +20,53 @@ impl HotSasApi {
         Self {
             services,
             current_project: Mutex::new(None),
+            formula_registry: Mutex::new(fallback_formula_registry()),
         }
+    }
+
+    pub fn load_formula_packs(
+        &self,
+        packs: Vec<FormulaPack>,
+    ) -> Result<Vec<FormulaPackDto>, ApiError> {
+        let registry = FormulaRegistryService::new(packs)?;
+        let metadata = registry
+            .get_pack_metadata()
+            .iter()
+            .map(FormulaPackDto::from)
+            .collect();
+        let mut guard = self
+            .formula_registry
+            .lock()
+            .map_err(|_| ApiError::State("formula registry lock poisoned".to_string()))?;
+        *guard = registry;
+        Ok(metadata)
+    }
+
+    pub fn list_formulas(&self) -> Result<Vec<FormulaSummaryDto>, ApiError> {
+        let registry = self.formula_registry()?;
+        Ok(registry
+            .list_formulas()
+            .iter()
+            .map(FormulaSummaryDto::from)
+            .collect())
+    }
+
+    pub fn list_formula_categories(&self) -> Result<Vec<String>, ApiError> {
+        Ok(self.formula_registry()?.list_categories())
+    }
+
+    pub fn get_formula(&self, id: String) -> Result<FormulaDetailsDto, ApiError> {
+        let registry = self.formula_registry()?;
+        Ok(FormulaDetailsDto::from(&registry.get_formula(&id)?))
+    }
+
+    pub fn get_formula_pack_metadata(&self) -> Result<Vec<FormulaPackDto>, ApiError> {
+        let registry = self.formula_registry()?;
+        Ok(registry
+            .get_pack_metadata()
+            .iter()
+            .map(FormulaPackDto::from)
+            .collect())
     }
 
     pub fn create_rc_low_pass_demo_project(&self) -> Result<ProjectDto, ApiError> {
@@ -144,4 +193,21 @@ impl HotSasApi {
             .clone()
             .ok_or_else(|| ApiError::State("create or open a project first".to_string()))
     }
+
+    fn formula_registry(&self) -> Result<FormulaRegistryService, ApiError> {
+        self.formula_registry
+            .lock()
+            .map_err(|_| ApiError::State("formula registry lock poisoned".to_string()))
+            .map(|guard| guard.clone())
+    }
+}
+
+fn fallback_formula_registry() -> FormulaRegistryService {
+    FormulaRegistryService::new(vec![FormulaPack {
+        pack_id: "fallback_filters".to_string(),
+        title: "Fallback Filters".to_string(),
+        version: "0.1.0".to_string(),
+        formulas: vec![rc_low_pass_formula()],
+    }])
+    .expect("fallback formula registry must be valid")
 }

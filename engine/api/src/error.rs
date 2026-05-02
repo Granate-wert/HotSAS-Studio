@@ -29,6 +29,10 @@ impl ApiError {
     fn code(&self) -> &'static str {
         match self {
             Self::Application(ApplicationError::MissingProjectState(_)) => "missing_project_state",
+            Self::Application(ApplicationError::FormulaNotFound(_)) => "formula_not_found",
+            Self::Application(ApplicationError::DuplicateFormulaId(_)) => "duplicate_formula_id",
+            Self::Application(ApplicationError::InvalidFormulaPack(_)) => "invalid_formula_pack",
+            Self::Application(ApplicationError::InvalidBinding(_)) => "invalid_formula_binding",
             Self::Application(ApplicationError::Core(_)) | Self::Core(_) => "core_error",
             Self::Application(ApplicationError::Port(_)) => "port_error",
             Self::InvalidInput(_) => "invalid_input",

@@ -188,8 +188,27 @@ pub struct FormulaDefinition {
     pub assumptions: Vec<String>,
     pub limitations: Vec<String>,
     pub linked_circuit_template_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mapping: Option<BTreeMap<String, String>>,
     pub default_simulation_profile: Option<SimulationProfile>,
     pub examples: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FormulaPack {
+    pub pack_id: String,
+    pub title: String,
+    pub version: String,
+    pub formulas: Vec<FormulaDefinition>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FormulaPackMetadata {
+    pub pack_id: String,
+    pub title: String,
+    pub version: String,
+    pub formula_count: usize,
+    pub categories: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -12,4 +12,9 @@ commands.allow = [
   "export_html_report",
   "save_project_json",
   "run_vertical_slice_preview",
+  "load_formula_packs",
+  "list_formulas",
+  "list_formula_categories",
+  "get_formula",
+  "get_formula_pack_metadata",
 ]

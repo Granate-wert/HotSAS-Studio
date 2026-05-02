@@ -214,6 +214,12 @@ pub fn rc_low_pass_formula() -> FormulaDefinition {
             "Parasitics and source/load impedance are ignored in v1 formula mode".to_string(),
         ],
         linked_circuit_template_id: Some("rc_low_pass_template".to_string()),
+        mapping: Some(BTreeMap::from([
+            ("R".to_string(), "R1.resistance".to_string()),
+            ("C".to_string(), "C1.capacitance".to_string()),
+            ("Vin".to_string(), "net_in".to_string()),
+            ("Vout".to_string(), "net_out".to_string()),
+        ])),
         default_simulation_profile: Some(rc_low_pass_ac_profile()),
         examples: vec!["R = 10k, C = 100n -> fc ~= 159.15 Hz".to_string()],
     }

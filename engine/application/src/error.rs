@@ -7,6 +7,10 @@ pub enum ApplicationError {
     Core(CoreError),
     Port(PortError),
     MissingProjectState(String),
+    FormulaNotFound(String),
+    DuplicateFormulaId(String),
+    InvalidFormulaPack(String),
+    InvalidBinding(String),
 }
 
 impl fmt::Display for ApplicationError {
@@ -15,6 +19,10 @@ impl fmt::Display for ApplicationError {
             Self::Core(error) => write!(f, "{error}"),
             Self::Port(error) => write!(f, "{error}"),
             Self::MissingProjectState(message) => write!(f, "missing project state: {message}"),
+            Self::FormulaNotFound(id) => write!(f, "formula not found: {id}"),
+            Self::DuplicateFormulaId(id) => write!(f, "duplicate formula id: {id}"),
+            Self::InvalidFormulaPack(message) => write!(f, "invalid formula pack: {message}"),
+            Self::InvalidBinding(message) => write!(f, "invalid formula binding: {message}"),
         }
     }
 }

@@ -55,6 +55,55 @@ export type FormulaResultDto = {
   expression: string;
 };
 
+export type FormulaPackDto = {
+  pack_id: string;
+  title: string;
+  version: string;
+  formula_count: number;
+  categories: string[];
+};
+
+export type FormulaSummaryDto = {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  linked_circuit_template_id: string | null;
+};
+
+export type FormulaVariableDto = {
+  name: string;
+  unit: string;
+  description: string;
+  default: ValueDto | null;
+};
+
+export type FormulaEquationDto = {
+  id: string;
+  latex: string;
+  expression: string;
+  solve_for: string[];
+};
+
+export type FormulaOutputDto = {
+  name: string;
+  unit: string;
+  description: string;
+};
+
+export type FormulaDetailsDto = {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  variables: FormulaVariableDto[];
+  equations: FormulaEquationDto[];
+  outputs: FormulaOutputDto[];
+  linked_circuit_template_id: string | null;
+  mapping: Record<string, string> | null;
+  default_simulation: string | null;
+};
+
 export type PreferredValueDto = {
   requested_value: ValueDto;
   series: string;

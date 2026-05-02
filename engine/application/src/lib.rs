@@ -4,6 +4,6 @@ pub mod services;
 pub use error::ApplicationError;
 pub use hotsas_core::CircuitQueryService;
 pub use services::{
-    AppServices, CircuitTemplateService, ExportService, FormulaService, NetlistGenerationService,
-    PreferredValuesService, ProjectService, SimulationService,
+    AppServices, CircuitTemplateService, ExportService, FormulaRegistryService, FormulaService,
+    NetlistGenerationService, PreferredValuesService, ProjectService, SimulationService,
 };

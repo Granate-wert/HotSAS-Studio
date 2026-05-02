@@ -1,6 +1,7 @@
 use hotsas_core::{
-    CircuitProject, CircuitQueryService, EngineeringUnit, GraphPoint, GraphSeries, ReportModel,
-    SimulationProfile, SimulationResult, SimulationStatus, ValueWithUnit,
+    CircuitProject, CircuitQueryService, EngineeringUnit, FormulaDefinition, FormulaEquation,
+    FormulaOutput, FormulaPack, FormulaVariable, GraphPoint, GraphSeries, ReportModel,
+    SimulationProfile, SimulationResult, SimulationStatus, SimulationType, ValueWithUnit,
 };
 use hotsas_ports::{
     FormulaEnginePort, NetlistExporterPort, PortError, ReportExporterPort, SimulationEnginePort,
@@ -9,7 +10,298 @@ use hotsas_ports::{
 use std::collections::BTreeMap;
 use std::f64::consts::PI;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+#[derive(Debug, Default)]
+pub struct FormulaPackFileLoader;
+
+impl FormulaPackFileLoader {
+    pub fn load_pack_from_file(&self, path: &Path) -> Result<FormulaPack, PortError> {
+        let content = fs::read_to_string(path).map_err(|error| {
+            PortError::Storage(format!(
+                "could not read formula pack {}: {error}",
+                path.display()
+            ))
+        })?;
+        let extension = path
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .unwrap_or_default()
+            .to_ascii_lowercase();
+        let raw: RawFormulaPack = match extension.as_str() {
+            "yaml" | "yml" => serde_yaml::from_str(&content).map_err(|error| {
+                PortError::Storage(format!("could not parse YAML formula pack: {error}"))
+            })?,
+            "json" => serde_json::from_str(&content).map_err(|error| {
+                PortError::Storage(format!("could not parse JSON formula pack: {error}"))
+            })?,
+            other => {
+                return Err(PortError::Storage(format!(
+                    "unsupported formula pack extension: {other}"
+                )))
+            }
+        };
+        let pack = raw.into_formula_pack()?;
+        Self::validate_pack(&pack)?;
+        Ok(pack)
+    }
+
+    pub fn load_pack_from_dir(&self, path: &Path) -> Result<Vec<FormulaPack>, PortError> {
+        let mut files = fs::read_dir(path)
+            .map_err(|error| {
+                PortError::Storage(format!(
+                    "could not read formula pack directory {}: {error}",
+                    path.display()
+                ))
+            })?
+            .filter_map(Result::ok)
+            .map(|entry| entry.path())
+            .filter(|path| {
+                path.extension()
+                    .and_then(|extension| extension.to_str())
+                    .map(|extension| matches!(extension, "yaml" | "yml" | "json"))
+                    .unwrap_or(false)
+            })
+            .collect::<Vec<_>>();
+        files.sort();
+
+        files
+            .iter()
+            .map(|path| self.load_pack_from_file(path))
+            .collect()
+    }
+
+    pub fn load_builtin_packs(&self) -> Result<Vec<FormulaPack>, PortError> {
+        for path in builtin_formula_pack_candidates() {
+            if path.exists() {
+                return self.load_pack_from_dir(&path);
+            }
+        }
+        Ok(vec![FormulaPack {
+            pack_id: "fallback_filters".to_string(),
+            title: "Fallback Filters".to_string(),
+            version: "0.1.0".to_string(),
+            formulas: vec![hotsas_core::rc_low_pass_formula()],
+        }])
+    }
+
+    pub fn validate_pack(pack: &FormulaPack) -> Result<(), PortError> {
+        require_non_empty(&pack.pack_id, "packId")?;
+        require_non_empty(&pack.title, "title")?;
+        require_non_empty(&pack.version, "version")?;
+        if pack.formulas.is_empty() {
+            return Err(PortError::Formula(
+                "formula pack must contain at least one formula".to_string(),
+            ));
+        }
+
+        for formula in &pack.formulas {
+            require_non_empty(&formula.id, "formula.id")?;
+            require_non_empty(&formula.title, "formula.title")?;
+            require_non_empty(&formula.category, "formula.category")?;
+            if formula.equations.is_empty() {
+                return Err(PortError::Formula(format!(
+                    "formula {} must contain at least one equation",
+                    formula.id
+                )));
+            }
+            if formula.outputs.is_empty() {
+                return Err(PortError::Formula(format!(
+                    "formula {} must contain at least one output",
+                    formula.id
+                )));
+            }
+        }
+        Ok(())
+    }
+}
+
+fn builtin_formula_pack_candidates() -> Vec<PathBuf> {
+    vec![
+        PathBuf::from("shared/formula_packs"),
+        PathBuf::from("../shared/formula_packs"),
+        PathBuf::from("../../shared/formula_packs"),
+    ]
+}
+
+fn require_non_empty(value: &str, field: &str) -> Result<(), PortError> {
+    if value.trim().is_empty() {
+        return Err(PortError::Formula(format!("{field} must not be empty")));
+    }
+    Ok(())
+}
+
+#[derive(serde::Deserialize)]
+struct RawFormulaPack {
+    #[serde(rename = "packId")]
+    pack_id: String,
+    title: String,
+    version: String,
+    formulas: Vec<RawFormulaDefinition>,
+}
+
+impl RawFormulaPack {
+    fn into_formula_pack(self) -> Result<FormulaPack, PortError> {
+        Ok(FormulaPack {
+            pack_id: self.pack_id,
+            title: self.title,
+            version: self.version,
+            formulas: self
+                .formulas
+                .into_iter()
+                .map(RawFormulaDefinition::into_formula_definition)
+                .collect::<Result<Vec<_>, _>>()?,
+        })
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct RawFormulaDefinition {
+    id: String,
+    title: String,
+    category: String,
+    #[serde(default)]
+    description: String,
+    #[serde(default)]
+    variables: BTreeMap<String, RawFormulaVariable>,
+    equations: Vec<FormulaEquation>,
+    outputs: BTreeMap<String, RawFormulaOutput>,
+    #[serde(default)]
+    assumptions: Vec<String>,
+    #[serde(default)]
+    limitations: Vec<String>,
+    #[serde(rename = "linkedCircuitTemplateId")]
+    linked_circuit_template_id: Option<String>,
+    #[serde(default)]
+    mapping: Option<BTreeMap<String, String>>,
+    #[serde(rename = "defaultSimulation")]
+    default_simulation: Option<RawDefaultSimulation>,
+    #[serde(default)]
+    examples: Vec<String>,
+}
+
+impl RawFormulaDefinition {
+    fn into_formula_definition(self) -> Result<FormulaDefinition, PortError> {
+        Ok(FormulaDefinition {
+            id: self.id,
+            title: self.title,
+            category: self.category,
+            description: self.description,
+            equations: self.equations,
+            variables: self
+                .variables
+                .into_iter()
+                .map(|(name, variable)| Ok((name, variable.into_formula_variable()?)))
+                .collect::<Result<BTreeMap<_, _>, PortError>>()?,
+            outputs: self
+                .outputs
+                .into_iter()
+                .map(|(name, output)| Ok((name, output.into_formula_output()?)))
+                .collect::<Result<BTreeMap<_, _>, PortError>>()?,
+            assumptions: self.assumptions,
+            limitations: self.limitations,
+            linked_circuit_template_id: self.linked_circuit_template_id,
+            mapping: self.mapping,
+            default_simulation_profile: self
+                .default_simulation
+                .map(RawDefaultSimulation::into_simulation_profile)
+                .transpose()?,
+            examples: self.examples,
+        })
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct RawFormulaVariable {
+    unit: String,
+    description: String,
+    #[serde(default)]
+    default: Option<String>,
+}
+
+impl RawFormulaVariable {
+    fn into_formula_variable(self) -> Result<FormulaVariable, PortError> {
+        let unit = EngineeringUnit::parse(&self.unit)
+            .map_err(|error| PortError::Formula(error.to_string()))?;
+        let default = self
+            .default
+            .map(|value| ValueWithUnit::parse_with_default(&value, unit))
+            .transpose()
+            .map_err(|error| PortError::Formula(error.to_string()))?;
+        Ok(FormulaVariable {
+            unit,
+            description: self.description,
+            default,
+        })
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct RawFormulaOutput {
+    unit: String,
+    description: String,
+}
+
+impl RawFormulaOutput {
+    fn into_formula_output(self) -> Result<FormulaOutput, PortError> {
+        Ok(FormulaOutput {
+            unit: EngineeringUnit::parse(&self.unit)
+                .map_err(|error| PortError::Formula(error.to_string()))?,
+            description: self.description,
+        })
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct RawDefaultSimulation {
+    #[serde(rename = "type")]
+    simulation_type: String,
+    start: Option<String>,
+    stop: Option<String>,
+    #[serde(rename = "pointsPerDecade")]
+    points_per_decade: Option<u32>,
+}
+
+impl RawDefaultSimulation {
+    fn into_simulation_profile(self) -> Result<SimulationProfile, PortError> {
+        let simulation_type = match self.simulation_type.as_str() {
+            "ac_sweep" => SimulationType::AcSweep,
+            other => {
+                return Err(PortError::Formula(format!(
+                    "unsupported default simulation type: {other}"
+                )))
+            }
+        };
+        let mut parameters = BTreeMap::new();
+        if let Some(start) = self.start {
+            parameters.insert(
+                "start".to_string(),
+                ValueWithUnit::parse_with_default(&start, EngineeringUnit::Hertz)
+                    .map_err(|error| PortError::Formula(error.to_string()))?,
+            );
+        }
+        if let Some(stop) = self.stop {
+            parameters.insert(
+                "stop".to_string(),
+                ValueWithUnit::parse_with_default(&stop, EngineeringUnit::Hertz)
+                    .map_err(|error| PortError::Formula(error.to_string()))?,
+            );
+        }
+        if let Some(points) = self.points_per_decade {
+            parameters.insert(
+                "points_per_decade".to_string(),
+                ValueWithUnit::new_si(points as f64, EngineeringUnit::Unitless),
+            );
+        }
+
+        Ok(SimulationProfile {
+            id: "default-ac-sweep".to_string(),
+            simulation_type,
+            parameters,
+            requested_outputs: vec!["gain_db".to_string(), "phase_deg".to_string()],
+        })
+    }
+}
 
 #[derive(Debug, Default)]
 pub struct JsonProjectStorage;

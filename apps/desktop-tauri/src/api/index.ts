@@ -1,7 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   ApiErrorDto,
+  FormulaDetailsDto,
+  FormulaPackDto,
   FormulaResultDto,
+  FormulaSummaryDto,
   PreferredValueDto,
   ProjectDto,
   SaveProjectDto,
@@ -42,4 +45,9 @@ export const backend = {
   exportHtmlReport: () => invokeCommand<string>("export_html_report"),
   saveProjectJson: (path: string) => invokeCommand<SaveProjectDto>("save_project_json", { path }),
   runVerticalSlicePreview: () => invokeCommand<VerticalSliceDto>("run_vertical_slice_preview"),
+  loadFormulaPacks: () => invokeCommand<FormulaPackDto[]>("load_formula_packs"),
+  listFormulas: () => invokeCommand<FormulaSummaryDto[]>("list_formulas"),
+  listFormulaCategories: () => invokeCommand<string[]>("list_formula_categories"),
+  getFormula: (id: string) => invokeCommand<FormulaDetailsDto>("get_formula", { id }),
+  getFormulaPackMetadata: () => invokeCommand<FormulaPackDto[]>("get_formula_pack_metadata"),
 };

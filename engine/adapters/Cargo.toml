@@ -8,7 +8,9 @@ authors.workspace = true
 [dependencies]
 hotsas_core = { path = "../core" }
 hotsas_ports = { path = "../ports" }
+serde.workspace = true
 serde_json.workspace = true
+serde_yaml.workspace = true
 
 [dev-dependencies]
 hotsas_application = { path = "../application" }

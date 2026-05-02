@@ -1,6 +1,8 @@
 # HotSAS Studio
 
-**HotSAS Studio - Hardware-Oriented Schematic Analysis & Simulation Studio** is a desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
+**HotSAS Studio - Hardware-Oriented Schematic Analysis & Simulation Studio** is a
+desktop engineering application for schematic analysis, formula-driven circuit
+templates, SPICE-oriented simulation workflows, and report generation.
 
 The v1 vertical slice focuses on a single RC low-pass demo project:
 
@@ -22,7 +24,14 @@ The v1 vertical slice focuses on a single RC low-pass demo project:
 - Charts: Apache ECharts
 - Engine: Rust workspace
 
-Mantine is a pragmatic v1 UI kit only. It does not influence backend architecture.
+Mantine is a pragmatic v1 UI kit only. It does not influence backend
+architecture.
+
+## Formula Packs
+
+v1.1.3 loads formula packs at runtime from `shared/formula_packs` through the
+Rust backend. The Formula Library UI receives DTOs through Tauri commands; React
+does not parse YAML or calculate formulas.
 
 ## Architecture
 
@@ -40,14 +49,17 @@ engine/
 
 Dependency direction:
 
-- `hotsas_core` is pure domain code and does not depend on application, adapters, api, Tauri, React, or UI.
+- `hotsas_core` is pure domain code and does not depend on application,
+  adapters, api, Tauri, React, or UI.
 - `hotsas_application` depends on `hotsas_core` and ports/interfaces.
-- `hotsas_adapters` implements ports and may depend on core/application contracts.
+- `hotsas_adapters` implements ports and may depend on core/application
+  contracts.
 - `hotsas_api` depends on application and DTO contracts.
 - Tauri calls `hotsas_api`.
 - React calls only Tauri commands.
 
-React Flow is a view adapter. The source of truth for schematic state is `CircuitModel` / `CircuitDto`, not React Flow nodes and edges.
+React Flow is a view adapter. The source of truth for schematic state is
+`CircuitModel` / `CircuitDto`, not React Flow nodes and edges.
 
 ## Run
 
@@ -77,7 +89,7 @@ cd ..\apps\desktop-tauri
 npm.cmd run build
 ```
 
-## Development checks
+## Development Checks
 
 Rust engine:
 
@@ -103,11 +115,13 @@ cd apps/desktop-tauri
 npm.cmd run tauri:dev
 ```
 
-Подробности: `docs/testing/TESTING.md`.
+Details: `docs/testing/TESTING.md`.
 
 ## Roadmap
 
 - v1: RC low-pass vertical slice with mock simulation and Markdown/HTML reports.
-- v2: richer formula engine, user formula packs, stronger unit model, more templates.
+- v2: richer formula engine, user formula packs, stronger unit model, more
+  templates.
 - v3: real ngspice adapter, SQLite storage, import/export expansion.
-- Later: KiCad-compatible symbol/footprint export and Altium workflow package. No PCB editor is implemented in v1.
+- Later: KiCad-compatible symbol/footprint export and Altium workflow package.
+  No PCB editor is implemented in v1.
