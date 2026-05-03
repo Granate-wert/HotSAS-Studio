@@ -1,26 +1,28 @@
 # HotSAS Studio — Latest Verification Log
 
-**Version:** v1.8 — ngspice Adapter v1
+**Version:** v1.9 — SPICE/Touchstone Import Foundation
 **Date:** 2026-05-03
-**Commit:** 76c8b19
+**Commit:** <to be filled after push>
 
-See full log: [`docs/testing/verification_logs/v1.8_ngspice_adapter_v1.md`](./verification_logs/v1.8_ngspice_adapter_v1.md)
+See full log: [`docs/testing/verification_logs/v1.9_spice_touchstone_import_foundation.md`](./verification_logs/v1.9_spice_touchstone_import_foundation.md)
 
 ## Quick Results
 
-| Check                | Result            |
-| -------------------- | ----------------- |
-| cargo fmt --check    | PASS              |
-| cargo test           | PASS (146+ tests) |
-| npm run format:check | PASS              |
-| npm run typecheck    | PASS              |
-| npm run test         | PASS (55 tests)   |
+| Check                | Result             |
+| -------------------- | ------------------ |
+| cargo fmt --check    | PASS               |
+| cargo test           | PASS (155+ tests)  |
+| npm run format:check | PASS               |
+| npm run typecheck    | PASS               |
+| npm run test         | PASS (61 tests)    |
+| Tauri cargo check    | PASS (no errors)   |
 
 ## Status
 
-- v1.8 ngspice Adapter v1 is complete and verified.
-- Core domain models extended, `SimulationEnginePort` extended, `NgspiceSimulationAdapter` with resolver/runner/parser, `NgspiceSimulationService` with engine selection policy, API DTOs/facade, Tauri commands, frontend `SimulationResultsScreen` with engine status, selector, run buttons, result card, ECharts graph, Zustand store integration, and tests are all implemented.
-- Dependency boundary test preserved: `api` crate does not depend on `adapters` directly (api tests use inline fake structs).
-- ECharts mocked in test setup to prevent jsdom canvas issues.
+- v1.9 SPICE/Touchstone Import Foundation is complete and verified.
+- Core domain models for imported models, SPICE parser port, Touchstone parser port, `SimpleSpiceModelParser`, `SimpleTouchstoneParser`, `ModelImportService`, API DTOs/facade, Tauri commands, frontend `ImportModelsScreen` with SPICE/Touchstone/Library tabs, Zustand store integration, and tests are all implemented.
+- 29 new Rust tests (12 spice parser + 10 touchstone parser + 7 model import service) + 6 frontend tests.
+- Dependency boundary test preserved: `api` crate does not depend on `adapters` directly.
+- `SimulationModel` backward compatibility preserved via serde defaults on new `Option` fields.
 - Prettier and rustfmt formatting applied and verified.
-- Ready for v1.9 or next iteration.
+- Ready for v1.10 or next iteration.

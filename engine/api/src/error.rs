@@ -36,6 +36,11 @@ impl ApiError {
             Self::Application(ApplicationError::Core(_)) | Self::Core(_) => "core_error",
             Self::Application(ApplicationError::Port(_)) => "port_error",
             Self::Application(ApplicationError::InvalidInput(_)) => "invalid_input",
+            Self::Application(ApplicationError::State(_)) => "state_error",
+            Self::Application(ApplicationError::NotFound(_)) => "not_found",
+            Self::Application(ApplicationError::Storage(_)) => "storage_error",
+            Self::Application(ApplicationError::Export(_)) => "export_error",
+            Self::Application(ApplicationError::Simulation(_)) => "simulation_error",
             Self::InvalidInput(_) => "invalid_input",
             Self::State(_) => "state_error",
         }

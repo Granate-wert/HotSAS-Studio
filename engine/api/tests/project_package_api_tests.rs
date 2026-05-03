@@ -203,6 +203,8 @@ fn fake_api() -> HotSasApi {
         Arc::new(FakeSimulationDataExporter),
         Arc::new(FakeComponentLibraryExporter),
         Arc::new(FakeSchematicExporter),
+        Arc::new(FakeSpiceParser),
+        Arc::new(FakeTouchstoneParser),
     ))
 }
 
@@ -234,4 +236,45 @@ fn validate_project_package_returns_valid() {
     let result = api.validate_project_package("/test/package.circuit".to_string());
     assert!(result.is_ok());
     assert!(result.unwrap().valid);
+}
+
+struct FakeSpiceParser;
+
+impl hotsas_ports::SpiceModelParserPort for FakeSpiceParser {
+    fn parse_spice_models_from_str(
+        &self,
+        _source_name: Option<String>,
+        _content: &str,
+    ) -> Result<hotsas_core::SpiceImportReport, hotsas_ports::PortError> {
+        Ok(hotsas_core::SpiceImportReport {
+            status: hotsas_core::ModelImportStatus::Parsed,
+            source: hotsas_core::ImportedModelSource {
+                file_name: None,
+                file_path: None,
+                source_format: "spice".to_string(),
+                content_hash: None,
+            },
+            models: vec![],
+            subcircuits: vec![],
+            warnings: vec![],
+            errors: vec![],
+        })
+    }
+}
+
+struct FakeTouchstoneParser;
+
+impl hotsas_ports::TouchstoneParserPort for FakeTouchstoneParser {
+    fn parse_touchstone_from_str(
+        &self,
+        _source_name: Option<String>,
+        _content: &str,
+    ) -> Result<hotsas_core::TouchstoneImportReport, hotsas_ports::PortError> {
+        Ok(hotsas_core::TouchstoneImportReport {
+            status: hotsas_core::ModelImportStatus::Parsed,
+            network: None,
+            warnings: vec![],
+            errors: vec![],
+        })
+    }
 }

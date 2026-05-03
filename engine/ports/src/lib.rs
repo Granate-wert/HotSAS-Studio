@@ -198,3 +198,19 @@ pub trait ComponentLibraryPort: Send + Sync {
         library: &ComponentLibrary,
     ) -> Result<(), PortError>;
 }
+
+pub trait SpiceModelParserPort: Send + Sync {
+    fn parse_spice_models_from_str(
+        &self,
+        source_name: Option<String>,
+        content: &str,
+    ) -> Result<hotsas_core::SpiceImportReport, PortError>;
+}
+
+pub trait TouchstoneParserPort: Send + Sync {
+    fn parse_touchstone_from_str(
+        &self,
+        source_name: Option<String>,
+        content: &str,
+    ) -> Result<hotsas_core::TouchstoneImportReport, PortError>;
+}

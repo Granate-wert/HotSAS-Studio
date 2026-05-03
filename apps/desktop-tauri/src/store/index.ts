@@ -8,6 +8,8 @@ import type {
   ExportHistoryEntryDto,
   ExportResultDto,
   FormulaResultDto,
+  ImportedModelDetailsDto,
+  ImportedModelSummaryDto,
   NgspiceAvailabilityDto,
   NotebookEvaluationResultDto,
   NotebookStateDto,
@@ -17,6 +19,8 @@ import type {
   SelectedRegionAnalysisResultDto,
   SelectedRegionPreviewDto,
   SimulationResultDto,
+  SpiceImportReportDto,
+  TouchstoneImportReportDto,
 } from "../types";
 
 type HotSasState = {
@@ -52,6 +56,10 @@ type HotSasState = {
   simulationHistory: SimulationResultDto[];
   isSimulationRunning: boolean;
   simulationError: string | null;
+  spiceImportReport: SpiceImportReportDto | null;
+  touchstoneImportReport: TouchstoneImportReportDto | null;
+  importedModels: ImportedModelSummaryDto[];
+  selectedImportedModel: ImportedModelDetailsDto | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -85,6 +93,10 @@ type HotSasState = {
   setSimulationHistory: (history: SimulationResultDto[]) => void;
   setIsSimulationRunning: (running: boolean) => void;
   setSimulationError: (error: string | null) => void;
+  setSpiceImportReport: (report: SpiceImportReportDto | null) => void;
+  setTouchstoneImportReport: (report: TouchstoneImportReportDto | null) => void;
+  setImportedModels: (models: ImportedModelSummaryDto[]) => void;
+  setSelectedImportedModel: (model: ImportedModelDetailsDto | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -120,6 +132,10 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   simulationHistory: [],
   isSimulationRunning: false,
   simulationError: null,
+  spiceImportReport: null,
+  touchstoneImportReport: null,
+  importedModels: [],
+  selectedImportedModel: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -156,4 +172,8 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setSimulationHistory: (simulationHistory) => set({ simulationHistory }),
   setIsSimulationRunning: (isSimulationRunning) => set({ isSimulationRunning }),
   setSimulationError: (simulationError) => set({ simulationError }),
+  setSpiceImportReport: (spiceImportReport) => set({ spiceImportReport }),
+  setTouchstoneImportReport: (touchstoneImportReport) => set({ touchstoneImportReport }),
+  setImportedModels: (importedModels) => set({ importedModels }),
+  setSelectedImportedModel: (selectedImportedModel) => set({ selectedImportedModel }),
 }));

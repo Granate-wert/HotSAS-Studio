@@ -237,5 +237,49 @@ export const backend = {
       message: "Exported",
     }),
   exportHistory: () => Promise.resolve([]),
+  importSpiceModel: (_request: unknown) =>
+    Promise.resolve({
+      status: "Parsed",
+      models: [],
+      subcircuits: [],
+      warnings: [],
+      errors: [],
+    }),
+  importTouchstoneModel: (_request: unknown) =>
+    Promise.resolve({
+      status: "Parsed",
+      summary: null,
+      warnings: [],
+      errors: [],
+    }),
+  listImportedModels: () => Promise.resolve([]),
+  getImportedModel: (_modelId: string) =>
+    Promise.resolve({
+      id: "mock-model",
+      kind: "Unknown",
+      name: "Mock Model",
+      source_format: "spice",
+      spice_model: null,
+      spice_subcircuit: null,
+      touchstone_summary: null,
+    }),
+  validateSpicePinMapping: (_request: unknown) =>
+    Promise.resolve({
+      valid: true,
+      warnings: [],
+      errors: [],
+    }),
+  attachImportedModelToComponent: (_request: unknown) =>
+    Promise.resolve({
+      id: "mock-component",
+      name: "Mock",
+      category: "test",
+      description: "",
+      parameters: [],
+      ratings: [],
+      symbol: null,
+      footprint: null,
+      simulation_model: null,
+    }),
   writeLog: (_level: string, _message: string) => Promise.resolve(),
 };

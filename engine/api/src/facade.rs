@@ -870,6 +870,113 @@ impl HotSasApi {
             .collect())
     }
 
+    pub fn import_spice_model(
+        &self,
+        request: crate::SpiceImportRequestDto,
+    ) -> Result<crate::SpiceImportReportDto, ApiError> {
+        let report = self
+            .services
+            .model_import_service()
+            .import_spice_from_text(request.source_name, request.content)?;
+        Ok(crate::SpiceImportReportDto::from(&report))
+    }
+
+    pub fn import_touchstone_model(
+        &self,
+        request: crate::TouchstoneImportRequestDto,
+    ) -> Result<crate::TouchstoneImportReportDto, ApiError> {
+        let report = self
+            .services
+            .model_import_service()
+            .import_touchstone_from_text(request.source_name, request.content)?;
+        Ok(crate::TouchstoneImportReportDto::from(&report))
+    }
+
+    pub fn list_imported_models(&self) -> Result<Vec<crate::ImportedModelSummaryDto>, ApiError> {
+        Ok(self
+            .services
+            .model_import_service()
+            .list_imported_models()?
+            .iter()
+            .map(crate::ImportedModelSummaryDto::from)
+            .collect())
+    }
+
+    pub fn get_imported_model(
+        &self,
+        model_id: String,
+    ) -> Result<crate::ImportedModelDetailsDto, ApiError> {
+        let details = self
+            .services
+            .model_import_service()
+            .get_imported_model(model_id)?;
+        Ok(crate::ImportedModelDetailsDto::from(&details))
+    }
+
+    pub fn validate_spice_pin_mapping(
+        &self,
+        request: crate::SpicePinMappingRequestDto,
+    ) -> Result<crate::SpicePinMappingValidationReportDto, ApiError> {
+        let core_request = hotsas_core::SpicePinMappingRequest {
+            model_id: request.model_id,
+            component_definition_id: request.component_definition_id,
+            mappings: request
+                .mappings
+                .into_iter()
+                .map(|m| hotsas_core::SpicePinMappingEntry {
+                    model_pin: m.model_pin,
+                    component_pin: m.component_pin,
+                    role_hint: m.role_hint,
+                })
+                .collect(),
+        };
+        let report = self
+            .services
+            .model_import_service()
+            .validate_spice_pin_mapping(core_request)?;
+        Ok(crate::SpicePinMappingValidationReportDto::from(&report))
+    }
+
+    pub fn attach_imported_model_to_component(
+        &self,
+        request: crate::AttachImportedModelRequestDto,
+    ) -> Result<crate::ComponentDetailsDto, ApiError> {
+        let mut library = self.current_component_library()?;
+        let component = library
+            .components
+            .iter_mut()
+            .find(|c| c.id == request.component_definition_id)
+            .ok_or_else(|| {
+                ApiError::Application(hotsas_application::ApplicationError::NotFound(format!(
+                    "component definition {}",
+                    request.component_definition_id
+                )))
+            })?;
+        let core_request = hotsas_core::AttachImportedModelRequest {
+            model_id: request.model_id,
+            component_definition_id: request.component_definition_id,
+            pin_mapping: request
+                .pin_mapping
+                .map(|pm| hotsas_core::SpicePinMappingRequest {
+                    model_id: pm.model_id,
+                    component_definition_id: pm.component_definition_id,
+                    mappings: pm
+                        .mappings
+                        .into_iter()
+                        .map(|m| hotsas_core::SpicePinMappingEntry {
+                            model_pin: m.model_pin,
+                            component_pin: m.component_pin,
+                            role_hint: m.role_hint,
+                        })
+                        .collect(),
+                }),
+        };
+        self.services
+            .model_import_service()
+            .attach_imported_model_to_component(core_request, component)?;
+        Ok(crate::ComponentDetailsDto::from(&*component))
+    }
+
     fn current_component_library(&self) -> Result<ComponentLibrary, ApiError> {
         self.component_library
             .lock()

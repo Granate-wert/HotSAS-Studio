@@ -493,6 +493,7 @@ fn generic_op_amp() -> ComponentDefinition {
             model_type: "spice".to_string(),
             source_path: None,
             raw_model: None,
+            raw_model_id: None,
             pin_mapping: BTreeMap::new(),
         }],
         datasheets: vec![],

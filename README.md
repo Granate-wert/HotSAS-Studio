@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v1.9 next**
+**Current roadmap stage: v1.10 next**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
@@ -15,6 +15,7 @@ Completed:
 - v1.6 — Selected Region Analysis Foundation
 - v1.7 — Export Center v1
 - v1.8 — ngspice Adapter v1
+- v1.9 — SPICE/Touchstone Import Foundation
 
 ---
 
@@ -90,6 +91,21 @@ Completed:
   - `SelectedRegionPreviewCard` and `SelectedRegionResultCard`
 - Integrated **Region** tab into `SchematicScreen` side panel.
 - React remains view adapter only; all topology detection and template matching live in Rust.
+
+### v1.9 — SPICE/Touchstone Import Foundation
+
+- Added core domain models: `ImportedModelKind`, `SpiceModelDefinition`, `SpiceSubcircuitDefinition`, `SpiceImportReport`, `TouchstoneNetworkData`, `TouchstoneImportReport`, `SpicePinMapping`.
+- Extended `SimulationModel` with `display_name`, `source_file_name`, `model_kind`, `raw_model_id` (backward-compatible with serde defaults).
+- Added port traits: `SpiceModelParserPort`, `TouchstoneParserPort`.
+- Added `SimpleSpiceModelParser`: parses `.model` and `.subckt`, line continuations, comments, heuristic op-amp detection, warnings for unsupported directives.
+- Added `SimpleTouchstoneParser`: parses `.s1p` / `.s2p`, option line, RI/MA/DB formats, frequency units, reference impedance.
+- Added `ModelImportService` with `import_spice_from_text`, `import_touchstone_from_text`, `list_imported_models`, `get_imported_model`, `validate_spice_pin_mapping`, `attach_imported_model_to_component`.
+- Added API DTOs: `SpiceImportRequestDto`, `SpiceImportReportDto`, `TouchstoneImportRequestDto`, `TouchstoneImportReportDto`, `ImportedModelSummaryDto`, `ImportedModelDetailsDto`, `SpicePinMappingRequestDto`, `SpicePinMappingValidationReportDto`, `AttachImportedModelRequestDto`.
+- Added facade methods and Tauri commands: `import_spice_model`, `import_touchstone_model`, `list_imported_models`, `get_imported_model`, `validate_spice_pin_mapping`, `attach_imported_model_to_component`.
+- Added frontend: types, API wrappers, Zustand store fields (`spiceImportReport`, `touchstoneImportReport`, `importedModels`, `selectedImportedModel`).
+- Added `ImportModelsScreen` with tabs: SPICE import, Touchstone import, Imported Library list with model details.
+- React remains view adapter only; all parsing logic lives in Rust backend.
+- 29 new Rust tests (spice parser 12, touchstone parser 10, model import service 7) + 6 frontend tests.
 
 ### v1.8 — ngspice Adapter v1
 

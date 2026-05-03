@@ -2,7 +2,8 @@ use hotsas_core::{
     CircuitProject, EngineeringNotebook, FormulaDefinition, FormulaEquation, FormulaOutput,
     FormulaPackMetadata, FormulaVariable, GraphSeries, NotebookEvaluationResult,
     NotebookHistoryEntry, PreferredValueResult, ProjectPackageManifest,
-    ProjectPackageValidationReport, SimulationResult, ValueWithUnit,
+    ProjectPackageValidationReport, SimulationResult, SpiceModelKind, TouchstoneFrequencyUnit,
+    TouchstoneParameterFormat, ValueWithUnit,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -792,6 +793,56 @@ pub struct ComponentDetailsDto {
     pub footprint_previews: Vec<FootprintDto>,
 }
 
+impl From<&hotsas_core::ComponentDefinition> for ComponentDetailsDto {
+    fn from(component: &hotsas_core::ComponentDefinition) -> Self {
+        Self {
+            id: component.id.clone(),
+            name: component.name.clone(),
+            category: component.category.clone(),
+            manufacturer: component.manufacturer.clone(),
+            part_number: component.part_number.clone(),
+            description: component.description.clone(),
+            parameters: component
+                .parameters
+                .iter()
+                .map(|(name, value)| ComponentParameterDto {
+                    name: name.clone(),
+                    value: value.value.original.clone(),
+                    unit: Some(value.unit.symbol().to_string()),
+                })
+                .collect(),
+            ratings: component
+                .ratings
+                .iter()
+                .map(|(name, value)| ComponentParameterDto {
+                    name: name.clone(),
+                    value: value.value.original.clone(),
+                    unit: Some(value.unit.symbol().to_string()),
+                })
+                .collect(),
+            symbol_ids: component.symbol_ids.clone(),
+            footprint_ids: component.footprint_ids.clone(),
+            simulation_models: component
+                .simulation_models
+                .iter()
+                .map(SimulationModelDto::from)
+                .collect(),
+            datasheets: component.datasheets.clone(),
+            tags: component.tags.clone(),
+            metadata: component
+                .metadata
+                .iter()
+                .map(|(k, v)| KeyValueDto {
+                    key: k.clone(),
+                    value: v.clone(),
+                })
+                .collect(),
+            symbol_preview: None,
+            footprint_previews: vec![],
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentSearchRequestDto {
     pub search: Option<String>,
@@ -1342,4 +1393,238 @@ pub struct SimulationRunMetadataDto {
     pub parsed_output_path: Option<String>,
     pub exit_code: Option<i32>,
     pub elapsed_ms: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpiceImportRequestDto {
+    pub source_name: Option<String>,
+    pub content: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpiceModelParameterDto {
+    pub name: String,
+    pub value: String,
+    pub unit_hint: Option<String>,
+}
+
+impl From<&hotsas_core::SpiceModelParameter> for SpiceModelParameterDto {
+    fn from(p: &hotsas_core::SpiceModelParameter) -> Self {
+        Self {
+            name: p.name.clone(),
+            value: p.value.clone(),
+            unit_hint: p.unit_hint.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpiceModelDto {
+    pub id: String,
+    pub name: String,
+    pub kind: String,
+    pub parameters: Vec<SpiceModelParameterDto>,
+    pub warnings: Vec<String>,
+}
+
+impl From<&hotsas_core::SpiceModelDefinition> for SpiceModelDto {
+    fn from(m: &hotsas_core::SpiceModelDefinition) -> Self {
+        Self {
+            id: m.id.clone(),
+            name: m.name.clone(),
+            kind: format!("{:?}", m.kind),
+            parameters: m
+                .parameters
+                .iter()
+                .map(SpiceModelParameterDto::from)
+                .collect(),
+            warnings: m.warnings.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpiceSubcircuitDto {
+    pub id: String,
+    pub name: String,
+    pub pins: Vec<String>,
+    pub detected_kind: String,
+    pub parameters: Vec<SpiceModelParameterDto>,
+    pub warnings: Vec<String>,
+}
+
+impl From<&hotsas_core::SpiceSubcircuitDefinition> for SpiceSubcircuitDto {
+    fn from(s: &hotsas_core::SpiceSubcircuitDefinition) -> Self {
+        Self {
+            id: s.id.clone(),
+            name: s.name.clone(),
+            pins: s.pins.clone(),
+            detected_kind: format!("{:?}", s.detected_kind),
+            parameters: s
+                .parameters
+                .iter()
+                .map(SpiceModelParameterDto::from)
+                .collect(),
+            warnings: s.warnings.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpiceImportReportDto {
+    pub status: String,
+    pub models: Vec<SpiceModelDto>,
+    pub subcircuits: Vec<SpiceSubcircuitDto>,
+    pub warnings: Vec<String>,
+    pub errors: Vec<String>,
+}
+
+impl From<&hotsas_core::SpiceImportReport> for SpiceImportReportDto {
+    fn from(r: &hotsas_core::SpiceImportReport) -> Self {
+        Self {
+            status: format!("{:?}", r.status),
+            models: r.models.iter().map(SpiceModelDto::from).collect(),
+            subcircuits: r.subcircuits.iter().map(SpiceSubcircuitDto::from).collect(),
+            warnings: r.warnings.clone(),
+            errors: r.errors.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TouchstoneImportRequestDto {
+    pub source_name: Option<String>,
+    pub content: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TouchstoneSummaryDto {
+    pub id: String,
+    pub name: String,
+    pub port_count: usize,
+    pub point_count: usize,
+    pub start_frequency_hz: Option<f64>,
+    pub stop_frequency_hz: Option<f64>,
+    pub parameter_format: String,
+    pub reference_impedance_ohm: f64,
+}
+
+impl From<&hotsas_core::TouchstoneNetworkData> for TouchstoneSummaryDto {
+    fn from(n: &hotsas_core::TouchstoneNetworkData) -> Self {
+        let freqs: Vec<f64> = n.points.iter().map(|p| p.frequency_hz).collect();
+        Self {
+            id: n.id.clone(),
+            name: n.name.clone(),
+            port_count: n.port_count,
+            point_count: n.points.len(),
+            start_frequency_hz: freqs.first().copied(),
+            stop_frequency_hz: freqs.last().copied(),
+            parameter_format: format!("{:?}", n.parameter_format),
+            reference_impedance_ohm: n.reference_impedance_ohm,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TouchstoneImportReportDto {
+    pub status: String,
+    pub summary: Option<TouchstoneSummaryDto>,
+    pub warnings: Vec<String>,
+    pub errors: Vec<String>,
+}
+
+impl From<&hotsas_core::TouchstoneImportReport> for TouchstoneImportReportDto {
+    fn from(r: &hotsas_core::TouchstoneImportReport) -> Self {
+        Self {
+            status: format!("{:?}", r.status),
+            summary: r.network.as_ref().map(TouchstoneSummaryDto::from),
+            warnings: r.warnings.clone(),
+            errors: r.errors.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpicePinMappingEntryDto {
+    pub model_pin: String,
+    pub component_pin: String,
+    pub role_hint: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpicePinMappingRequestDto {
+    pub model_id: String,
+    pub component_definition_id: String,
+    pub mappings: Vec<SpicePinMappingEntryDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpicePinMappingValidationReportDto {
+    pub valid: bool,
+    pub warnings: Vec<String>,
+    pub errors: Vec<String>,
+}
+
+impl From<&hotsas_core::SpicePinMappingValidationReport> for SpicePinMappingValidationReportDto {
+    fn from(r: &hotsas_core::SpicePinMappingValidationReport) -> Self {
+        Self {
+            valid: r.valid,
+            warnings: r.warnings.clone(),
+            errors: r.errors.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AttachImportedModelRequestDto {
+    pub model_id: String,
+    pub component_definition_id: String,
+    pub pin_mapping: Option<SpicePinMappingRequestDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImportedModelSummaryDto {
+    pub id: String,
+    pub kind: String,
+    pub name: String,
+    pub source_format: String,
+}
+
+impl From<&hotsas_core::ImportedModelSummary> for ImportedModelSummaryDto {
+    fn from(s: &hotsas_core::ImportedModelSummary) -> Self {
+        Self {
+            id: s.id.clone(),
+            kind: format!("{:?}", s.kind),
+            name: s.name.clone(),
+            source_format: s.source_format.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImportedModelDetailsDto {
+    pub id: String,
+    pub kind: String,
+    pub name: String,
+    pub source_format: String,
+    pub spice_model: Option<SpiceModelDto>,
+    pub spice_subcircuit: Option<SpiceSubcircuitDto>,
+    pub touchstone_summary: Option<TouchstoneSummaryDto>,
+}
+
+impl From<&hotsas_core::ImportedModelDetails> for ImportedModelDetailsDto {
+    fn from(d: &hotsas_core::ImportedModelDetails) -> Self {
+        Self {
+            id: d.id.clone(),
+            kind: format!("{:?}", d.kind),
+            name: d.name.clone(),
+            source_format: d.source.source_format.clone(),
+            spice_model: d.spice_model.as_ref().map(SpiceModelDto::from),
+            spice_subcircuit: d.spice_subcircuit.as_ref().map(SpiceSubcircuitDto::from),
+            touchstone_summary: d
+                .touchstone_network
+                .as_ref()
+                .map(TouchstoneSummaryDto::from),
+        }
+    }
 }

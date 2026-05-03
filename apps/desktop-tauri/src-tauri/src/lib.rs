@@ -2,7 +2,8 @@ use hotsas_adapters::{
     BomCsvExporter, CircuitProjectPackageStorage,
     ComponentLibraryJsonExporter, CsvSimulationDataExporter, FormulaPackFileLoader,
     JsonComponentLibraryStorage, JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine,
-    NgspiceSimulationAdapter, SimpleFormulaEngine, SpiceNetlistExporter, SvgSchematicExporter,
+    NgspiceSimulationAdapter, SimpleFormulaEngine, SimpleSpiceModelParser, SimpleTouchstoneParser,
+    SpiceNetlistExporter, SvgSchematicExporter,
 };
 use hotsas_api::{
     ApiError, ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitValidationReportDto,
@@ -210,6 +211,69 @@ fn simulation_history(api: State<'_, HotSasApi>) -> Result<Vec<SimulationResultD
     log::info!("COMMAND simulation_history");
     let result = api.simulation_history().map_err(tauri_error);
     log_command_result("simulation_history", &result);
+    result
+}
+
+#[tauri::command]
+fn import_spice_model(
+    api: State<'_, HotSasApi>,
+    request: hotsas_api::SpiceImportRequestDto,
+) -> Result<hotsas_api::SpiceImportReportDto, String> {
+    log::info!("COMMAND import_spice_model");
+    let result = api.import_spice_model(request).map_err(tauri_error);
+    log_command_result("import_spice_model", &result);
+    result
+}
+
+#[tauri::command]
+fn import_touchstone_model(
+    api: State<'_, HotSasApi>,
+    request: hotsas_api::TouchstoneImportRequestDto,
+) -> Result<hotsas_api::TouchstoneImportReportDto, String> {
+    log::info!("COMMAND import_touchstone_model");
+    let result = api.import_touchstone_model(request).map_err(tauri_error);
+    log_command_result("import_touchstone_model", &result);
+    result
+}
+
+#[tauri::command]
+fn list_imported_models(api: State<'_, HotSasApi>) -> Result<Vec<hotsas_api::ImportedModelSummaryDto>, String> {
+    log::info!("COMMAND list_imported_models");
+    let result = api.list_imported_models().map_err(tauri_error);
+    log_command_result("list_imported_models", &result);
+    result
+}
+
+#[tauri::command]
+fn get_imported_model(
+    api: State<'_, HotSasApi>,
+    model_id: String,
+) -> Result<hotsas_api::ImportedModelDetailsDto, String> {
+    log::info!("COMMAND get_imported_model");
+    let result = api.get_imported_model(model_id).map_err(tauri_error);
+    log_command_result("get_imported_model", &result);
+    result
+}
+
+#[tauri::command]
+fn validate_spice_pin_mapping(
+    api: State<'_, HotSasApi>,
+    request: hotsas_api::SpicePinMappingRequestDto,
+) -> Result<hotsas_api::SpicePinMappingValidationReportDto, String> {
+    log::info!("COMMAND validate_spice_pin_mapping");
+    let result = api.validate_spice_pin_mapping(request).map_err(tauri_error);
+    log_command_result("validate_spice_pin_mapping", &result);
+    result
+}
+
+#[tauri::command]
+fn attach_imported_model_to_component(
+    api: State<'_, HotSasApi>,
+    request: hotsas_api::AttachImportedModelRequestDto,
+) -> Result<hotsas_api::ComponentDetailsDto, String> {
+    log::info!("COMMAND attach_imported_model_to_component");
+    let result = api.attach_imported_model_to_component(request).map_err(tauri_error);
+    log_command_result("attach_imported_model_to_component", &result);
     result
 }
 
@@ -506,6 +570,8 @@ fn build_api() -> HotSasApi {
         Arc::new(CsvSimulationDataExporter),
         Arc::new(ComponentLibraryJsonExporter),
         Arc::new(SvgSchematicExporter),
+        Arc::new(SimpleSpiceModelParser::new()),
+        Arc::new(SimpleTouchstoneParser::new()),
     ))
 }
 
@@ -527,6 +593,12 @@ pub fn run() {
             check_ngspice_availability,
             run_simulation,
             simulation_history,
+            import_spice_model,
+            import_touchstone_model,
+            list_imported_models,
+            get_imported_model,
+            validate_spice_pin_mapping,
+            attach_imported_model_to_component,
             export_markdown_report,
             export_html_report,
             save_project_json,

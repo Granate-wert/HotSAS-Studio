@@ -17,6 +17,8 @@ pub mod component_library_storage;
 pub mod export_center;
 pub mod ngspice;
 pub mod project_package_storage;
+pub mod spice_model_parser;
+pub mod touchstone_parser;
 pub use component_library_storage::JsonComponentLibraryStorage;
 pub use export_center::{
     AltiumWorkflowPackageExporter, BomCsvExporter, ComponentLibraryJsonExporter,
@@ -24,6 +26,8 @@ pub use export_center::{
 };
 pub use ngspice::{NgspiceBinaryResolver, NgspiceOutputParser, NgspiceSimulationAdapter};
 pub use project_package_storage::CircuitProjectPackageStorage;
+pub use spice_model_parser::SimpleSpiceModelParser;
+pub use touchstone_parser::SimpleTouchstoneParser;
 
 #[derive(Debug, Default)]
 pub struct FormulaPackFileLoader;

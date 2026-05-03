@@ -12,6 +12,11 @@ pub enum ApplicationError {
     InvalidFormulaPack(String),
     InvalidBinding(String),
     InvalidInput(String),
+    State(String),
+    NotFound(String),
+    Storage(String),
+    Export(String),
+    Simulation(String),
 }
 
 impl fmt::Display for ApplicationError {
@@ -25,6 +30,11 @@ impl fmt::Display for ApplicationError {
             Self::InvalidFormulaPack(message) => write!(f, "invalid formula pack: {message}"),
             Self::InvalidBinding(message) => write!(f, "invalid formula binding: {message}"),
             Self::InvalidInput(message) => write!(f, "invalid input: {message}"),
+            Self::State(message) => write!(f, "state error: {message}"),
+            Self::NotFound(message) => write!(f, "not found: {message}"),
+            Self::Storage(message) => write!(f, "storage error: {message}"),
+            Self::Export(message) => write!(f, "export error: {message}"),
+            Self::Simulation(message) => write!(f, "simulation error: {message}"),
         }
     }
 }

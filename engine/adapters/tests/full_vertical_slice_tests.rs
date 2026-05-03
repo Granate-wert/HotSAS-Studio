@@ -2,7 +2,7 @@ use hotsas_adapters::{
     BomCsvExporter, CircuitProjectPackageStorage, ComponentLibraryJsonExporter,
     CsvSimulationDataExporter, JsonComponentLibraryStorage, JsonProjectStorage,
     MarkdownReportExporter, MockSimulationEngine, NgspiceSimulationAdapter, SimpleFormulaEngine,
-    SpiceNetlistExporter, SvgSchematicExporter,
+    SimpleSpiceModelParser, SimpleTouchstoneParser, SpiceNetlistExporter, SvgSchematicExporter,
 };
 use hotsas_application::AppServices;
 use hotsas_core::EngineeringUnit;
@@ -25,6 +25,8 @@ fn backend_vertical_slice_runs_end_to_end_with_current_adapters() {
         Arc::new(CsvSimulationDataExporter),
         Arc::new(ComponentLibraryJsonExporter),
         Arc::new(SvgSchematicExporter),
+        Arc::new(SimpleSpiceModelParser::new()),
+        Arc::new(SimpleTouchstoneParser::new()),
     );
 
     let project = services.create_rc_low_pass_demo_project();

@@ -560,3 +560,103 @@ export type SelectedRegionAnalysisRequestDto = {
   analysis_direction: string;
   analysis_mode: string;
 };
+
+export type SpiceModelParameterDto = {
+  name: string;
+  value: string;
+  unit_hint: string | null;
+};
+
+export type SpiceModelDto = {
+  id: string;
+  name: string;
+  kind: string;
+  parameters: SpiceModelParameterDto[];
+  warnings: string[];
+};
+
+export type SpiceSubcircuitDto = {
+  id: string;
+  name: string;
+  pins: string[];
+  detected_kind: string;
+  parameters: SpiceModelParameterDto[];
+  warnings: string[];
+};
+
+export type SpiceImportRequestDto = {
+  source_name: string | null;
+  content: string;
+};
+
+export type SpiceImportReportDto = {
+  status: string;
+  models: SpiceModelDto[];
+  subcircuits: SpiceSubcircuitDto[];
+  warnings: string[];
+  errors: string[];
+};
+
+export type TouchstoneSummaryDto = {
+  id: string;
+  name: string;
+  port_count: number;
+  point_count: number;
+  start_frequency_hz: number | null;
+  stop_frequency_hz: number | null;
+  parameter_format: string;
+  reference_impedance_ohm: number;
+};
+
+export type TouchstoneImportRequestDto = {
+  source_name: string | null;
+  content: string;
+};
+
+export type TouchstoneImportReportDto = {
+  status: string;
+  summary: TouchstoneSummaryDto | null;
+  warnings: string[];
+  errors: string[];
+};
+
+export type SpicePinMappingEntryDto = {
+  model_pin: string;
+  component_pin: string;
+  role_hint: string | null;
+};
+
+export type SpicePinMappingRequestDto = {
+  model_id: string;
+  component_definition_id: string;
+  mappings: SpicePinMappingEntryDto[];
+};
+
+export type SpicePinMappingValidationReportDto = {
+  valid: boolean;
+  warnings: string[];
+  errors: string[];
+};
+
+export type AttachImportedModelRequestDto = {
+  model_id: string;
+  component_definition_id: string;
+  pin_mapping: SpicePinMappingRequestDto | null;
+};
+
+export type ImportedModelSummaryDto = {
+  id: string;
+  kind: string;
+  name: string;
+  source_format: string;
+};
+
+export type ImportedModelDetailsDto = {
+  id: string;
+  kind: string;
+  name: string;
+  source_format: string;
+  spice_model: SpiceModelDto | null;
+  spice_subcircuit: SpiceSubcircuitDto | null;
+  touchstone_summary: TouchstoneSummaryDto | null;
+};

@@ -3,6 +3,7 @@ import type {
   ApiErrorDto,
   ApplyNotebookValueRequestDto,
   AssignComponentRequestDto,
+  AttachImportedModelRequestDto,
   CircuitValidationReportDto,
   ComponentDetailsDto,
   ComponentLibraryDto,
@@ -19,6 +20,8 @@ import type {
   FormulaPackDto,
   FormulaResultDto,
   FormulaSummaryDto,
+  ImportedModelDetailsDto,
+  ImportedModelSummaryDto,
   NgspiceAvailabilityDto,
   NotebookEvaluationRequestDto,
   NotebookEvaluationResultDto,
@@ -35,6 +38,12 @@ import type {
   SelectedRegionPreviewDto,
   SimulationResultDto,
   SimulationRunRequestDto,
+  SpiceImportReportDto,
+  SpiceImportRequestDto,
+  SpicePinMappingRequestDto,
+  SpicePinMappingValidationReportDto,
+  TouchstoneImportReportDto,
+  TouchstoneImportRequestDto,
   VerticalSliceDto,
 } from "../types";
 
@@ -130,6 +139,17 @@ export const backend = {
   exportFile: (request: ExportRequestDto) =>
     invokeCommand<ExportResultDto>("export_file", { request }),
   exportHistory: () => invokeCommand<ExportHistoryEntryDto[]>("export_history"),
+  importSpiceModel: (request: SpiceImportRequestDto) =>
+    invokeCommand<SpiceImportReportDto>("import_spice_model", { request }),
+  importTouchstoneModel: (request: TouchstoneImportRequestDto) =>
+    invokeCommand<TouchstoneImportReportDto>("import_touchstone_model", { request }),
+  listImportedModels: () => invokeCommand<ImportedModelSummaryDto[]>("list_imported_models"),
+  getImportedModel: (modelId: string) =>
+    invokeCommand<ImportedModelDetailsDto>("get_imported_model", { modelId }),
+  validateSpicePinMapping: (request: SpicePinMappingRequestDto) =>
+    invokeCommand<SpicePinMappingValidationReportDto>("validate_spice_pin_mapping", { request }),
+  attachImportedModelToComponent: (request: AttachImportedModelRequestDto) =>
+    invokeCommand<ComponentDetailsDto>("attach_imported_model_to_component", { request }),
   writeLog: (level: string, message: string) =>
     invokeCommand<void>("write_log", { level, message }),
 };

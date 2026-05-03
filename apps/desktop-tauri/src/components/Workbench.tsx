@@ -9,6 +9,7 @@ import {
   Save,
   Sigma,
 } from "lucide-react";
+import { ImportModelsScreen } from "../screens/ImportModelsScreen";
 import { backend } from "../api";
 import { CalculatorScreen } from "../screens/CalculatorScreen";
 import { ComponentLibraryScreen } from "../screens/ComponentLibraryScreen";
@@ -66,6 +67,10 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     setSimulationHistory,
     setIsSimulationRunning,
     setSimulationError,
+    setSpiceImportReport,
+    setTouchstoneImportReport,
+    setImportedModels,
+    setSelectedImportedModel,
   } = useHotSasStore();
 
   const run = async <T,>(operation: () => Promise<T>, onResult: (result: T) => void) => {
@@ -146,6 +151,25 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         (report) => setValidationReport(report),
       ),
     loadExportCapabilities: () => run(backend.listExportCapabilities, setExportCapabilities),
+    importSpiceModel: (content: string) =>
+      run(
+        () => backend.importSpiceModel({ source_name: null, content }),
+        (report) => {
+          setSpiceImportReport(report);
+          run(backend.listImportedModels, setImportedModels);
+        },
+      ),
+    importTouchstoneModel: (content: string) =>
+      run(
+        () => backend.importTouchstoneModel({ source_name: null, content }),
+        (report) => {
+          setTouchstoneImportReport(report);
+          run(backend.listImportedModels, setImportedModels);
+        },
+      ),
+    listImportedModels: () => run(backend.listImportedModels, setImportedModels),
+    getImportedModel: (modelId: string) =>
+      run(() => backend.getImportedModel(modelId), setSelectedImportedModel),
     exportFile: (format: string, writeToFile: boolean, outputDir: string) =>
       run(
         () =>
@@ -323,6 +347,10 @@ function renderScreen(
       validateCircuit: () => void;
       loadExportCapabilities: () => void;
       exportFile: (format: string, writeToFile: boolean, outputDir: string) => void;
+      importSpiceModel: (content: string) => void;
+      importTouchstoneModel: (content: string) => void;
+      listImportedModels: () => void;
+      getImportedModel: (modelId: string) => void;
       refreshSelectedComponent: () => void;
     };
   },
@@ -390,6 +418,10 @@ function renderScreen(
         onSetEngine={context.actions.setSimulationEngine}
       />
     );
+  }
+
+  if (activeScreen === "import") {
+    return <ImportModelsScreen />;
   }
 
   return (

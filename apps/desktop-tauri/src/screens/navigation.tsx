@@ -1,4 +1,12 @@
-import { Activity, Calculator, CircuitBoard, FileText, Sigma, TableProperties } from "lucide-react";
+import {
+  Activity,
+  Calculator,
+  CircuitBoard,
+  FileText,
+  Sigma,
+  TableProperties,
+  Upload,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
 export type ScreenId =
@@ -8,7 +16,8 @@ export type ScreenId =
   | "formulas"
   | "components"
   | "simulation"
-  | "export";
+  | "export"
+  | "import";
 
 export const navigationItems: Array<{ id: ScreenId; label: string; icon: ReactNode }> = [
   { id: "start", label: "Start", icon: <CircuitBoard size={18} /> },
@@ -18,4 +27,5 @@ export const navigationItems: Array<{ id: ScreenId; label: string; icon: ReactNo
   { id: "components", label: "E Component Library", icon: <TableProperties size={18} /> },
   { id: "simulation", label: "Simulation Results", icon: <Activity size={18} /> },
   { id: "export", label: "Export Center", icon: <FileText size={18} /> },
+  { id: "import", label: "Import Models", icon: <Upload size={18} /> },
 ];

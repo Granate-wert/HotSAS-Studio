@@ -8,11 +8,11 @@ An engine selection policy allows the user to choose between the built-in Mock e
 
 ## Engine Selection
 
-| Engine   | Behavior                                                              |
-| -------- | --------------------------------------------------------------------- |
-| `mock`   | Always uses the built-in `MockSimulationEngine` (synthetic RC data)   |
-| `ngspice`| Always uses the real `NgspiceSimulationAdapter`; fails if unavailable |
-| `auto`   | Prefers ngspice; falls back to Mock with a warning if ngspice missing |
+| Engine    | Behavior                                                              |
+| --------- | --------------------------------------------------------------------- |
+| `mock`    | Always uses the built-in `MockSimulationEngine` (synthetic RC data)   |
+| `ngspice` | Always uses the real `NgspiceSimulationAdapter`; fails if unavailable |
+| `auto`    | Prefers ngspice; falls back to Mock with a warning if ngspice missing |
 
 ## Architecture
 
@@ -61,11 +61,11 @@ React SimulationScreen -> Tauri commands -> hotsas_api facade -> NgspiceSimulati
 
 ## Tauri Commands
 
-| Command                        | Input                                    | Output                     |
-| ------------------------------ | ---------------------------------------- | -------------------------- |
-| `check_ngspice_availability`   | —                                        | `NgspiceAvailabilityDto`   |
-| `run_simulation`               | `SimulationRunRequestDto`                | `SimulationResultDto`      |
-| `simulation_history`           | —                                        | `Vec<SimulationResultDto>` |
+| Command                      | Input                     | Output                     |
+| ---------------------------- | ------------------------- | -------------------------- |
+| `check_ngspice_availability` | —                         | `NgspiceAvailabilityDto`   |
+| `run_simulation`             | `SimulationRunRequestDto` | `SimulationResultDto`      |
+| `simulation_history`         | —                         | `Vec<SimulationResultDto>` |
 
 ## Frontend Types
 
@@ -149,12 +149,12 @@ wrdata ac_out.csv v(net_out)
 
 ### Rust Tests
 
-| Test File                                | Tests | Focus                                         |
-| ---------------------------------------- | ----- | --------------------------------------------- |
-| `ngspice_binary_resolver_tests.rs`       | 3     | Env path, PATH fallback, invalid path handling|
-| `ngspice_parser_tests.rs`                | 7     | AC, OP, transient parsing; empty/garbage input|
-| `ngspice_simulation_service_tests.rs`    | 5     | Engine policy, fallback, history              |
-| `ngspice_simulation_api_tests.rs`        | 4     | Facade DTO mapping, controlled errors         |
+| Test File                             | Tests | Focus                                          |
+| ------------------------------------- | ----- | ---------------------------------------------- |
+| `ngspice_binary_resolver_tests.rs`    | 3     | Env path, PATH fallback, invalid path handling |
+| `ngspice_parser_tests.rs`             | 7     | AC, OP, transient parsing; empty/garbage input |
+| `ngspice_simulation_service_tests.rs` | 5     | Engine policy, fallback, history               |
+| `ngspice_simulation_api_tests.rs`     | 4     | Facade DTO mapping, controlled errors          |
 
 Real integration tests are opt-in via `HOTSAS_RUN_NGSPICE_INTEGRATION=1`.
 

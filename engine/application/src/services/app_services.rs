@@ -1,7 +1,7 @@
 use crate::{
     ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
     EngineeringNotebookService, ExportCenterService, ExportService, FormulaService,
-    NetlistGenerationService, NgspiceSimulationService, PreferredValuesService,
+    ModelImportService, NetlistGenerationService, NgspiceSimulationService, PreferredValuesService,
     ProjectPackageService, ProjectService, SelectedRegionAnalysisService, SimulationEngineChoice,
     SimulationService,
 };
@@ -12,7 +12,8 @@ use hotsas_core::{
 use hotsas_ports::{
     BomExporterPort, ComponentLibraryExporterPort, ComponentLibraryPort, FormulaEnginePort,
     NetlistExporterPort, ProjectPackageStoragePort, ReportExporterPort, SchematicExporterPort,
-    SimulationDataExporterPort, SimulationEnginePort, StoragePort,
+    SimulationDataExporterPort, SimulationEnginePort, SpiceModelParserPort, StoragePort,
+    TouchstoneParserPort,
 };
 use std::path::Path;
 use std::sync::Arc;
@@ -33,6 +34,7 @@ pub struct AppServices {
     export_center_service: ExportCenterService,
     component_library_service: ComponentLibraryService,
     selected_region_analysis_service: SelectedRegionAnalysisService,
+    model_import_service: ModelImportService,
 }
 
 impl AppServices {
@@ -49,6 +51,8 @@ impl AppServices {
         simulation_data_exporter: Arc<dyn SimulationDataExporterPort>,
         library_exporter: Arc<dyn ComponentLibraryExporterPort>,
         schematic_exporter: Arc<dyn SchematicExporterPort>,
+        spice_parser: Arc<dyn SpiceModelParserPort>,
+        touchstone_parser: Arc<dyn TouchstoneParserPort>,
     ) -> Self {
         Self {
             project_service: ProjectService::new(storage),
@@ -72,6 +76,7 @@ impl AppServices {
             ),
             component_library_service: ComponentLibraryService::new(component_library_port),
             selected_region_analysis_service: SelectedRegionAnalysisService::new(),
+            model_import_service: ModelImportService::new(spice_parser, touchstone_parser),
         }
     }
 
@@ -129,6 +134,10 @@ impl AppServices {
 
     pub fn selected_region_analysis_service(&self) -> &SelectedRegionAnalysisService {
         &self.selected_region_analysis_service
+    }
+
+    pub fn model_import_service(&self) -> &ModelImportService {
+        &self.model_import_service
     }
 
     pub fn create_rc_low_pass_demo_project(&self) -> CircuitProject {

@@ -73,6 +73,7 @@ pub struct SimulationModel {
     pub model_type: String,
     pub source_path: Option<String>,
     pub raw_model: Option<String>,
+    pub raw_model_id: Option<String>,
     pub pin_mapping: BTreeMap<String, String>,
 }
 
