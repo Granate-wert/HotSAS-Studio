@@ -2,7 +2,7 @@
 
 **Version:** v1.7 — Export Center v1
 **Date:** 2026-05-03
-**Commit:** 2452585
+**Commit:** 0ef6fbe
 
 See full log: [`docs/testing/verification_logs/v1.7_export_center_v1.md`](./verification_logs/v1.7_export_center_v1.md)
 

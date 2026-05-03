@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v1.7 next**
+**Current roadmap stage: v1.8 next**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
@@ -13,6 +13,7 @@ Completed:
 - v1.4 — Engineering Notebook / Calculator Foundations
 - v1.5 — Component Library Foundation
 - v1.6 — Selected Region Analysis Foundation
+- v1.7 — Export Center v1
 
 ---
 
@@ -27,6 +28,7 @@ Completed:
 - Generate SPICE netlist for RC low-pass.
 - Run mock AC simulation with gain/phase graph.
 - Export Markdown and HTML reports.
+- Export Center with 9 formats: SPICE netlist, BOM CSV/JSON, simulation CSV, component library JSON, SVG schematic, Altium workflow placeholder.
 
 ### v0.1.1 — Architecture Hardening
 

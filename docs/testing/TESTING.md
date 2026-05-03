@@ -433,9 +433,38 @@ This stage verifies:
 
 ---
 
+### v1.7 — Export Center v1
+
+- **Export Center API** (`api/tests/export_center_api_tests.rs`)
+  - List export capabilities returns all nine formats
+  - Export without project returns state error
+  - Export SPICE netlist with project returns success
+  - Export BOM CSV contains expected headers
+  - Export SVG schematic contains SVG tag
+  - Export history returns empty list initially
+
+- **Frontend Export Center** (`src/screens/ExportScreen.test.tsx`)
+  - Renders export center title and description
+  - Disables export buttons when no project is loaded
+  - Enables export buttons when project exists
+  - Calls onLoadCapabilities on mount when capabilities are empty
+  - Calls onExport with correct format when button clicked
+  - Toggles write-to-file switch and shows output directory input
+  - Displays last export result when provided
+
+## Manual v1.7 Export Center Smoke Check
+
+1. Open the **Export Center** screen.
+2. Verify that 9 export format buttons are listed (Markdown, HTML, SPICE, CSV Sim, BOM CSV, BOM JSON, Library JSON, SVG, Altium).
+3. Click **Markdown Report** — verify content preview appears.
+4. Toggle **Write to file** switch, set output directory, click **SPICE Netlist** — verify success message with file path.
+5. Click **Load History** — verify history entries appear.
+
+---
+
 ## Test Summary
 
-As of v1.6, the Rust workspace runs **125+ tests** across all crates with **zero failures**, and the frontend runs **41 UI tests** with **zero failures**.
+As of v1.7, the Rust workspace runs **123+ tests** across all crates with **zero failures**, and the frontend runs **48 UI tests** with **zero failures**.
 
 ---
 
