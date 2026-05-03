@@ -31,20 +31,38 @@ impl From<&CircuitProject> for ProjectDto {
                     .schematic
                     .components
                     .iter()
-                    .map(|component| ComponentDto {
-                        instance_id: component.instance_id.clone(),
-                        definition_id: component.definition_id.clone(),
-                        x: component.position.x,
-                        y: component.position.y,
-                        rotation_degrees: component.rotation_degrees,
-                        parameters: component
-                            .overridden_parameters
-                            .iter()
-                            .map(|(key, value)| ParameterDto {
-                                name: key.clone(),
-                                value: ValueDto::from(value),
-                            })
-                            .collect(),
+                    .map(|component| {
+                        let symbol = hotsas_core::seed_symbol_for_kind(&component.definition_id)
+                            .as_ref()
+                            .map(SymbolDto::from);
+                        let pins = symbol.as_ref().map(|s| s.pins.clone()).unwrap_or_default();
+                        ComponentDto {
+                            instance_id: component.instance_id.clone(),
+                            definition_id: component.definition_id.clone(),
+                            component_kind: component.definition_id.clone(),
+                            display_label: component.instance_id.clone(),
+                            x: component.position.x,
+                            y: component.position.y,
+                            rotation_degrees: component.rotation_degrees,
+                            parameters: component
+                                .overridden_parameters
+                                .iter()
+                                .map(|(key, value)| ParameterDto {
+                                    name: key.clone(),
+                                    value: ValueDto::from(value),
+                                })
+                                .collect(),
+                            symbol,
+                            pins,
+                            connected_nets: component
+                                .connected_nets
+                                .iter()
+                                .map(|cn| ConnectedPinDto {
+                                    pin_id: cn.pin_id.clone(),
+                                    net_id: cn.net_id.clone(),
+                                })
+                                .collect(),
+                        }
                     })
                     .collect(),
                 wires: project
@@ -85,16 +103,79 @@ pub struct CircuitDto {
 pub struct ComponentDto {
     pub instance_id: String,
     pub definition_id: String,
+    pub component_kind: String,
+    pub display_label: String,
     pub x: f64,
     pub y: f64,
     pub rotation_degrees: f64,
     pub parameters: Vec<ParameterDto>,
+    pub symbol: Option<SymbolDto>,
+    pub pins: Vec<PinDto>,
+    pub connected_nets: Vec<ConnectedPinDto>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParameterDto {
     pub name: String,
     pub value: ValueDto,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PinDto {
+    pub id: String,
+    pub name: String,
+    pub number: String,
+    pub electrical_type: String,
+    pub x: f64,
+    pub y: f64,
+    pub side: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SymbolDto {
+    pub id: String,
+    pub title: String,
+    pub component_kind: String,
+    pub width: f64,
+    pub height: f64,
+    pub pins: Vec<PinDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectedPinDto {
+    pub pin_id: String,
+    pub net_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentParameterDto {
+    pub name: String,
+    pub value: String,
+    pub unit: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SelectedComponentDto {
+    pub instance_id: String,
+    pub component_kind: String,
+    pub title: String,
+    pub parameters: Vec<ComponentParameterDto>,
+    pub symbol: Option<SymbolDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CircuitValidationIssueDto {
+    pub code: String,
+    pub message: String,
+    pub component_id: Option<String>,
+    pub net_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CircuitValidationReportDto {
+    pub valid: bool,
+    pub warnings: Vec<CircuitValidationIssueDto>,
+    pub errors: Vec<CircuitValidationIssueDto>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -117,6 +198,62 @@ pub struct ValueDto {
     pub si_value: f64,
     pub unit: String,
     pub display: String,
+}
+
+impl From<&hotsas_core::SymbolDefinition> for SymbolDto {
+    fn from(symbol: &hotsas_core::SymbolDefinition) -> Self {
+        Self {
+            id: symbol.id.clone(),
+            title: symbol.title.clone(),
+            component_kind: symbol.component_kind.clone(),
+            width: symbol.width,
+            height: symbol.height,
+            pins: symbol.pins.iter().map(PinDto::from).collect(),
+        }
+    }
+}
+
+impl From<&hotsas_core::PinDefinition> for PinDto {
+    fn from(pin: &hotsas_core::PinDefinition) -> Self {
+        Self {
+            id: pin.id.clone(),
+            name: pin.name.clone(),
+            number: pin.number.clone(),
+            electrical_type: pin.electrical_type.to_string(),
+            x: pin.position.x,
+            y: pin.position.y,
+            side: pin.position.side.to_string(),
+        }
+    }
+}
+
+impl From<&hotsas_core::CircuitValidationReport> for CircuitValidationReportDto {
+    fn from(report: &hotsas_core::CircuitValidationReport) -> Self {
+        Self {
+            valid: report.valid,
+            warnings: report
+                .warnings
+                .iter()
+                .map(CircuitValidationIssueDto::from)
+                .collect(),
+            errors: report
+                .errors
+                .iter()
+                .map(CircuitValidationIssueDto::from)
+                .collect(),
+        }
+    }
+}
+
+impl From<&hotsas_core::CircuitValidationIssue> for CircuitValidationIssueDto {
+    fn from(issue: &hotsas_core::CircuitValidationIssue) -> Self {
+        Self {
+            code: issue.code.clone(),
+            message: issue.message.clone(),
+            component_id: issue.component_id.clone(),
+            net_id: issue.net_id.clone(),
+        }
+    }
 }
 
 impl From<&ValueWithUnit> for ValueDto {

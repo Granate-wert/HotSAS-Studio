@@ -5,7 +5,10 @@ import { PreBlock } from "../components/PreBlock";
 import { ProjectMetrics } from "../components/ProjectMetrics";
 import { ReportPanel } from "../components/ReportPanel";
 import { SchematicCanvas } from "../components/SchematicCanvas";
+import { CircuitValidationPanel } from "../components/schematic/CircuitValidationPanel";
+import { SchematicPropertyPanel } from "../components/schematic/SchematicPropertyPanel";
 import { SimulationChart } from "../components/SimulationChart";
+import type { CircuitValidationReportDto, ProjectDto, SelectedComponentDto } from "../types";
 import type { ProjectMetricsData } from "./screenTypes";
 
 type SchematicScreenProps = ProjectMetricsData & {
@@ -15,6 +18,11 @@ type SchematicScreenProps = ProjectMetricsData & {
   onMarkdown: () => void;
   onHtml: () => void;
   hasProject: boolean;
+  selectedComponent: SelectedComponentDto | null;
+  validationReport: CircuitValidationReportDto | null;
+  onSelectComponent: (instanceId: string) => void;
+  onValidate: (report: CircuitValidationReportDto) => void;
+  onPropertyUpdate: () => void;
 };
 
 export function SchematicScreen({
@@ -28,20 +36,40 @@ export function SchematicScreen({
   onMarkdown,
   onHtml,
   hasProject,
+  selectedComponent,
+  validationReport,
+  onSelectComponent,
+  onValidate,
+  onPropertyUpdate,
 }: SchematicScreenProps) {
   return (
     <div className="grid">
       <section className="schematic-panel">
-        <SchematicCanvas project={project} />
+        <SchematicCanvas project={project} onSelectComponent={onSelectComponent} />
       </section>
 
       <aside className="side-panel">
-        <ProjectMetrics
-          project={project}
-          formulaResult={formulaResult}
-          preferredValue={preferredValue}
-          simulation={simulation}
-        />
+        <Tabs defaultValue="properties" className="tabs">
+          <Tabs.List>
+            <Tabs.Tab value="properties">Properties</Tabs.Tab>
+            <Tabs.Tab value="validation">Validation</Tabs.Tab>
+            <Tabs.Tab value="metrics">Metrics</Tabs.Tab>
+          </Tabs.List>
+          <Tabs.Panel value="properties">
+            <SchematicPropertyPanel component={selectedComponent} onUpdate={onPropertyUpdate} />
+          </Tabs.Panel>
+          <Tabs.Panel value="validation">
+            <CircuitValidationPanel report={validationReport} onValidate={onValidate} />
+          </Tabs.Panel>
+          <Tabs.Panel value="metrics">
+            <ProjectMetrics
+              project={project}
+              formulaResult={formulaResult}
+              preferredValue={preferredValue}
+              simulation={simulation}
+            />
+          </Tabs.Panel>
+        </Tabs>
       </aside>
 
       <section className="bottom-panel">

@@ -3,10 +3,10 @@ use hotsas_adapters::{
     MockSimulationEngine, SimpleFormulaEngine, SpiceNetlistExporter,
 };
 use hotsas_api::{
-    ApiError, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
-    FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi, PreferredValueDto, ProjectDto,
-    ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
-    SimulationResultDto, VerticalSliceDto,
+    ApiError, CircuitValidationReportDto, FormulaCalculationRequestDto, FormulaDetailsDto,
+    FormulaEvaluationResultDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi,
+    PreferredValueDto, ProjectDto, ProjectPackageManifestDto, ProjectPackageValidationReportDto,
+    SaveProjectDto, SelectedComponentDto, SimulationResultDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -185,6 +185,43 @@ fn run_vertical_slice_preview(api: State<'_, HotSasApi>) -> Result<VerticalSlice
 }
 
 #[tauri::command]
+fn get_selected_component(
+    api: State<'_, HotSasApi>,
+    instance_id: String,
+) -> Result<SelectedComponentDto, String> {
+    log::info!("COMMAND get_selected_component instance_id={instance_id}");
+    let result = api.get_selected_component(instance_id).map_err(tauri_error);
+    log_command_result("get_selected_component", &result);
+    result
+}
+
+#[tauri::command]
+fn update_component_parameter(
+    mut api: State<'_, HotSasApi>,
+    instance_id: String,
+    parameter_name: String,
+    value: String,
+    unit: Option<String>,
+) -> Result<ProjectDto, String> {
+    log::info!("COMMAND update_component_parameter instance_id={instance_id} parameter={parameter_name} value={value} unit={unit:?}");
+    let result = api
+        .update_component_parameter(instance_id, parameter_name, value, unit)
+        .map_err(tauri_error);
+    log_command_result("update_component_parameter", &result);
+    result
+}
+
+#[tauri::command]
+fn validate_current_circuit(
+    api: State<'_, HotSasApi>,
+) -> Result<CircuitValidationReportDto, String> {
+    log::info!("COMMAND validate_current_circuit");
+    let result = api.validate_current_circuit().map_err(tauri_error);
+    log_command_result("validate_current_circuit", &result);
+    result
+}
+
+#[tauri::command]
 fn load_formula_packs(api: State<'_, HotSasApi>) -> Result<Vec<FormulaPackDto>, String> {
     log::info!("COMMAND load_formula_packs");
     let loader = FormulaPackFileLoader;
@@ -292,6 +329,9 @@ pub fn run() {
             load_project_package,
             validate_project_package,
             run_vertical_slice_preview,
+            get_selected_component,
+            update_component_parameter,
+            validate_current_circuit,
             load_formula_packs,
             list_formulas,
             list_formula_categories,

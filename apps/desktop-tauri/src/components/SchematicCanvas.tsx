@@ -1,9 +1,43 @@
-import { Stack, Text } from "@mantine/core";
 import { Background, Controls, MiniMap, ReactFlow, type Edge, type Node } from "@xyflow/react";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { ProjectDto } from "../types";
+import {
+  CapacitorNode,
+  GenericComponentNode,
+  GroundNode,
+  ResistorNode,
+  VoltageSourceNode,
+} from "./schematic/nodes";
 
-export function SchematicCanvas({ project }: { project: ProjectDto | null }) {
+const nodeTypes = {
+  resistor: ResistorNode,
+  capacitor: CapacitorNode,
+  voltage_source: VoltageSourceNode,
+  ground: GroundNode,
+  generic: GenericComponentNode,
+};
+
+function mapComponentKindToNodeType(kind: string): string {
+  switch (kind) {
+    case "resistor":
+      return "resistor";
+    case "capacitor":
+      return "capacitor";
+    case "voltage_source":
+      return "voltage_source";
+    case "ground":
+      return "ground";
+    default:
+      return "generic";
+  }
+}
+
+type SchematicCanvasProps = {
+  project: ProjectDto | null;
+  onSelectComponent?: (instanceId: string) => void;
+};
+
+export function SchematicCanvas({ project, onSelectComponent }: SchematicCanvasProps) {
   const { nodes, edges } = useMemo(() => {
     if (!project) {
       return { nodes: [], edges: [] };
@@ -11,19 +45,11 @@ export function SchematicCanvas({ project }: { project: ProjectDto | null }) {
 
     const nodes: Node[] = project.schematic.components.map((component) => ({
       id: component.instance_id,
-      type: "default",
+      type: mapComponentKindToNodeType(component.component_kind),
       position: { x: component.x, y: component.y },
       data: {
-        label: (
-          <Stack gap={2}>
-            <Text fw={700} size="sm">
-              {component.instance_id}
-            </Text>
-            <Text size="xs" c="dimmed">
-              {component.definition_id}
-            </Text>
-          </Stack>
-        ),
+        component,
+        onSelect: onSelectComponent,
       },
     }));
 
@@ -38,11 +64,24 @@ export function SchematicCanvas({ project }: { project: ProjectDto | null }) {
       }));
 
     return { nodes, edges };
-  }, [project]);
+  }, [project, onSelectComponent]);
+
+  const handleNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      onSelectComponent?.(node.id);
+    },
+    [onSelectComponent],
+  );
 
   return (
     <div className="canvas">
-      <ReactFlow nodes={nodes} edges={edges} fitView>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodeClick={handleNodeClick}
+        fitView
+      >
         <Background />
         <Controls />
         <MiniMap pannable zoomable />

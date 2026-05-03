@@ -1,7 +1,7 @@
 use crate::{
-    ApplicationError, CircuitTemplateService, ExportService, FormulaService,
-    NetlistGenerationService, PreferredValuesService, ProjectPackageService, ProjectService,
-    SimulationService,
+    ApplicationError, CircuitTemplateService, CircuitValidationService, ExportService,
+    FormulaService, NetlistGenerationService, PreferredValuesService, ProjectPackageService,
+    ProjectService, SimulationService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
@@ -21,6 +21,7 @@ pub struct AppServices {
     formula_service: FormulaService,
     preferred_values_service: PreferredValuesService,
     circuit_template_service: CircuitTemplateService,
+    circuit_validation_service: CircuitValidationService,
     netlist_generation_service: NetlistGenerationService,
     simulation_service: SimulationService,
     export_service: ExportService,
@@ -41,6 +42,7 @@ impl AppServices {
             formula_service: FormulaService::new(formula_engine),
             preferred_values_service: PreferredValuesService,
             circuit_template_service: CircuitTemplateService,
+            circuit_validation_service: CircuitValidationService::new(),
             netlist_generation_service: NetlistGenerationService::new(netlist_exporter),
             simulation_service: SimulationService::new(simulation_engine),
             export_service: ExportService::new(report_exporter),
@@ -65,6 +67,10 @@ impl AppServices {
 
     pub fn circuit_template_service(&self) -> &CircuitTemplateService {
         &self.circuit_template_service
+    }
+
+    pub fn circuit_validation_service(&self) -> &CircuitValidationService {
+        &self.circuit_validation_service
     }
 
     pub fn netlist_generation_service(&self) -> &NetlistGenerationService {
@@ -181,5 +187,12 @@ impl AppServices {
     ) -> Result<ProjectPackageValidationReport, ApplicationError> {
         self.project_package_service
             .validate_project_package(package_dir)
+    }
+
+    pub fn validate_circuit(
+        &self,
+        project: &CircuitProject,
+    ) -> hotsas_core::CircuitValidationReport {
+        self.circuit_validation_service.validate(&project.schematic)
     }
 }

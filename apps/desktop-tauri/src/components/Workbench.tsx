@@ -46,6 +46,12 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     setPackageResult,
     setBusy,
     setError,
+    selectedComponentId,
+    selectedComponent,
+    validationReport,
+    setSelectedComponentId,
+    setSelectedComponent,
+    setValidationReport,
   } = useHotSasStore();
 
   const run = async <T,>(operation: () => Promise<T>, onResult: (result: T) => void) => {
@@ -95,6 +101,27 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
             report.valid ? `Package is valid` : `Invalid: ${report.errors.join(", ")}`,
           ),
       ),
+    selectComponent: (instanceId: string) =>
+      run(
+        () => backend.getSelectedComponent(instanceId),
+        (component) => {
+          setSelectedComponentId(instanceId);
+          setSelectedComponent(component);
+        },
+      ),
+    validateCircuit: () =>
+      run(
+        () => backend.validateCurrentCircuit(),
+        (report) => setValidationReport(report),
+      ),
+    refreshSelectedComponent: () => {
+      if (selectedComponentId) {
+        run(
+          () => backend.getSelectedComponent(selectedComponentId),
+          (component) => setSelectedComponent(component),
+        );
+      }
+    },
   };
   const hasProject = Boolean(project);
 
@@ -202,6 +229,8 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         htmlReport,
         busy,
         hasProject,
+        selectedComponent,
+        validationReport,
         actions,
       })}
     </div>
@@ -220,6 +249,8 @@ function renderScreen(
     htmlReport: string;
     busy: boolean;
     hasProject: boolean;
+    selectedComponent: ReturnType<typeof useHotSasStore.getState>["selectedComponent"];
+    validationReport: ReturnType<typeof useHotSasStore.getState>["validationReport"];
     actions: {
       createDemoProject: () => void;
       calculateCutoff: () => void;
@@ -231,6 +262,9 @@ function renderScreen(
       saveProjectPackage: () => void;
       loadProjectPackage: () => void;
       validateProjectPackage: () => void;
+      selectComponent: (instanceId: string) => void;
+      validateCircuit: () => void;
+      refreshSelectedComponent: () => void;
     };
   },
 ) {
@@ -263,6 +297,11 @@ function renderScreen(
         onMarkdown={context.actions.exportMarkdown}
         onHtml={context.actions.exportHtml}
         hasProject={context.hasProject}
+        selectedComponent={context.selectedComponent}
+        validationReport={context.validationReport}
+        onSelectComponent={context.actions.selectComponent}
+        onValidate={context.actions.validateCircuit}
+        onPropertyUpdate={context.actions.refreshSelectedComponent}
       />
     );
   }

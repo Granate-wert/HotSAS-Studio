@@ -271,9 +271,43 @@ This stage verifies:
 
 ---
 
+## v1.3 — Schematic Editor Foundations
+
+### Tests
+
+- **Symbol / Pin Models** (`core/tests/symbol_pin_tests.rs`)
+  - Resistor symbol has 2 passive pins
+  - Capacitor symbol has 2 passive pins
+  - Voltage source has p/n pins
+  - Ground has gnd pin
+  - Pin positions are finite
+
+- **Circuit Validation** (`application/tests/circuit_validation_tests.rs`)
+  - Valid RC low-pass has no errors
+  - Missing ground returns error
+  - Empty circuit returns error
+  - Duplicated component id returns error
+  - Missing required parameter returns error
+  - Floating net returns warning
+
+- **Schematic Editor API** (`api/tests/schematic_editor_api_tests.rs`)
+  - `get_selected_component` R1 returns parameters and symbol
+  - Missing component id returns error
+  - `update_component_parameter` changes project
+  - Invalid value returns error
+  - `validate_current_circuit` returns report
+
+- **Frontend Schematic** (`src/components/schematic/__tests__/`)
+  - PropertyPanel renders placeholder when no selection
+  - PropertyPanel renders selected component parameters
+  - ValidationPanel renders Validate Circuit button
+  - ValidationPanel calls onValidate after validate click
+
+---
+
 ## Test Summary
 
-As of v1.2, the Rust workspace runs **85 tests** across all crates with **zero failures**, and the frontend runs **12 UI tests** with **zero failures**.
+As of v1.3, the Rust workspace runs **96 tests** across all crates with **zero failures**, and the frontend runs **16 UI tests** with **zero failures**.
 
 ---
 

@@ -55,6 +55,17 @@ Desktop engineering application for schematic analysis, formula-driven circuit t
 - Formula Library UI: variable inputs + **Calculate** button.
 - Old RC-specific commands preserved for compatibility.
 
+### v1.3 — Schematic Editor Foundations
+
+- Added pin/symbol foundations: `PinDefinition`, `ElectricalPinType`, `PinPosition`, `PinSide`, `SymbolDefinition`.
+- Added seed symbols for resistor, capacitor, voltage source, ground.
+- Added `CircuitValidationService` with checks: empty circuit, missing ground, duplicated ids, missing parameters, floating nets, unknown references.
+- Added backend API: `get_selected_component`, `update_component_parameter`, `validate_current_circuit`.
+- Added custom React Flow nodes: ResistorNode, CapacitorNode, VoltageSourceNode, GroundNode.
+- Added `SchematicPropertyPanel` for viewing/editing component parameters.
+- Added `CircuitValidationPanel` for running circuit validation.
+- React Flow remains view adapter only; backend remains source of truth.
+
 ---
 
 ## Technology Stack

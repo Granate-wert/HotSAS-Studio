@@ -10,13 +10,42 @@ export type ParameterDto = {
   value: ValueDto;
 };
 
+export type PinDto = {
+  id: string;
+  name: string;
+  number: string;
+  electrical_type: string;
+  x: number;
+  y: number;
+  side: string;
+};
+
+export type SymbolDto = {
+  id: string;
+  title: string;
+  component_kind: string;
+  width: number;
+  height: number;
+  pins: PinDto[];
+};
+
+export type ConnectedPinDto = {
+  pin_id: string;
+  net_id: string;
+};
+
 export type ComponentDto = {
   instance_id: string;
   definition_id: string;
+  component_kind: string;
+  display_label: string;
   x: number;
   y: number;
   rotation_degrees: number;
   parameters: ParameterDto[];
+  symbol: SymbolDto | null;
+  pins: PinDto[];
+  connected_nets: ConnectedPinDto[];
 };
 
 export type WireDto = {
@@ -193,6 +222,33 @@ export type ProjectPackageValidationReportDto = {
   missing_files: string[];
   warnings: string[];
   errors: string[];
+};
+
+export type ComponentParameterDto = {
+  name: string;
+  value: string;
+  unit?: string | null;
+};
+
+export type SelectedComponentDto = {
+  instance_id: string;
+  component_kind: string;
+  title: string;
+  parameters: ComponentParameterDto[];
+  symbol: SymbolDto | null;
+};
+
+export type CircuitValidationIssueDto = {
+  code: string;
+  message: string;
+  component_id: string | null;
+  net_id: string | null;
+};
+
+export type CircuitValidationReportDto = {
+  valid: boolean;
+  warnings: CircuitValidationIssueDto[];
+  errors: CircuitValidationIssueDto[];
 };
 
 export type ApiErrorDto = {

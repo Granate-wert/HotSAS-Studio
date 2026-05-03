@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   ApiErrorDto,
+  CircuitValidationReportDto,
   FormulaCalculationRequestDto,
   FormulaDetailsDto,
   FormulaEvaluationResultDto,
@@ -12,6 +13,7 @@ import type {
   ProjectPackageManifestDto,
   ProjectPackageValidationReportDto,
   SaveProjectDto,
+  SelectedComponentDto,
   SimulationResultDto,
   VerticalSliceDto,
 } from "../types";
@@ -55,6 +57,22 @@ export const backend = {
   validateProjectPackage: (packageDir: string) =>
     invokeCommand<ProjectPackageValidationReportDto>("validate_project_package", { packageDir }),
   runVerticalSlicePreview: () => invokeCommand<VerticalSliceDto>("run_vertical_slice_preview"),
+  getSelectedComponent: (instanceId: string) =>
+    invokeCommand<SelectedComponentDto>("get_selected_component", { instanceId }),
+  updateComponentParameter: (
+    instanceId: string,
+    parameterName: string,
+    value: string,
+    unit?: string | null,
+  ) =>
+    invokeCommand<ProjectDto>("update_component_parameter", {
+      instanceId,
+      parameterName,
+      value,
+      unit,
+    }),
+  validateCurrentCircuit: () =>
+    invokeCommand<CircuitValidationReportDto>("validate_current_circuit"),
   loadFormulaPacks: () => invokeCommand<FormulaPackDto[]>("load_formula_packs"),
   listFormulas: () => invokeCommand<FormulaSummaryDto[]>("list_formulas"),
   listFormulaCategories: () => invokeCommand<string[]>("list_formula_categories"),

@@ -1,8 +1,9 @@
 use crate::{
-    ApiError, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
-    FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, PreferredValueDto,
-    ProjectDto, ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
-    SimulationResultDto, ValueDto, VerticalSliceDto,
+    ApiError, CircuitValidationReportDto, ComponentParameterDto, FormulaCalculationRequestDto,
+    FormulaDetailsDto, FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto,
+    FormulaResultDto, FormulaSummaryDto, PreferredValueDto, ProjectDto, ProjectPackageManifestDto,
+    ProjectPackageValidationReportDto, SaveProjectDto, SelectedComponentDto, SimulationResultDto,
+    SymbolDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, FormulaRegistryService};
 use hotsas_core::{
@@ -192,6 +193,81 @@ impl HotSasApi {
             .services
             .validate_project_package(Path::new(&package_dir))?;
         Ok(ProjectPackageValidationReportDto::from(&report))
+    }
+
+    pub fn get_selected_component(
+        &self,
+        instance_id: String,
+    ) -> Result<SelectedComponentDto, ApiError> {
+        let project = self.current_project()?;
+        let component = project
+            .schematic
+            .components
+            .iter()
+            .find(|c| c.instance_id == instance_id)
+            .ok_or_else(|| {
+                ApiError::InvalidInput(format!("component '{}' not found", instance_id))
+            })?;
+        let symbol = hotsas_core::seed_symbol_for_kind(&component.definition_id);
+        let parameters: Vec<ComponentParameterDto> = component
+            .overridden_parameters
+            .iter()
+            .map(|(name, value)| ComponentParameterDto {
+                name: name.clone(),
+                value: value.value.original.clone(),
+                unit: Some(value.unit.symbol().to_string()),
+            })
+            .collect();
+        Ok(SelectedComponentDto {
+            instance_id: component.instance_id.clone(),
+            component_kind: component.definition_id.clone(),
+            title: symbol
+                .as_ref()
+                .map(|s| s.title.clone())
+                .unwrap_or_else(|| component.definition_id.clone()),
+            parameters,
+            symbol: symbol.as_ref().map(SymbolDto::from),
+        })
+    }
+
+    pub fn update_component_parameter(
+        &mut self,
+        instance_id: String,
+        parameter_name: String,
+        value: String,
+        unit: Option<String>,
+    ) -> Result<ProjectDto, ApiError> {
+        let mut project = self.current_project()?;
+        let component = project
+            .schematic
+            .components
+            .iter_mut()
+            .find(|c| c.instance_id == instance_id)
+            .ok_or_else(|| {
+                ApiError::InvalidInput(format!("component '{}' not found", instance_id))
+            })?;
+        let engineering_unit = match unit.as_deref() {
+            Some("Ohm") => EngineeringUnit::Ohm,
+            Some("F") => EngineeringUnit::Farad,
+            Some("Hz") => EngineeringUnit::Hertz,
+            Some("V") => EngineeringUnit::Volt,
+            Some("") | None => EngineeringUnit::Unitless,
+            Some(other) => {
+                return Err(ApiError::InvalidInput(format!("unsupported unit: {other}")))
+            }
+        };
+        let parsed = ValueWithUnit::parse_with_default(&value, engineering_unit)?;
+        component
+            .overridden_parameters
+            .insert(parameter_name, parsed);
+        self.replace_current_project(project.clone())?;
+        Ok(ProjectDto::from(&project))
+    }
+
+    pub fn validate_current_circuit(&self) -> Result<CircuitValidationReportDto, ApiError> {
+        let project = self.current_project()?;
+        let report = self.services.validate_circuit(&project);
+        Ok(CircuitValidationReportDto::from(&report))
     }
 
     pub fn run_vertical_slice_preview(&self) -> Result<VerticalSliceDto, ApiError> {
