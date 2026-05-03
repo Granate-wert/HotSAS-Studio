@@ -34,12 +34,14 @@ export function ExportScreen({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<ExportResultDto[]>([]);
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
 
   useEffect(() => {
-    if (capabilities.length === 0) {
+    if (!hasAttemptedLoad && capabilities.length === 0) {
+      setHasAttemptedLoad(true);
       onLoadCapabilities();
     }
-  }, [capabilities.length, onLoadCapabilities]);
+  }, [hasAttemptedLoad, capabilities.length, onLoadCapabilities]);
 
   const handleExport = async (format: string) => {
     setBusy(true);
