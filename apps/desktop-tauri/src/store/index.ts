@@ -2,6 +2,8 @@ import { create } from "zustand";
 import type {
   CircuitValidationReportDto,
   FormulaResultDto,
+  NotebookEvaluationResultDto,
+  NotebookStateDto,
   PreferredValueDto,
   ProjectDto,
   SelectedComponentDto,
@@ -24,6 +26,8 @@ type HotSasState = {
   selectedComponentId: string | null;
   selectedComponent: SelectedComponentDto | null;
   validationReport: CircuitValidationReportDto | null;
+  notebookState: NotebookStateDto | null;
+  lastNotebookResult: NotebookEvaluationResultDto | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -39,6 +43,8 @@ type HotSasState = {
   setSelectedComponentId: (id: string | null) => void;
   setSelectedComponent: (component: SelectedComponentDto | null) => void;
   setValidationReport: (report: CircuitValidationReportDto | null) => void;
+  setNotebookState: (state: NotebookStateDto | null) => void;
+  setLastNotebookResult: (result: NotebookEvaluationResultDto | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -57,6 +63,8 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   selectedComponentId: null,
   selectedComponent: null,
   validationReport: null,
+  notebookState: null,
+  lastNotebookResult: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -72,4 +80,6 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setSelectedComponentId: (selectedComponentId) => set({ selectedComponentId }),
   setSelectedComponent: (selectedComponent) => set({ selectedComponent }),
   setValidationReport: (validationReport) => set({ validationReport }),
+  setNotebookState: (notebookState) => set({ notebookState }),
+  setLastNotebookResult: (lastNotebookResult) => set({ lastNotebookResult }),
 }));

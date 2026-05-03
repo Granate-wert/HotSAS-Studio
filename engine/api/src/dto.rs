@@ -1,6 +1,7 @@
 use hotsas_core::{
-    CircuitProject, FormulaDefinition, FormulaEquation, FormulaOutput, FormulaPackMetadata,
-    FormulaVariable, GraphSeries, PreferredValueResult, ProjectPackageManifest,
+    CircuitProject, EngineeringNotebook, FormulaDefinition, FormulaEquation, FormulaOutput,
+    FormulaPackMetadata, FormulaVariable, GraphSeries, NotebookEvaluationResult,
+    NotebookHistoryEntry, PreferredValueResult, ProjectPackageManifest,
     ProjectPackageValidationReport, SimulationResult, ValueWithUnit,
 };
 use serde::{Deserialize, Serialize};
@@ -613,4 +614,117 @@ impl From<&ProjectPackageValidationReport> for ProjectPackageValidationReportDto
             errors: report.errors.clone(),
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotebookVariableDto {
+    pub name: String,
+    pub value: ValueDto,
+}
+
+impl From<(&String, &ValueWithUnit)> for NotebookVariableDto {
+    fn from((name, value): (&String, &ValueWithUnit)) -> Self {
+        Self {
+            name: name.clone(),
+            value: ValueDto::from(value),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotebookOutputDto {
+    pub name: String,
+    pub value: ValueDto,
+}
+
+impl From<(&String, &ValueWithUnit)> for NotebookOutputDto {
+    fn from((name, value): (&String, &ValueWithUnit)) -> Self {
+        Self {
+            name: name.clone(),
+            value: ValueDto::from(value),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotebookEvaluationRequestDto {
+    pub input: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotebookEvaluationResultDto {
+    pub input: String,
+    pub status: String,
+    pub kind: String,
+    pub outputs: Vec<NotebookOutputDto>,
+    pub variables: Vec<NotebookVariableDto>,
+    pub message: Option<String>,
+    pub warnings: Vec<String>,
+}
+
+impl From<&NotebookEvaluationResult> for NotebookEvaluationResultDto {
+    fn from(result: &NotebookEvaluationResult) -> Self {
+        Self {
+            input: result.input.clone(),
+            status: result.status.as_str().to_string(),
+            kind: format!("{:?}", result.kind),
+            outputs: result.outputs.iter().map(NotebookOutputDto::from).collect(),
+            variables: result
+                .variables
+                .iter()
+                .map(NotebookVariableDto::from)
+                .collect(),
+            message: result.message.clone(),
+            warnings: result.warnings.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotebookHistoryEntryDto {
+    pub id: String,
+    pub input: String,
+    pub result_summary: String,
+    pub status: String,
+}
+
+impl From<&NotebookHistoryEntry> for NotebookHistoryEntryDto {
+    fn from(entry: &NotebookHistoryEntry) -> Self {
+        Self {
+            id: entry.id.clone(),
+            input: entry.input.clone(),
+            result_summary: entry.result_summary.clone(),
+            status: entry.status.as_str().to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotebookStateDto {
+    pub variables: Vec<NotebookVariableDto>,
+    pub history: Vec<NotebookHistoryEntryDto>,
+}
+
+impl From<&EngineeringNotebook> for NotebookStateDto {
+    fn from(notebook: &EngineeringNotebook) -> Self {
+        Self {
+            variables: notebook
+                .variables
+                .iter()
+                .map(NotebookVariableDto::from)
+                .collect(),
+            history: notebook
+                .history
+                .iter()
+                .map(NotebookHistoryEntryDto::from)
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ApplyNotebookValueRequestDto {
+    pub instance_id: String,
+    pub parameter_name: String,
+    pub output_name: String,
 }

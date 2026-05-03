@@ -3,10 +3,12 @@ use hotsas_adapters::{
     MockSimulationEngine, SimpleFormulaEngine, SpiceNetlistExporter,
 };
 use hotsas_api::{
-    ApiError, CircuitValidationReportDto, FormulaCalculationRequestDto, FormulaDetailsDto,
-    FormulaEvaluationResultDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi,
-    PreferredValueDto, ProjectDto, ProjectPackageManifestDto, ProjectPackageValidationReportDto,
-    SaveProjectDto, SelectedComponentDto, SimulationResultDto, VerticalSliceDto,
+    ApiError, ApplyNotebookValueRequestDto, CircuitValidationReportDto,
+    FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto, FormulaPackDto,
+    FormulaResultDto, FormulaSummaryDto, HotSasApi, NotebookEvaluationRequestDto,
+    NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto, ProjectDto,
+    ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
+    SelectedComponentDto, SimulationResultDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -285,6 +287,51 @@ fn calculate_formula(
     result
 }
 
+#[tauri::command]
+fn evaluate_notebook_input(
+    api: State<'_, HotSasApi>,
+    request: NotebookEvaluationRequestDto,
+) -> Result<NotebookEvaluationResultDto, String> {
+    log::info!("COMMAND evaluate_notebook_input input={}", request.input);
+    let result = api.evaluate_notebook_input(request).map_err(tauri_error);
+    log_command_result("evaluate_notebook_input", &result);
+    result
+}
+
+#[tauri::command]
+fn get_notebook_state(api: State<'_, HotSasApi>) -> Result<NotebookStateDto, String> {
+    log::info!("COMMAND get_notebook_state");
+    let result = api.get_notebook_state().map_err(tauri_error);
+    log_command_result("get_notebook_state", &result);
+    result
+}
+
+#[tauri::command]
+fn clear_notebook(api: State<'_, HotSasApi>) -> Result<NotebookStateDto, String> {
+    log::info!("COMMAND clear_notebook");
+    let result = api.clear_notebook().map_err(tauri_error);
+    log_command_result("clear_notebook", &result);
+    result
+}
+
+#[tauri::command]
+fn apply_notebook_output_to_component(
+    api: State<'_, HotSasApi>,
+    request: ApplyNotebookValueRequestDto,
+) -> Result<ProjectDto, String> {
+    log::info!(
+        "COMMAND apply_notebook_output_to_component instance_id={} parameter={} output={}",
+        request.instance_id,
+        request.parameter_name,
+        request.output_name
+    );
+    let result = api
+        .apply_notebook_output_to_component(request)
+        .map_err(tauri_error);
+    log_command_result("apply_notebook_output_to_component", &result);
+    result
+}
+
 fn log_command_result<T>(name: &str, result: &Result<T, String>) {
     match result {
         Ok(_) => log::info!("Command {name} succeeded"),
@@ -338,6 +385,10 @@ pub fn run() {
             get_formula,
             get_formula_pack_metadata,
             calculate_formula,
+            evaluate_notebook_input,
+            get_notebook_state,
+            clear_notebook,
+            apply_notebook_output_to_component,
             write_log
         ])
         .run(tauri::generate_context!())

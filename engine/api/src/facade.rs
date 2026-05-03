@@ -1,14 +1,15 @@
 use crate::{
-    ApiError, CircuitValidationReportDto, ComponentParameterDto, FormulaCalculationRequestDto,
-    FormulaDetailsDto, FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto,
-    FormulaResultDto, FormulaSummaryDto, PreferredValueDto, ProjectDto, ProjectPackageManifestDto,
-    ProjectPackageValidationReportDto, SaveProjectDto, SelectedComponentDto, SimulationResultDto,
-    SymbolDto, ValueDto, VerticalSliceDto,
+    ApiError, ApplyNotebookValueRequestDto, CircuitValidationReportDto, ComponentParameterDto,
+    FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
+    FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto,
+    NotebookEvaluationRequestDto, NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto,
+    ProjectDto, ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
+    SelectedComponentDto, SimulationResultDto, SymbolDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, FormulaRegistryService};
 use hotsas_core::{
-    rc_low_pass_formula, CircuitProject, EngineeringUnit, FormulaDefinition, FormulaPack,
-    ValueWithUnit,
+    rc_low_pass_formula, CircuitProject, EngineeringNotebook, EngineeringUnit, FormulaDefinition,
+    FormulaPack, NotebookEvaluationStatus, NotebookHistoryEntry, ValueWithUnit,
 };
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -18,6 +19,7 @@ pub struct HotSasApi {
     services: AppServices,
     current_project: Mutex<Option<CircuitProject>>,
     formula_registry: Mutex<FormulaRegistryService>,
+    notebook: Mutex<EngineeringNotebook>,
 }
 
 impl HotSasApi {
@@ -26,6 +28,7 @@ impl HotSasApi {
             services,
             current_project: Mutex::new(None),
             formula_registry: Mutex::new(fallback_formula_registry()),
+            notebook: Mutex::new(EngineeringNotebook::new("default", "Engineering Notebook")),
         }
     }
 
@@ -348,6 +351,106 @@ impl HotSasApi {
         }
 
         Ok(variables)
+    }
+
+    pub fn evaluate_notebook_input(
+        &self,
+        request: NotebookEvaluationRequestDto,
+    ) -> Result<NotebookEvaluationResultDto, ApiError> {
+        let registry = self.formula_registry()?;
+        let mut notebook = self
+            .notebook
+            .lock()
+            .map_err(|_| ApiError::State("notebook lock poisoned".to_string()))?;
+        let result = self
+            .services
+            .engineering_notebook_service()
+            .evaluate_input(
+                &request.input,
+                &notebook.variables,
+                &registry,
+                self.services.preferred_values_service(),
+                self.services.formula_service(),
+            )?;
+        if !result.variables.is_empty() {
+            notebook.variables = result.variables.clone();
+        }
+        let summary = if result.outputs.is_empty() {
+            result.message.clone().unwrap_or_default()
+        } else {
+            result
+                .outputs
+                .iter()
+                .map(|(name, value)| format!("{}={}", name, value.original()))
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
+        let hist_id = format!("hist-{}", notebook.history.len());
+        notebook.history.push(NotebookHistoryEntry {
+            id: hist_id,
+            input: request.input.clone(),
+            result_summary: summary,
+            status: result.status.clone(),
+        });
+        Ok(NotebookEvaluationResultDto::from(&result))
+    }
+
+    pub fn get_notebook_state(&self) -> Result<NotebookStateDto, ApiError> {
+        let notebook = self
+            .notebook
+            .lock()
+            .map_err(|_| ApiError::State("notebook lock poisoned".to_string()))?;
+        Ok(NotebookStateDto::from(&*notebook))
+    }
+
+    pub fn clear_notebook(&self) -> Result<NotebookStateDto, ApiError> {
+        let mut notebook = self
+            .notebook
+            .lock()
+            .map_err(|_| ApiError::State("notebook lock poisoned".to_string()))?;
+        *notebook = EngineeringNotebook::new("default", "Engineering Notebook");
+        Ok(NotebookStateDto::from(&*notebook))
+    }
+
+    pub fn apply_notebook_output_to_component(
+        &self,
+        request: ApplyNotebookValueRequestDto,
+    ) -> Result<ProjectDto, ApiError> {
+        let mut project = self.current_project()?;
+        let notebook = self
+            .notebook
+            .lock()
+            .map_err(|_| ApiError::State("notebook lock poisoned".to_string()))?;
+        let last_result = notebook
+            .history
+            .iter()
+            .filter(|h| h.status == NotebookEvaluationStatus::Success)
+            .last()
+            .and_then(|h| {
+                notebook
+                    .blocks
+                    .iter()
+                    .find(|b| b.input == h.input)
+                    .and_then(|b| b.result.clone())
+            });
+        let value = last_result
+            .and_then(|r| r.outputs.get(&request.output_name).cloned())
+            .ok_or_else(|| {
+                ApiError::InvalidInput(format!(
+                    "output '{}' not found in last notebook result",
+                    request.output_name
+                ))
+            })?;
+        self.services
+            .engineering_notebook_service()
+            .apply_result_to_component(
+                &mut project,
+                &request.instance_id,
+                &request.parameter_name,
+                value,
+            )?;
+        self.replace_current_project(project.clone())?;
+        Ok(ProjectDto::from(&project))
     }
 
     fn replace_current_project(&self, project: CircuitProject) -> Result<(), ApiError> {

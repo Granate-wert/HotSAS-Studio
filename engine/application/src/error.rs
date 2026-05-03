@@ -11,6 +11,7 @@ pub enum ApplicationError {
     DuplicateFormulaId(String),
     InvalidFormulaPack(String),
     InvalidBinding(String),
+    InvalidInput(String),
 }
 
 impl fmt::Display for ApplicationError {
@@ -23,6 +24,7 @@ impl fmt::Display for ApplicationError {
             Self::DuplicateFormulaId(id) => write!(f, "duplicate formula id: {id}"),
             Self::InvalidFormulaPack(message) => write!(f, "invalid formula pack: {message}"),
             Self::InvalidBinding(message) => write!(f, "invalid formula binding: {message}"),
+            Self::InvalidInput(message) => write!(f, "invalid input: {message}"),
         }
     }
 }

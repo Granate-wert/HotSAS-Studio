@@ -160,6 +160,10 @@ impl ValueWithUnit {
         self.value.si_value
     }
 
+    pub fn original(&self) -> &str {
+        &self.value.original
+    }
+
     pub fn parse_with_default(
         input: &str,
         default_unit: EngineeringUnit,

@@ -1,7 +1,7 @@
 use crate::{
-    ApplicationError, CircuitTemplateService, CircuitValidationService, ExportService,
-    FormulaService, NetlistGenerationService, PreferredValuesService, ProjectPackageService,
-    ProjectService, SimulationService,
+    ApplicationError, CircuitTemplateService, CircuitValidationService, EngineeringNotebookService,
+    ExportService, FormulaService, NetlistGenerationService, PreferredValuesService,
+    ProjectPackageService, ProjectService, SimulationService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
@@ -22,6 +22,7 @@ pub struct AppServices {
     preferred_values_service: PreferredValuesService,
     circuit_template_service: CircuitTemplateService,
     circuit_validation_service: CircuitValidationService,
+    engineering_notebook_service: EngineeringNotebookService,
     netlist_generation_service: NetlistGenerationService,
     simulation_service: SimulationService,
     export_service: ExportService,
@@ -43,6 +44,7 @@ impl AppServices {
             preferred_values_service: PreferredValuesService,
             circuit_template_service: CircuitTemplateService,
             circuit_validation_service: CircuitValidationService::new(),
+            engineering_notebook_service: EngineeringNotebookService::new(),
             netlist_generation_service: NetlistGenerationService::new(netlist_exporter),
             simulation_service: SimulationService::new(simulation_engine),
             export_service: ExportService::new(report_exporter),
@@ -71,6 +73,10 @@ impl AppServices {
 
     pub fn circuit_validation_service(&self) -> &CircuitValidationService {
         &self.circuit_validation_service
+    }
+
+    pub fn engineering_notebook_service(&self) -> &EngineeringNotebookService {
+        &self.engineering_notebook_service
     }
 
     pub fn netlist_generation_service(&self) -> &NetlistGenerationService {

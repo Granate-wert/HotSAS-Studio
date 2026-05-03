@@ -35,6 +35,7 @@ impl ApiError {
             Self::Application(ApplicationError::InvalidBinding(_)) => "invalid_formula_binding",
             Self::Application(ApplicationError::Core(_)) | Self::Core(_) => "core_error",
             Self::Application(ApplicationError::Port(_)) => "port_error",
+            Self::Application(ApplicationError::InvalidInput(_)) => "invalid_input",
             Self::InvalidInput(_) => "invalid_input",
             Self::State(_) => "state_error",
         }

@@ -2,6 +2,7 @@ pub mod circuit_query;
 pub mod circuit_validation;
 pub mod error;
 pub mod models;
+pub mod notebook;
 pub mod preferred_value_tables;
 pub mod preferred_values;
 pub mod project_package;
@@ -13,6 +14,7 @@ pub use circuit_query::CircuitQueryService;
 pub use circuit_validation::{CircuitValidationIssue, CircuitValidationReport};
 pub use error::CoreError;
 pub use models::*;
+pub use notebook::*;
 pub use preferred_values::*;
 pub use project_package::*;
 pub use symbol::{

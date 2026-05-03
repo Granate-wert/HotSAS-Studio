@@ -24,5 +24,9 @@ commands.allow = [
   "get_formula",
   "get_formula_pack_metadata",
   "calculate_formula",
+  "evaluate_notebook_input",
+  "get_notebook_state",
+  "clear_notebook",
+  "apply_notebook_output_to_component",
   "write_log",
 ]

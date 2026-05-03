@@ -256,3 +256,45 @@ export type ApiErrorDto = {
   message: string;
   details?: string | null;
 };
+
+export type NotebookVariableDto = {
+  name: string;
+  value: ValueDto;
+};
+
+export type NotebookOutputDto = {
+  name: string;
+  value: ValueDto;
+};
+
+export type NotebookEvaluationRequestDto = {
+  input: string;
+};
+
+export type NotebookEvaluationResultDto = {
+  input: string;
+  status: string;
+  kind: string;
+  outputs: NotebookOutputDto[];
+  variables: NotebookVariableDto[];
+  message?: string | null;
+  warnings: string[];
+};
+
+export type NotebookHistoryEntryDto = {
+  id: string;
+  input: string;
+  result_summary: string;
+  status: string;
+};
+
+export type NotebookStateDto = {
+  variables: NotebookVariableDto[];
+  history: NotebookHistoryEntryDto[];
+};
+
+export type ApplyNotebookValueRequestDto = {
+  instance_id: string;
+  parameter_name: string;
+  output_name: string;
+};

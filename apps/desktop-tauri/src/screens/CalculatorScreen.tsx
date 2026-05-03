@@ -1,12 +1,12 @@
 import { Title } from "@mantine/core";
-import { FormulaPanel } from "../components/FormulaPanel";
+import { EngineeringNotebook } from "../components/notebook/EngineeringNotebook";
 
 export function CalculatorScreen() {
   return (
     <section className="screen-panel">
       <div className="screen-content">
         <Title order={2}>Engineering Notebook</Title>
-        <FormulaPanel />
+        <EngineeringNotebook />
       </div>
     </section>
   );

@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   ApiErrorDto,
+  ApplyNotebookValueRequestDto,
   CircuitValidationReportDto,
   FormulaCalculationRequestDto,
   FormulaDetailsDto,
@@ -8,6 +9,9 @@ import type {
   FormulaPackDto,
   FormulaResultDto,
   FormulaSummaryDto,
+  NotebookEvaluationRequestDto,
+  NotebookEvaluationResultDto,
+  NotebookStateDto,
   PreferredValueDto,
   ProjectDto,
   ProjectPackageManifestDto,
@@ -80,6 +84,12 @@ export const backend = {
   getFormulaPackMetadata: () => invokeCommand<FormulaPackDto[]>("get_formula_pack_metadata"),
   calculateFormula: (request: FormulaCalculationRequestDto) =>
     invokeCommand<FormulaEvaluationResultDto>("calculate_formula", { request }),
+  evaluateNotebookInput: (request: NotebookEvaluationRequestDto) =>
+    invokeCommand<NotebookEvaluationResultDto>("evaluate_notebook_input", { request }),
+  getNotebookState: () => invokeCommand<NotebookStateDto>("get_notebook_state"),
+  clearNotebook: () => invokeCommand<NotebookStateDto>("clear_notebook"),
+  applyNotebookOutputToComponent: (request: ApplyNotebookValueRequestDto) =>
+    invokeCommand<ProjectDto>("apply_notebook_output_to_component", { request }),
   writeLog: (level: string, message: string) =>
     invokeCommand<void>("write_log", { level, message }),
 };
