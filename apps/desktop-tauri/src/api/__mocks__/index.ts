@@ -211,5 +211,31 @@ export const backend = {
       report_section_markdown: null,
     }),
   validateSelectedRegion: (_request: unknown) => Promise.resolve([]),
+  listExportCapabilities: () =>
+    Promise.resolve([
+      {
+        format: "markdown_report",
+        label: "Markdown Report",
+        description: "",
+        file_extension: "md",
+        available: true,
+      },
+      {
+        format: "spice_netlist",
+        label: "SPICE Netlist",
+        description: "",
+        file_extension: "cir",
+        available: true,
+      },
+    ]),
+  exportFile: (_request: unknown) =>
+    Promise.resolve({
+      format: "markdown_report",
+      content: "# Report",
+      file_path: null,
+      success: true,
+      message: "Exported",
+    }),
+  exportHistory: () => Promise.resolve([]),
   writeLog: (_level: string, _message: string) => Promise.resolve(),
 };

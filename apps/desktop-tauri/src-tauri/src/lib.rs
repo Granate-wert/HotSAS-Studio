@@ -1,12 +1,14 @@
 use hotsas_adapters::{
-    CircuitProjectPackageStorage, FormulaPackFileLoader, JsonComponentLibraryStorage,
-    JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine, SimpleFormulaEngine,
-    SpiceNetlistExporter,
+    AltiumWorkflowPackageExporter, BomCsvExporter, CircuitProjectPackageStorage,
+    ComponentLibraryJsonExporter, CsvSimulationDataExporter, FormulaPackFileLoader,
+    JsonComponentLibraryStorage, JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine,
+    SimpleFormulaEngine, SpiceNetlistExporter, SvgSchematicExporter,
 };
 use hotsas_api::{
     ApiError, ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitValidationReportDto,
     ComponentDetailsDto, ComponentLibraryDto, ComponentSearchRequestDto, ComponentSearchResultDto,
-    ComponentSummaryDto, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
+    ComponentSummaryDto, ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto,
+    ExportResultDto, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
     FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi, NotebookEvaluationRequestDto,
     NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto, ProjectDto,
     ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
@@ -90,6 +92,33 @@ fn validate_selected_region(
     log::info!("COMMAND validate_selected_region");
     let result = api.validate_selected_region(request).map_err(tauri_error);
     log_command_result("validate_selected_region", &result);
+    result
+}
+
+#[tauri::command]
+fn list_export_capabilities(api: State<'_, HotSasApi>) -> Result<Vec<ExportCapabilityDto>, String> {
+    log::info!("COMMAND list_export_capabilities");
+    let result = api.list_export_capabilities().map_err(tauri_error);
+    log_command_result("list_export_capabilities", &result);
+    result
+}
+
+#[tauri::command]
+fn export_file(
+    api: State<'_, HotSasApi>,
+    request: ExportRequestDto,
+) -> Result<ExportResultDto, String> {
+    log::info!("COMMAND export_file format={}", request.format);
+    let result = api.export(request).map_err(tauri_error);
+    log_command_result("export_file", &result);
+    result
+}
+
+#[tauri::command]
+fn export_history(api: State<'_, HotSasApi>) -> Result<Vec<ExportHistoryEntryDto>, String> {
+    log::info!("COMMAND export_history");
+    let result = api.export_history().map_err(tauri_error);
+    log_command_result("export_history", &result);
     result
 }
 
@@ -445,6 +474,10 @@ fn build_api() -> HotSasApi {
         Arc::new(MockSimulationEngine),
         Arc::new(MarkdownReportExporter),
         Arc::new(JsonComponentLibraryStorage),
+        Arc::new(BomCsvExporter),
+        Arc::new(CsvSimulationDataExporter),
+        Arc::new(ComponentLibraryJsonExporter),
+        Arc::new(SvgSchematicExporter),
     ))
 }
 
@@ -491,6 +524,9 @@ pub fn run() {
             preview_selected_region,
             analyze_selected_region,
             validate_selected_region,
+            list_export_capabilities,
+            export_file,
+            export_history,
             write_log
         ])
         .run(tauri::generate_context!())

@@ -1227,3 +1227,73 @@ impl From<&hotsas_core::SelectedRegionAnalysisResult> for SelectedRegionAnalysis
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExportCapabilityDto {
+    pub format: String,
+    pub label: String,
+    pub description: String,
+    pub file_extension: String,
+    pub available: bool,
+}
+
+impl From<&hotsas_core::ExportCapability> for ExportCapabilityDto {
+    fn from(cap: &hotsas_core::ExportCapability) -> Self {
+        Self {
+            format: cap.format.clone(),
+            label: cap.label.clone(),
+            description: cap.description.clone(),
+            file_extension: cap.file_extension.clone(),
+            available: cap.available,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExportResultDto {
+    pub format: String,
+    pub content: String,
+    pub file_path: Option<String>,
+    pub success: bool,
+    pub message: String,
+}
+
+impl From<&hotsas_core::ExportResult> for ExportResultDto {
+    fn from(result: &hotsas_core::ExportResult) -> Self {
+        Self {
+            format: result.format.clone(),
+            content: result.content.clone(),
+            file_path: result.file_path.clone(),
+            success: result.success,
+            message: result.message.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExportHistoryEntryDto {
+    pub timestamp: String,
+    pub format: String,
+    pub file_path: Option<String>,
+    pub success: bool,
+    pub message: String,
+}
+
+impl From<&hotsas_core::ExportHistoryEntry> for ExportHistoryEntryDto {
+    fn from(entry: &hotsas_core::ExportHistoryEntry) -> Self {
+        Self {
+            timestamp: entry.timestamp.clone(),
+            format: entry.format.clone(),
+            file_path: entry.file_path.clone(),
+            success: entry.success,
+            message: entry.message.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExportRequestDto {
+    pub format: String,
+    pub write_to_file: bool,
+    pub output_dir: Option<String>,
+}

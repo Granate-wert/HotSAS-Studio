@@ -1,16 +1,17 @@
 use crate::{
     ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
-    EngineeringNotebookService, ExportService, FormulaService, NetlistGenerationService,
-    PreferredValuesService, ProjectPackageService, ProjectService, SelectedRegionAnalysisService,
-    SimulationService,
+    EngineeringNotebookService, ExportCenterService, ExportService, FormulaService,
+    NetlistGenerationService, PreferredValuesService, ProjectPackageService, ProjectService,
+    SelectedRegionAnalysisService, SimulationService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
     ReportModel, SimulationResult, ValueWithUnit,
 };
 use hotsas_ports::{
-    ComponentLibraryPort, FormulaEnginePort, NetlistExporterPort, ProjectPackageStoragePort,
-    ReportExporterPort, SimulationEnginePort, StoragePort,
+    BomExporterPort, ComponentLibraryExporterPort, ComponentLibraryPort, FormulaEnginePort,
+    NetlistExporterPort, ProjectPackageStoragePort, ReportExporterPort, SchematicExporterPort,
+    SimulationDataExporterPort, SimulationEnginePort, StoragePort,
 };
 use std::path::Path;
 use std::sync::Arc;
@@ -27,6 +28,7 @@ pub struct AppServices {
     netlist_generation_service: NetlistGenerationService,
     simulation_service: SimulationService,
     export_service: ExportService,
+    export_center_service: ExportCenterService,
     component_library_service: ComponentLibraryService,
     selected_region_analysis_service: SelectedRegionAnalysisService,
 }
@@ -40,6 +42,10 @@ impl AppServices {
         simulation_engine: Arc<dyn SimulationEnginePort>,
         report_exporter: Arc<dyn ReportExporterPort>,
         component_library_port: Arc<dyn ComponentLibraryPort>,
+        bom_exporter: Arc<dyn BomExporterPort>,
+        simulation_data_exporter: Arc<dyn SimulationDataExporterPort>,
+        library_exporter: Arc<dyn ComponentLibraryExporterPort>,
+        schematic_exporter: Arc<dyn SchematicExporterPort>,
     ) -> Self {
         Self {
             project_service: ProjectService::new(storage),
@@ -49,9 +55,17 @@ impl AppServices {
             circuit_template_service: CircuitTemplateService,
             circuit_validation_service: CircuitValidationService::new(),
             engineering_notebook_service: EngineeringNotebookService::new(),
-            netlist_generation_service: NetlistGenerationService::new(netlist_exporter),
+            netlist_generation_service: NetlistGenerationService::new(netlist_exporter.clone()),
             simulation_service: SimulationService::new(simulation_engine),
-            export_service: ExportService::new(report_exporter),
+            export_service: ExportService::new(report_exporter.clone()),
+            export_center_service: ExportCenterService::new(
+                report_exporter,
+                netlist_exporter,
+                bom_exporter,
+                simulation_data_exporter,
+                library_exporter,
+                schematic_exporter,
+            ),
             component_library_service: ComponentLibraryService::new(component_library_port),
             selected_region_analysis_service: SelectedRegionAnalysisService::new(),
         }
@@ -95,6 +109,10 @@ impl AppServices {
 
     pub fn export_service(&self) -> &ExportService {
         &self.export_service
+    }
+
+    pub fn export_center_service(&self) -> &ExportCenterService {
+        &self.export_center_service
     }
 
     pub fn component_library_service(&self) -> &ComponentLibraryService {

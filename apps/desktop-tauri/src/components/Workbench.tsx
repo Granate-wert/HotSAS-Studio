@@ -49,9 +49,13 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     selectedComponentId,
     selectedComponent,
     validationReport,
+    exportCapabilities,
+    lastExportResult,
     setSelectedComponentId,
     setSelectedComponent,
     setValidationReport,
+    setExportCapabilities,
+    setLastExportResult,
   } = useHotSasStore();
 
   const run = async <T,>(operation: () => Promise<T>, onResult: (result: T) => void) => {
@@ -113,6 +117,17 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
       run(
         () => backend.validateCurrentCircuit(),
         (report) => setValidationReport(report),
+      ),
+    loadExportCapabilities: () => run(backend.listExportCapabilities, setExportCapabilities),
+    exportFile: (format: string, writeToFile: boolean, outputDir: string) =>
+      run(
+        () =>
+          backend.exportFile({
+            format,
+            write_to_file: writeToFile,
+            output_dir: writeToFile ? outputDir : null,
+          }),
+        (result) => setLastExportResult(result),
       ),
     refreshSelectedComponent: () => {
       if (selectedComponentId) {
@@ -231,6 +246,8 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         hasProject,
         selectedComponent,
         validationReport,
+        exportCapabilities,
+        lastExportResult,
         actions,
       })}
     </div>
@@ -251,6 +268,8 @@ function renderScreen(
     hasProject: boolean;
     selectedComponent: ReturnType<typeof useHotSasStore.getState>["selectedComponent"];
     validationReport: ReturnType<typeof useHotSasStore.getState>["validationReport"];
+    exportCapabilities: ReturnType<typeof useHotSasStore.getState>["exportCapabilities"];
+    lastExportResult: ReturnType<typeof useHotSasStore.getState>["lastExportResult"];
     actions: {
       createDemoProject: () => void;
       calculateCutoff: () => void;
@@ -264,6 +283,8 @@ function renderScreen(
       validateProjectPackage: () => void;
       selectComponent: (instanceId: string) => void;
       validateCircuit: () => void;
+      loadExportCapabilities: () => void;
+      exportFile: (format: string, writeToFile: boolean, outputDir: string) => void;
       refreshSelectedComponent: () => void;
     };
   },
@@ -330,12 +351,11 @@ function renderScreen(
 
   return (
     <ExportScreen
-      markdownReport={context.markdownReport}
-      htmlReport={context.htmlReport}
       hasProject={context.hasProject}
-      onNetlist={context.actions.generateNetlist}
-      onMarkdown={context.actions.exportMarkdown}
-      onHtml={context.actions.exportHtml}
+      capabilities={context.exportCapabilities}
+      lastResult={context.lastExportResult}
+      onLoadCapabilities={context.actions.loadExportCapabilities}
+      onExport={context.actions.exportFile}
     />
   );
 }

@@ -1,5 +1,5 @@
 use hotsas_core::{
-    CircuitProject, ComponentLibrary, FormulaDefinition, FormulaEvaluationResult,
+    CircuitProject, ComponentLibrary, ExportResult, FormulaDefinition, FormulaEvaluationResult,
     FormulaExpressionValidationResult, FormulaOutput, ProjectPackageManifest,
     ProjectPackageValidationReport, ReportModel, SimulationProfile, SimulationResult,
     ValueWithUnit,
@@ -115,6 +115,31 @@ pub trait ProjectPackageStoragePort: Send + Sync {
         &self,
         package_dir: &Path,
     ) -> Result<ProjectPackageValidationReport, PortError>;
+}
+
+pub trait BomExporterPort: Send + Sync {
+    fn export_bom_csv(&self, project: &CircuitProject) -> Result<String, PortError>;
+    fn export_bom_json(&self, project: &CircuitProject) -> Result<String, PortError>;
+}
+
+pub trait SimulationDataExporterPort: Send + Sync {
+    fn export_simulation_csv(&self, simulation: &SimulationResult) -> Result<String, PortError>;
+}
+
+pub trait ComponentLibraryExporterPort: Send + Sync {
+    fn export_component_library_json(
+        &self,
+        library: &ComponentLibrary,
+    ) -> Result<String, PortError>;
+}
+
+pub trait SchematicExporterPort: Send + Sync {
+    fn export_svg_schematic(&self, project: &CircuitProject) -> Result<String, PortError>;
+}
+
+pub trait ExportHistoryPort: Send + Sync {
+    fn record_export(&self, result: &ExportResult) -> Result<(), PortError>;
+    fn list_history(&self) -> Result<Vec<hotsas_core::ExportHistoryEntry>, PortError>;
 }
 
 pub trait ComponentLibraryPort: Send + Sync {

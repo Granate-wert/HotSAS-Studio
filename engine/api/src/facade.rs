@@ -1,7 +1,8 @@
 use crate::{
     ApiError, ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitValidationReportDto,
     ComponentDetailsDto, ComponentLibraryDto, ComponentParameterDto, ComponentSearchRequestDto,
-    ComponentSearchResultDto, ComponentSummaryDto, FootprintDto, FormulaCalculationRequestDto,
+    ComponentSearchResultDto, ComponentSummaryDto, ExportCapabilityDto, ExportHistoryEntryDto,
+    ExportRequestDto, ExportResultDto, FootprintDto, FormulaCalculationRequestDto,
     FormulaDetailsDto, FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto,
     FormulaResultDto, FormulaSummaryDto, KeyValueDto, NotebookEvaluationRequestDto,
     NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto, ProjectDto,
@@ -775,6 +776,97 @@ impl HotSasApi {
             .lock()
             .map_err(|_| ApiError::State("formula registry lock poisoned".to_string()))
             .map(|guard| guard.clone())
+    }
+
+    pub fn list_export_capabilities(&self) -> Result<Vec<ExportCapabilityDto>, ApiError> {
+        Ok(self
+            .services
+            .export_center_service()
+            .list_capabilities()
+            .iter()
+            .map(ExportCapabilityDto::from)
+            .collect())
+    }
+
+    pub fn export(&self, request: ExportRequestDto) -> Result<ExportResultDto, ApiError> {
+        let format = parse_export_format(&request.format)?;
+        let project = self.current_project()?;
+        let report = match format {
+            hotsas_core::ExportFormat::MarkdownReport | hotsas_core::ExportFormat::HtmlReport => {
+                Some(self.current_report_model()?)
+            }
+            _ => None,
+        };
+        let simulation = match format {
+            hotsas_core::ExportFormat::CsvSimulationData => {
+                Some(self.services.run_mock_ac_simulation(&project)?)
+            }
+            _ => None,
+        };
+        let library = match format {
+            hotsas_core::ExportFormat::ComponentLibraryJson => {
+                Some(self.current_component_library()?)
+            }
+            _ => None,
+        };
+        let result = if request.write_to_file {
+            let output_dir = request
+                .output_dir
+                .as_deref()
+                .map(Path::new)
+                .unwrap_or_else(|| Path::new("."));
+            self.services.export_center_service().export_to_file(
+                format,
+                &project,
+                report.as_ref(),
+                simulation.as_ref(),
+                library.as_ref(),
+                output_dir,
+            )?
+        } else {
+            self.services.export_center_service().export_to_string(
+                format,
+                &project,
+                report.as_ref(),
+                simulation.as_ref(),
+                library.as_ref(),
+            )?
+        };
+        Ok(ExportResultDto::from(&result))
+    }
+
+    pub fn export_history(&self) -> Result<Vec<ExportHistoryEntryDto>, ApiError> {
+        Ok(self
+            .services
+            .export_center_service()
+            .list_history()?
+            .iter()
+            .map(ExportHistoryEntryDto::from)
+            .collect())
+    }
+
+    fn current_component_library(&self) -> Result<ComponentLibrary, ApiError> {
+        self.component_library
+            .lock()
+            .map_err(|_| ApiError::State("component library lock poisoned".to_string()))
+            .map(|guard| guard.clone())
+    }
+}
+
+fn parse_export_format(format: &str) -> Result<hotsas_core::ExportFormat, ApiError> {
+    match format {
+        "markdown_report" => Ok(hotsas_core::ExportFormat::MarkdownReport),
+        "html_report" => Ok(hotsas_core::ExportFormat::HtmlReport),
+        "spice_netlist" => Ok(hotsas_core::ExportFormat::SpiceNetlist),
+        "csv_simulation_data" => Ok(hotsas_core::ExportFormat::CsvSimulationData),
+        "bom_csv" => Ok(hotsas_core::ExportFormat::BomCsv),
+        "bom_json" => Ok(hotsas_core::ExportFormat::BomJson),
+        "component_library_json" => Ok(hotsas_core::ExportFormat::ComponentLibraryJson),
+        "svg_schematic" => Ok(hotsas_core::ExportFormat::SvgSchematic),
+        "altium_workflow_package" => Ok(hotsas_core::ExportFormat::AltiumWorkflowPackage),
+        other => Err(ApiError::InvalidInput(format!(
+            "unknown export format: {other}"
+        ))),
     }
 }
 

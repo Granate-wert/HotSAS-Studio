@@ -1,6 +1,8 @@
 use hotsas_adapters::{
-    CircuitProjectPackageStorage, JsonComponentLibraryStorage, JsonProjectStorage,
+    BomCsvExporter, CircuitProjectPackageStorage, ComponentLibraryJsonExporter,
+    CsvSimulationDataExporter, JsonComponentLibraryStorage, JsonProjectStorage,
     MarkdownReportExporter, MockSimulationEngine, SimpleFormulaEngine, SpiceNetlistExporter,
+    SvgSchematicExporter,
 };
 use hotsas_application::AppServices;
 use hotsas_core::EngineeringUnit;
@@ -18,6 +20,10 @@ fn backend_vertical_slice_runs_end_to_end_with_current_adapters() {
         Arc::new(MockSimulationEngine),
         Arc::new(MarkdownReportExporter),
         Arc::new(JsonComponentLibraryStorage),
+        Arc::new(BomCsvExporter),
+        Arc::new(CsvSimulationDataExporter),
+        Arc::new(ComponentLibraryJsonExporter),
+        Arc::new(SvgSchematicExporter),
     );
 
     let project = services.create_rc_low_pass_demo_project();

@@ -4,6 +4,9 @@ import type {
   ComponentDetailsDto,
   ComponentLibraryDto,
   ComponentSearchResultDto,
+  ExportCapabilityDto,
+  ExportHistoryEntryDto,
+  ExportResultDto,
   FormulaResultDto,
   NotebookEvaluationResultDto,
   NotebookStateDto,
@@ -40,6 +43,9 @@ type HotSasState = {
   selectedRegionComponentIds: string[];
   selectedRegionPreview: SelectedRegionPreviewDto | null;
   selectedRegionAnalysisResult: SelectedRegionAnalysisResultDto | null;
+  exportCapabilities: ExportCapabilityDto[];
+  lastExportResult: ExportResultDto | null;
+  exportHistory: ExportHistoryEntryDto[];
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -65,6 +71,9 @@ type HotSasState = {
   setSelectedRegionComponentIds: (ids: string[]) => void;
   setSelectedRegionPreview: (preview: SelectedRegionPreviewDto | null) => void;
   setSelectedRegionAnalysisResult: (result: SelectedRegionAnalysisResultDto | null) => void;
+  setExportCapabilities: (capabilities: ExportCapabilityDto[]) => void;
+  setLastExportResult: (result: ExportResultDto | null) => void;
+  setExportHistory: (history: ExportHistoryEntryDto[]) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -92,6 +101,9 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   selectedRegionComponentIds: [],
   selectedRegionPreview: null,
   selectedRegionAnalysisResult: null,
+  exportCapabilities: [],
+  lastExportResult: null,
+  exportHistory: [],
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -120,4 +132,7 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setSelectedRegionPreview: (selectedRegionPreview) => set({ selectedRegionPreview }),
   setSelectedRegionAnalysisResult: (selectedRegionAnalysisResult) =>
     set({ selectedRegionAnalysisResult }),
+  setExportCapabilities: (exportCapabilities) => set({ exportCapabilities }),
+  setLastExportResult: (lastExportResult) => set({ lastExportResult }),
+  setExportHistory: (exportHistory) => set({ exportHistory }),
 }));

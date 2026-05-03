@@ -9,6 +9,10 @@ import type {
   ComponentSearchRequestDto,
   ComponentSearchResultDto,
   ComponentSummaryDto,
+  ExportCapabilityDto,
+  ExportHistoryEntryDto,
+  ExportRequestDto,
+  ExportResultDto,
   FormulaCalculationRequestDto,
   FormulaDetailsDto,
   FormulaEvaluationResultDto,
@@ -115,6 +119,10 @@ export const backend = {
     invokeCommand<SelectedRegionAnalysisResultDto>("analyze_selected_region", { request }),
   validateSelectedRegion: (request: SelectedRegionAnalysisRequestDto) =>
     invokeCommand<SelectedRegionIssueDto[]>("validate_selected_region", { request }),
+  listExportCapabilities: () => invokeCommand<ExportCapabilityDto[]>("list_export_capabilities"),
+  exportFile: (request: ExportRequestDto) =>
+    invokeCommand<ExportResultDto>("export_file", { request }),
+  exportHistory: () => invokeCommand<ExportHistoryEntryDto[]>("export_history"),
   writeLog: (level: string, message: string) =>
     invokeCommand<void>("write_log", { level, message }),
 };

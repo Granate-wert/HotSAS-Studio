@@ -505,6 +505,36 @@ export type SelectedRegionAnalysisResultDto = {
   report_section_markdown: string | null;
 };
 
+export type ExportCapabilityDto = {
+  format: string;
+  label: string;
+  description: string;
+  file_extension: string;
+  available: boolean;
+};
+
+export type ExportResultDto = {
+  format: string;
+  content: string;
+  file_path: string | null;
+  success: boolean;
+  message: string;
+};
+
+export type ExportHistoryEntryDto = {
+  timestamp: string;
+  format: string;
+  file_path: string | null;
+  success: boolean;
+  message: string;
+};
+
+export type ExportRequestDto = {
+  format: string;
+  write_to_file: boolean;
+  output_dir?: string | null;
+};
+
 export type SelectedRegionAnalysisRequestDto = {
   component_ids: string[];
   input_port: RegionPortDto | null;

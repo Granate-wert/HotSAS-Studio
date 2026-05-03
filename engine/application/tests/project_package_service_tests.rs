@@ -4,8 +4,9 @@ use hotsas_core::{
     ReportModel, SimulationProfile, SimulationResult, ValueWithUnit,
 };
 use hotsas_ports::{
-    FormulaEnginePort, NetlistExporterPort, PortError, ProjectPackageStoragePort,
-    ReportExporterPort, SimulationEnginePort, StoragePort,
+    BomExporterPort, ComponentLibraryExporterPort, FormulaEnginePort, NetlistExporterPort,
+    PortError, ProjectPackageStoragePort, ReportExporterPort, SchematicExporterPort,
+    SimulationDataExporterPort, SimulationEnginePort, StoragePort,
 };
 use std::path::Path;
 use std::sync::Arc;
@@ -154,6 +155,54 @@ impl ReportExporterPort for FakeReportExporter {
     }
 }
 
+#[derive(Debug, Default)]
+struct FakeBomExporter;
+
+impl BomExporterPort for FakeBomExporter {
+    fn export_bom_csv(&self, _project: &hotsas_core::CircuitProject) -> Result<String, PortError> {
+        Ok("".to_string())
+    }
+    fn export_bom_json(&self, _project: &hotsas_core::CircuitProject) -> Result<String, PortError> {
+        Ok("".to_string())
+    }
+}
+
+#[derive(Debug, Default)]
+struct FakeSimulationDataExporter;
+
+impl SimulationDataExporterPort for FakeSimulationDataExporter {
+    fn export_simulation_csv(
+        &self,
+        _simulation: &hotsas_core::SimulationResult,
+    ) -> Result<String, PortError> {
+        Ok("".to_string())
+    }
+}
+
+#[derive(Debug, Default)]
+struct FakeComponentLibraryExporter;
+
+impl ComponentLibraryExporterPort for FakeComponentLibraryExporter {
+    fn export_component_library_json(
+        &self,
+        _library: &hotsas_core::ComponentLibrary,
+    ) -> Result<String, PortError> {
+        Ok("".to_string())
+    }
+}
+
+#[derive(Debug, Default)]
+struct FakeSchematicExporter;
+
+impl SchematicExporterPort for FakeSchematicExporter {
+    fn export_svg_schematic(
+        &self,
+        _project: &hotsas_core::CircuitProject,
+    ) -> Result<String, PortError> {
+        Ok("".to_string())
+    }
+}
+
 fn fake_services() -> AppServices {
     AppServices::new(
         Arc::new(FakeStorage),
@@ -163,6 +212,10 @@ fn fake_services() -> AppServices {
         Arc::new(FakeSimulationEngine),
         Arc::new(FakeReportExporter),
         Arc::new(FakeComponentLibraryStorage),
+        Arc::new(FakeBomExporter),
+        Arc::new(FakeSimulationDataExporter),
+        Arc::new(FakeComponentLibraryExporter),
+        Arc::new(FakeSchematicExporter),
     )
 }
 
