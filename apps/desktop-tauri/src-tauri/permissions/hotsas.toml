@@ -1,6 +1,6 @@
 [[permission]]
 identifier = "allow-hotsas-commands"
-description = "Allows the main HotSAS Studio window to invoke v1 vertical slice backend commands."
+description = "Allows the main HotSAS Studio window to invoke all backend commands."
 commands.allow = [
   "create_rc_low_pass_demo_project",
   "calculate_rc_low_pass",
@@ -29,4 +29,19 @@ commands.allow = [
   "clear_notebook",
   "apply_notebook_output_to_component",
   "write_log",
+  "list_export_capabilities",
+  "export_file",
+  "export_history",
+  "preview_selected_region",
+  "analyze_selected_region",
+  "validate_selected_region",
+  "check_ngspice_availability",
+  "run_simulation",
+  "simulation_history",
+  "import_spice_model",
+  "import_touchstone_model",
+  "list_imported_models",
+  "get_imported_model",
+  "validate_spice_pin_mapping",
+  "attach_imported_model_to_component",
 ]
