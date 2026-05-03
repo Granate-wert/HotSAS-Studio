@@ -117,6 +117,9 @@ impl NetlistExporterPort for FakeNetlistExporter {
 struct FakeSimulationEngine;
 
 impl SimulationEnginePort for FakeSimulationEngine {
+    fn engine_name(&self) -> &str {
+        "fake"
+    }
     fn run_ac_sweep(
         &self,
         _project: &hotsas_core::CircuitProject,
@@ -192,6 +195,7 @@ fn fake_api() -> HotSasApi {
         Arc::new(FakeProjectPackageStorage::default()),
         Arc::new(FakeFormulaEngine),
         Arc::new(FakeNetlistExporter),
+        Arc::new(FakeSimulationEngine),
         Arc::new(FakeSimulationEngine),
         Arc::new(FakeReportExporter),
         Arc::new(FakeComponentLibraryStorage),

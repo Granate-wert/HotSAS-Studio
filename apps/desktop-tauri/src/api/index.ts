@@ -19,6 +19,7 @@ import type {
   FormulaPackDto,
   FormulaResultDto,
   FormulaSummaryDto,
+  NgspiceAvailabilityDto,
   NotebookEvaluationRequestDto,
   NotebookEvaluationResultDto,
   NotebookStateDto,
@@ -33,6 +34,7 @@ import type {
   SelectedRegionIssueDto,
   SelectedRegionPreviewDto,
   SimulationResultDto,
+  SimulationRunRequestDto,
   VerticalSliceDto,
 } from "../types";
 
@@ -65,6 +67,11 @@ export const backend = {
     invokeCommand<PreferredValueDto>("nearest_e24", { value, unit }),
   generateSpiceNetlist: () => invokeCommand<string>("generate_spice_netlist"),
   runMockAcSimulation: () => invokeCommand<SimulationResultDto>("run_mock_ac_simulation"),
+  checkNgspiceAvailability: () =>
+    invokeCommand<NgspiceAvailabilityDto>("check_ngspice_availability"),
+  runSimulation: (request: SimulationRunRequestDto) =>
+    invokeCommand<SimulationResultDto>("run_simulation", { request }),
+  simulationHistory: () => invokeCommand<SimulationResultDto[]>("simulation_history"),
   exportMarkdownReport: () => invokeCommand<string>("export_markdown_report"),
   exportHtmlReport: () => invokeCommand<string>("export_html_report"),
   saveProjectJson: (path: string) => invokeCommand<SaveProjectDto>("save_project_json", { path }),

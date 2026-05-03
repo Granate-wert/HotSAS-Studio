@@ -19,6 +19,7 @@ fn fake_api() -> HotSasApi {
         Arc::new(FakeFormulaEngine),
         Arc::new(FakeNetlistExporter),
         Arc::new(FakeSimulationEngine),
+        Arc::new(FakeSimulationEngine),
         Arc::new(FakeReportExporter),
         Arc::new(FakeComponentLibraryStorage),
         Arc::new(FakeBomExporter),
@@ -212,6 +213,9 @@ impl NetlistExporterPort for FakeNetlistExporter {
 struct FakeSimulationEngine;
 
 impl SimulationEnginePort for FakeSimulationEngine {
+    fn engine_name(&self) -> &str {
+        "fake"
+    }
     fn run_ac_sweep(
         &self,
         _project: &CircuitProject,
@@ -221,6 +225,7 @@ impl SimulationEnginePort for FakeSimulationEngine {
             id: "mock".to_string(),
             profile_id: "default".to_string(),
             status: hotsas_core::SimulationStatus::Completed,
+            engine: "mock".to_string(),
             graph_series: vec![hotsas_core::GraphSeries {
                 name: "Gain".to_string(),
                 x_unit: hotsas_core::EngineeringUnit::Hertz,
@@ -232,6 +237,7 @@ impl SimulationEnginePort for FakeSimulationEngine {
             warnings: vec![],
             errors: vec![],
             raw_data_path: None,
+            metadata: std::collections::BTreeMap::new(),
         })
     }
 }

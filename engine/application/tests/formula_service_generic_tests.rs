@@ -141,6 +141,7 @@ fn fake_services() -> AppServices {
         Arc::new(FakeFormulaEngine),
         Arc::new(FakeNetlistExporter),
         Arc::new(FakeSimulationEngine),
+        Arc::new(FakeSimulationEngine),
         Arc::new(FakeReportExporter),
         Arc::new(FakeComponentLibraryStorage),
         Arc::new(FakeBomExporter),
@@ -223,6 +224,9 @@ impl NetlistExporterPort for FakeNetlistExporter {
 struct FakeSimulationEngine;
 
 impl SimulationEnginePort for FakeSimulationEngine {
+    fn engine_name(&self) -> &str {
+        "fake"
+    }
     fn run_ac_sweep(
         &self,
         _project: &CircuitProject,

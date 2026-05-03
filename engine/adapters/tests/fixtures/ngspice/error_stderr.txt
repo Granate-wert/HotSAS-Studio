@@ -1,0 +1,2 @@
+Error on line 3 : unknown device type
+Simulation interrupted due to error!

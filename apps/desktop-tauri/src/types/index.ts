@@ -177,9 +177,26 @@ export type SimulationResultDto = {
   id: string;
   profile_id: string;
   status: string;
+  engine: string;
   graph_series: GraphSeriesDto[];
   warnings: string[];
   errors: string[];
+};
+
+export type NgspiceAvailabilityDto = {
+  available: boolean;
+  executablePath?: string | null;
+  version?: string | null;
+  message?: string | null;
+  warnings: string[];
+};
+
+export type SimulationRunRequestDto = {
+  engine: string;
+  analysis_kind: string;
+  profile_id?: string | null;
+  output_variables: string[];
+  timeout_ms?: number | null;
 };
 
 export type SaveProjectDto = {

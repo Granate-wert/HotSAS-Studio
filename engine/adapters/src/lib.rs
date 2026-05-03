@@ -15,12 +15,14 @@ use std::path::{Path, PathBuf};
 
 pub mod component_library_storage;
 pub mod export_center;
+pub mod ngspice;
 pub mod project_package_storage;
 pub use component_library_storage::JsonComponentLibraryStorage;
 pub use export_center::{
     AltiumWorkflowPackageExporter, BomCsvExporter, ComponentLibraryJsonExporter,
     CsvSimulationDataExporter, SvgSchematicExporter,
 };
+pub use ngspice::{NgspiceBinaryResolver, NgspiceOutputParser, NgspiceSimulationAdapter};
 pub use project_package_storage::CircuitProjectPackageStorage;
 
 #[derive(Debug, Default)]
@@ -519,6 +521,10 @@ impl NetlistExporterPort for SpiceNetlistExporter {
 pub struct MockSimulationEngine;
 
 impl SimulationEnginePort for MockSimulationEngine {
+    fn engine_name(&self) -> &str {
+        "mock"
+    }
+
     fn run_ac_sweep(
         &self,
         project: &CircuitProject,
@@ -567,6 +573,7 @@ impl SimulationEnginePort for MockSimulationEngine {
             id: "mock-ac-rc-low-pass".to_string(),
             profile_id: profile.id.clone(),
             status: SimulationStatus::Completed,
+            engine: "mock".to_string(),
             graph_series: vec![
                 GraphSeries {
                     name: "Gain".to_string(),
@@ -589,6 +596,7 @@ impl SimulationEnginePort for MockSimulationEngine {
             ],
             errors: vec![],
             raw_data_path: None,
+            metadata: BTreeMap::new(),
         })
     }
 }

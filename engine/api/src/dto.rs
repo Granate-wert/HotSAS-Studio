@@ -480,6 +480,7 @@ pub struct SimulationResultDto {
     pub id: String,
     pub profile_id: String,
     pub status: String,
+    pub engine: String,
     pub graph_series: Vec<GraphSeriesDto>,
     pub warnings: Vec<String>,
     pub errors: Vec<String>,
@@ -491,6 +492,7 @@ impl From<&SimulationResult> for SimulationResultDto {
             id: result.id.clone(),
             profile_id: result.profile_id.clone(),
             status: format!("{:?}", result.status),
+            engine: result.engine.clone(),
             graph_series: result
                 .graph_series
                 .iter()
@@ -1296,4 +1298,48 @@ pub struct ExportRequestDto {
     pub format: String,
     pub write_to_file: bool,
     pub output_dir: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NgspiceAvailabilityDto {
+    pub available: bool,
+    pub executable_path: Option<String>,
+    pub version: Option<String>,
+    pub message: Option<String>,
+    pub warnings: Vec<String>,
+}
+
+impl From<&hotsas_core::NgspiceAvailability> for NgspiceAvailabilityDto {
+    fn from(a: &hotsas_core::NgspiceAvailability) -> Self {
+        Self {
+            available: a.available,
+            executable_path: a.executable_path.clone(),
+            version: a.version.clone(),
+            message: a.message.clone(),
+            warnings: a.warnings.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationRunRequestDto {
+    pub engine: String,
+    pub analysis_kind: String,
+    pub profile_id: Option<String>,
+    pub output_variables: Vec<String>,
+    pub timeout_ms: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationRunMetadataDto {
+    pub run_id: String,
+    pub engine: String,
+    pub status: String,
+    pub netlist_path: Option<String>,
+    pub stdout_path: Option<String>,
+    pub stderr_path: Option<String>,
+    pub raw_output_path: Option<String>,
+    pub parsed_output_path: Option<String>,
+    pub exit_code: Option<i32>,
+    pub elapsed_ms: Option<u64>,
 }

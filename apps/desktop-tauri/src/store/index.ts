@@ -8,6 +8,7 @@ import type {
   ExportHistoryEntryDto,
   ExportResultDto,
   FormulaResultDto,
+  NgspiceAvailabilityDto,
   NotebookEvaluationResultDto,
   NotebookStateDto,
   PreferredValueDto,
@@ -46,6 +47,11 @@ type HotSasState = {
   exportCapabilities: ExportCapabilityDto[];
   lastExportResult: ExportResultDto | null;
   exportHistory: ExportHistoryEntryDto[];
+  ngspiceAvailability: NgspiceAvailabilityDto | null;
+  selectedSimulationEngine: string;
+  simulationHistory: SimulationResultDto[];
+  isSimulationRunning: boolean;
+  simulationError: string | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -74,6 +80,11 @@ type HotSasState = {
   setExportCapabilities: (capabilities: ExportCapabilityDto[]) => void;
   setLastExportResult: (result: ExportResultDto | null) => void;
   setExportHistory: (history: ExportHistoryEntryDto[]) => void;
+  setNgspiceAvailability: (availability: NgspiceAvailabilityDto | null) => void;
+  setSelectedSimulationEngine: (engine: string) => void;
+  setSimulationHistory: (history: SimulationResultDto[]) => void;
+  setIsSimulationRunning: (running: boolean) => void;
+  setSimulationError: (error: string | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -104,6 +115,11 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   exportCapabilities: [],
   lastExportResult: null,
   exportHistory: [],
+  ngspiceAvailability: null,
+  selectedSimulationEngine: "auto",
+  simulationHistory: [],
+  isSimulationRunning: false,
+  simulationError: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -135,4 +151,9 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setExportCapabilities: (exportCapabilities) => set({ exportCapabilities }),
   setLastExportResult: (lastExportResult) => set({ lastExportResult }),
   setExportHistory: (exportHistory) => set({ exportHistory }),
+  setNgspiceAvailability: (ngspiceAvailability) => set({ ngspiceAvailability }),
+  setSelectedSimulationEngine: (selectedSimulationEngine) => set({ selectedSimulationEngine }),
+  setSimulationHistory: (simulationHistory) => set({ simulationHistory }),
+  setIsSimulationRunning: (isSimulationRunning) => set({ isSimulationRunning }),
+  setSimulationError: (simulationError) => set({ simulationError }),
 }));

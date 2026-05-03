@@ -60,6 +60,7 @@ pub enum EngineeringUnit {
     Watt,
     Percent,
     Henry,
+    Second,
 }
 
 impl EngineeringUnit {
@@ -74,6 +75,7 @@ impl EngineeringUnit {
             "W" | "watt" | "Watt" => Ok(Self::Watt),
             "%" | "percent" | "Percent" => Ok(Self::Percent),
             "H" | "henry" | "Henry" => Ok(Self::Henry),
+            "s" | "sec" | "second" | "Second" => Ok(Self::Second),
             other => Err(CoreError::InvalidUnit(other.to_string())),
         }
     }
@@ -89,6 +91,7 @@ impl EngineeringUnit {
             Self::Watt => "W",
             Self::Percent => "%",
             Self::Henry => "H",
+            Self::Second => "s",
         }
     }
 }

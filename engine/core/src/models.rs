@@ -330,11 +330,13 @@ pub struct SimulationResult {
     pub id: String,
     pub profile_id: String,
     pub status: SimulationStatus,
+    pub engine: String,
     pub graph_series: Vec<GraphSeries>,
     pub measurements: BTreeMap<String, ValueWithUnit>,
     pub warnings: Vec<String>,
     pub errors: Vec<String>,
     pub raw_data_path: Option<String>,
+    pub metadata: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

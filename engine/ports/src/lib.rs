@@ -1,6 +1,6 @@
 use hotsas_core::{
     CircuitProject, ComponentLibrary, ExportResult, FormulaDefinition, FormulaEvaluationResult,
-    FormulaExpressionValidationResult, FormulaOutput, ProjectPackageManifest,
+    FormulaExpressionValidationResult, FormulaOutput, NgspiceAvailability, ProjectPackageManifest,
     ProjectPackageValidationReport, ReportModel, SimulationProfile, SimulationResult,
     ValueWithUnit,
 };
@@ -90,11 +90,56 @@ pub trait NetlistExporterPort: Send + Sync {
 }
 
 pub trait SimulationEnginePort: Send + Sync {
+    fn engine_name(&self) -> &str;
+
+    fn check_availability(&self) -> Result<NgspiceAvailability, PortError> {
+        Ok(NgspiceAvailability {
+            available: false,
+            executable_path: None,
+            version: None,
+            message: Some(format!(
+                "availability check not implemented for {}",
+                self.engine_name()
+            )),
+            warnings: vec![],
+        })
+    }
+
     fn run_ac_sweep(
         &self,
         project: &CircuitProject,
         profile: &SimulationProfile,
     ) -> Result<SimulationResult, PortError>;
+
+    fn run_operating_point(
+        &self,
+        _project: &CircuitProject,
+        _profile: &SimulationProfile,
+    ) -> Result<SimulationResult, PortError> {
+        Err(PortError::Simulation(format!(
+            "operating point not supported by {}",
+            self.engine_name()
+        )))
+    }
+
+    fn run_transient(
+        &self,
+        _project: &CircuitProject,
+        _profile: &SimulationProfile,
+    ) -> Result<SimulationResult, PortError> {
+        Err(PortError::Simulation(format!(
+            "transient not supported by {}",
+            self.engine_name()
+        )))
+    }
+
+    fn stop_simulation(&self, _run_id: String) -> Result<(), PortError> {
+        Ok(())
+    }
+
+    fn get_result(&self, _run_id: String) -> Result<Option<SimulationResult>, PortError> {
+        Ok(None)
+    }
 }
 
 pub trait ReportExporterPort: Send + Sync {

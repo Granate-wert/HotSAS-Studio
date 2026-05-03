@@ -1,8 +1,9 @@
 use crate::{
     ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
     EngineeringNotebookService, ExportCenterService, ExportService, FormulaService,
-    NetlistGenerationService, PreferredValuesService, ProjectPackageService, ProjectService,
-    SelectedRegionAnalysisService, SimulationService,
+    NetlistGenerationService, NgspiceSimulationService, PreferredValuesService,
+    ProjectPackageService, ProjectService, SelectedRegionAnalysisService, SimulationEngineChoice,
+    SimulationService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
@@ -27,6 +28,7 @@ pub struct AppServices {
     engineering_notebook_service: EngineeringNotebookService,
     netlist_generation_service: NetlistGenerationService,
     simulation_service: SimulationService,
+    ngspice_simulation_service: NgspiceSimulationService,
     export_service: ExportService,
     export_center_service: ExportCenterService,
     component_library_service: ComponentLibraryService,
@@ -39,7 +41,8 @@ impl AppServices {
         project_package_storage: Arc<dyn ProjectPackageStoragePort>,
         formula_engine: Arc<dyn FormulaEnginePort>,
         netlist_exporter: Arc<dyn NetlistExporterPort>,
-        simulation_engine: Arc<dyn SimulationEnginePort>,
+        mock_engine: Arc<dyn SimulationEnginePort>,
+        ngspice_engine: Arc<dyn SimulationEnginePort>,
         report_exporter: Arc<dyn ReportExporterPort>,
         component_library_port: Arc<dyn ComponentLibraryPort>,
         bom_exporter: Arc<dyn BomExporterPort>,
@@ -56,7 +59,8 @@ impl AppServices {
             circuit_validation_service: CircuitValidationService::new(),
             engineering_notebook_service: EngineeringNotebookService::new(),
             netlist_generation_service: NetlistGenerationService::new(netlist_exporter.clone()),
-            simulation_service: SimulationService::new(simulation_engine),
+            simulation_service: SimulationService::new(mock_engine.clone()),
+            ngspice_simulation_service: NgspiceSimulationService::new(mock_engine, ngspice_engine),
             export_service: ExportService::new(report_exporter.clone()),
             export_center_service: ExportCenterService::new(
                 report_exporter,
@@ -105,6 +109,10 @@ impl AppServices {
 
     pub fn simulation_service(&self) -> &SimulationService {
         &self.simulation_service
+    }
+
+    pub fn ngspice_simulation_service(&self) -> &NgspiceSimulationService {
+        &self.ngspice_simulation_service
     }
 
     pub fn export_service(&self) -> &ExportService {
@@ -163,6 +171,41 @@ impl AppServices {
         project: &CircuitProject,
     ) -> Result<SimulationResult, ApplicationError> {
         self.simulation_service.run_mock_ac_simulation(project)
+    }
+
+    pub fn check_ngspice_availability(
+        &self,
+    ) -> Result<hotsas_core::NgspiceAvailability, ApplicationError> {
+        self.ngspice_simulation_service.check_ngspice_availability()
+    }
+
+    pub fn run_simulation(
+        &self,
+        project: &CircuitProject,
+        engine: &str,
+        analysis: &str,
+    ) -> Result<SimulationResult, ApplicationError> {
+        let choice: SimulationEngineChoice = engine
+            .parse()
+            .map_err(|e: String| ApplicationError::InvalidInput(e))?;
+        match analysis {
+            "ac_sweep" => self
+                .ngspice_simulation_service
+                .run_ac_sweep(project, choice),
+            "operating_point" => self
+                .ngspice_simulation_service
+                .run_operating_point(project, choice),
+            "transient" => self
+                .ngspice_simulation_service
+                .run_transient(project, choice),
+            other => Err(ApplicationError::InvalidInput(format!(
+                "unknown analysis: {other}"
+            ))),
+        }
+    }
+
+    pub fn simulation_history(&self) -> Vec<SimulationResult> {
+        self.ngspice_simulation_service.list_simulation_history()
     }
 
     pub fn build_report_model(

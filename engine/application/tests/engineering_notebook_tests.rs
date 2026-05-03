@@ -45,6 +45,7 @@ fn fake_services() -> AppServices {
         Arc::new(FakeFormulaEngine),
         Arc::new(FakeNetlistExporter),
         Arc::new(FakeSimulationEngine),
+        Arc::new(FakeSimulationEngine),
         Arc::new(FakeReportExporter),
         Arc::new(FakeComponentLibraryStorage),
         Arc::new(FakeBomExporter),
@@ -154,6 +155,10 @@ impl NetlistExporterPort for FakeNetlistExporter {
 struct FakeSimulationEngine;
 
 impl SimulationEnginePort for FakeSimulationEngine {
+    fn engine_name(&self) -> &str {
+        "fake"
+    }
+
     fn run_ac_sweep(
         &self,
         _project: &CircuitProject,
@@ -163,11 +168,13 @@ impl SimulationEnginePort for FakeSimulationEngine {
             id: "sim-1".to_string(),
             profile_id: "profile-1".to_string(),
             status: hotsas_core::SimulationStatus::Completed,
+            engine: "mock".to_string(),
             graph_series: vec![],
             measurements: BTreeMap::new(),
             warnings: vec![],
             errors: vec![],
             raw_data_path: None,
+            metadata: BTreeMap::new(),
         })
     }
 }

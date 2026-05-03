@@ -4,12 +4,12 @@ use crate::{
     ComponentSearchResultDto, ComponentSummaryDto, ExportCapabilityDto, ExportHistoryEntryDto,
     ExportRequestDto, ExportResultDto, FootprintDto, FormulaCalculationRequestDto,
     FormulaDetailsDto, FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto,
-    FormulaResultDto, FormulaSummaryDto, KeyValueDto, NotebookEvaluationRequestDto,
-    NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto, ProjectDto,
-    ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
+    FormulaResultDto, FormulaSummaryDto, KeyValueDto, NgspiceAvailabilityDto,
+    NotebookEvaluationRequestDto, NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto,
+    ProjectDto, ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
     SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
-    SelectedRegionPreviewDto, SimulationModelDto, SimulationResultDto, SymbolDto, ValueDto,
-    VerticalSliceDto,
+    SelectedRegionPreviewDto, SimulationModelDto, SimulationResultDto, SimulationRunRequestDto,
+    SymbolDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, FormulaRegistryService};
 use hotsas_core::{
@@ -172,6 +172,31 @@ impl HotSasApi {
         let project = self.current_project()?;
         let result = self.services.run_mock_ac_simulation(&project)?;
         Ok(SimulationResultDto::from(&result))
+    }
+
+    pub fn check_ngspice_availability(&self) -> Result<NgspiceAvailabilityDto, ApiError> {
+        let availability = self.services.check_ngspice_availability()?;
+        Ok(NgspiceAvailabilityDto::from(&availability))
+    }
+
+    pub fn run_simulation(
+        &self,
+        request: SimulationRunRequestDto,
+    ) -> Result<SimulationResultDto, ApiError> {
+        let project = self.current_project()?;
+        let result =
+            self.services
+                .run_simulation(&project, &request.engine, &request.analysis_kind)?;
+        Ok(SimulationResultDto::from(&result))
+    }
+
+    pub fn simulation_history(&self) -> Result<Vec<SimulationResultDto>, ApiError> {
+        Ok(self
+            .services
+            .simulation_history()
+            .iter()
+            .map(SimulationResultDto::from)
+            .collect())
     }
 
     pub fn export_markdown_report(&self) -> Result<String, ApiError> {

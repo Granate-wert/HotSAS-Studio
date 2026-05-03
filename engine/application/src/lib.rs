@@ -6,6 +6,7 @@ pub use hotsas_core::CircuitQueryService;
 pub use services::{
     AppServices, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
     EngineeringNotebookService, ExportCenterService, ExportService, FormulaRegistryService,
-    FormulaService, NetlistGenerationService, PreferredValuesService, ProjectPackageService,
-    ProjectService, SelectedRegionAnalysisService, SimulationService,
+    FormulaService, NetlistGenerationService, NgspiceSimulationService, PreferredValuesService,
+    ProjectPackageService, ProjectService, SelectedRegionAnalysisService, SimulationEngineChoice,
+    SimulationService,
 };

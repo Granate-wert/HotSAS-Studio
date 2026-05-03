@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v1.8 next**
+**Current roadmap stage: v1.9 next**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
@@ -14,6 +14,7 @@ Completed:
 - v1.5 — Component Library Foundation
 - v1.6 — Selected Region Analysis Foundation
 - v1.7 — Export Center v1
+- v1.8 — ngspice Adapter v1
 
 ---
 
@@ -90,6 +91,21 @@ Completed:
 - Integrated **Region** tab into `SchematicScreen` side panel.
 - React remains view adapter only; all topology detection and template matching live in Rust.
 
+### v1.8 — ngspice Adapter v1
+
+- Added `NgspiceAvailability`, `NgspiceRunStatus`, `NgspiceRunMetadata`, `NgspiceSimulationRequest` core models.
+- Extended `SimulationEnginePort` with `engine_name()`, `check_availability()`, `run_ac_sweep()`, `run_operating_point()`, `run_transient()`, `stop_simulation()`, `get_result()`.
+- Added `NgspiceSimulationAdapter` in `hotsas_adapters`: binary resolver, process runner, output parser, netlist control block builder.
+- Added `NgspiceSimulationService` with engine selection policy: Mock / ngspice / Auto (fallback to Mock with warning).
+- Added API DTOs: `NgspiceAvailabilityDto`, `SimulationRunRequestDto`, `SimulationRunMetadataDto`.
+- Added facade methods: `check_ngspice_availability`, `run_simulation`, `simulation_history`.
+- Added Tauri commands: `check_ngspice_availability`, `run_simulation`, `simulation_history`.
+- Updated frontend: types, API wrappers, Zustand store fields (`ngspiceAvailability`, `selectedSimulationEngine`, `simulationHistory`, `isSimulationRunning`).
+- Replaced `SimulationScreen` with `SimulationResultsScreen`: engine status card, engine selector (Auto/Mock/ngspice), run buttons (OP, AC Sweep, Transient), result card with ECharts graph.
+- React remains view adapter only; all ngspice logic (netlist generation, process execution, output parsing) lives in Rust backend.
+- Real ngspice integration tests are opt-in via `HOTSAS_RUN_NGSPICE_INTEGRATION=1`.
+- 19 new Rust tests (resolver, parser, service, API) + 7 frontend tests.
+
 ### v1.3 — Schematic Editor Foundations
 
 - Added pin/symbol foundations: `PinDefinition`, `ElectricalPinType`, `PinPosition`, `PinSide`, `SymbolDefinition`.
@@ -142,6 +158,7 @@ HotSAS Studio/
     ├── export/
     ├── formula_library/
     ├── selected_region/
+    ├── simulation/
     └── testing/
 ```
 

@@ -2,7 +2,7 @@ use hotsas_adapters::{
     AltiumWorkflowPackageExporter, BomCsvExporter, CircuitProjectPackageStorage,
     ComponentLibraryJsonExporter, CsvSimulationDataExporter, FormulaPackFileLoader,
     JsonComponentLibraryStorage, JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine,
-    SimpleFormulaEngine, SpiceNetlistExporter, SvgSchematicExporter,
+    NgspiceSimulationAdapter, SimpleFormulaEngine, SpiceNetlistExporter, SvgSchematicExporter,
 };
 use hotsas_api::{
     ApiError, ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitValidationReportDto,
@@ -183,6 +183,33 @@ fn run_mock_ac_simulation(api: State<'_, HotSasApi>) -> Result<SimulationResultD
     log::info!("COMMAND run_mock_ac_simulation");
     let result = api.run_mock_ac_simulation().map_err(tauri_error);
     log_command_result("run_mock_ac_simulation", &result);
+    result
+}
+
+#[tauri::command]
+fn check_ngspice_availability(api: State<'_, HotSasApi>) -> Result<NgspiceAvailabilityDto, String> {
+    log::info!("COMMAND check_ngspice_availability");
+    let result = api.check_ngspice_availability().map_err(tauri_error);
+    log_command_result("check_ngspice_availability", &result);
+    result
+}
+
+#[tauri::command]
+fn run_simulation(
+    api: State<'_, HotSasApi>,
+    request: SimulationRunRequestDto,
+) -> Result<SimulationResultDto, String> {
+    log::info!("COMMAND run_simulation engine={} analysis={}", request.engine, request.analysis_kind);
+    let result = api.run_simulation(request).map_err(tauri_error);
+    log_command_result("run_simulation", &result);
+    result
+}
+
+#[tauri::command]
+fn simulation_history(api: State<'_, HotSasApi>) -> Result<Vec<SimulationResultDto>, String> {
+    log::info!("COMMAND simulation_history");
+    let result = api.simulation_history().map_err(tauri_error);
+    log_command_result("simulation_history", &result);
     result
 }
 
@@ -472,6 +499,7 @@ fn build_api() -> HotSasApi {
         Arc::new(SimpleFormulaEngine),
         Arc::new(SpiceNetlistExporter),
         Arc::new(MockSimulationEngine),
+        Arc::new(NgspiceSimulationAdapter::new()),
         Arc::new(MarkdownReportExporter),
         Arc::new(JsonComponentLibraryStorage),
         Arc::new(BomCsvExporter),
@@ -496,6 +524,9 @@ pub fn run() {
             nearest_e24,
             generate_spice_netlist,
             run_mock_ac_simulation,
+            check_ngspice_availability,
+            run_simulation,
+            simulation_history,
             export_markdown_report,
             export_html_report,
             save_project_json,

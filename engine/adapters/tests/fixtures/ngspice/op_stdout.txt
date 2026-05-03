@@ -1,0 +1,7 @@
+ngspice-43
+Circuit: * HotSAS Studio - RC Low-Pass Demo
+
+v(net_in) = 1.000000e+00
+v(net_out) = 9.990010e-01
+
+CPU time: 0.001 seconds

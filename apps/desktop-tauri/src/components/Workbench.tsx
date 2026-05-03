@@ -34,6 +34,11 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     packageResult,
     busy,
     error,
+    ngspiceAvailability,
+    selectedSimulationEngine,
+    simulationHistory,
+    isSimulationRunning,
+    simulationError,
     setProject,
     setFormulaResult,
     setPreferredValue,
@@ -56,6 +61,11 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     setValidationReport,
     setExportCapabilities,
     setLastExportResult,
+    setNgspiceAvailability,
+    setSelectedSimulationEngine,
+    setSimulationHistory,
+    setIsSimulationRunning,
+    setSimulationError,
   } = useHotSasStore();
 
   const run = async <T,>(operation: () => Promise<T>, onResult: (result: T) => void) => {
@@ -77,6 +87,23 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     selectNearestE24: () => run(backend.nearestE24ForResistor, setPreferredValue),
     generateNetlist: () => run(backend.generateSpiceNetlist, setNetlist),
     runSimulation: () => run(backend.runMockAcSimulation, setSimulation),
+    checkNgspice: () => run(backend.checkNgspiceAvailability, setNgspiceAvailability),
+    runSimulationWithEngine: (analysis: string) =>
+      run(
+        () =>
+          backend.runSimulation({
+            engine: selectedSimulationEngine,
+            analysis_kind: analysis,
+            profile_id: null,
+            output_variables: [],
+            timeout_ms: null,
+          }),
+        (result) => {
+          setSimulation(result);
+          setSimulationHistory([...simulationHistory, result]);
+        },
+      ),
+    setSimulationEngine: (engine: string) => setSelectedSimulationEngine(engine),
     saveProject: () =>
       run(
         () => backend.saveProjectJson(savePath),
@@ -248,6 +275,9 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         validationReport,
         exportCapabilities,
         lastExportResult,
+        ngspiceAvailability,
+        selectedSimulationEngine,
+        isSimulationRunning: busy,
         actions,
       })}
     </div>
@@ -270,12 +300,20 @@ function renderScreen(
     validationReport: ReturnType<typeof useHotSasStore.getState>["validationReport"];
     exportCapabilities: ReturnType<typeof useHotSasStore.getState>["exportCapabilities"];
     lastExportResult: ReturnType<typeof useHotSasStore.getState>["lastExportResult"];
+    ngspiceAvailability: ReturnType<typeof useHotSasStore.getState>["ngspiceAvailability"];
+    selectedSimulationEngine: ReturnType<
+      typeof useHotSasStore.getState
+    >["selectedSimulationEngine"];
+    isSimulationRunning: ReturnType<typeof useHotSasStore.getState>["isSimulationRunning"];
     actions: {
       createDemoProject: () => void;
       calculateCutoff: () => void;
       selectNearestE24: () => void;
       generateNetlist: () => void;
       runSimulation: () => void;
+      checkNgspice: () => void;
+      runSimulationWithEngine: (analysis: string) => void;
+      setSimulationEngine: (engine: string) => void;
       exportMarkdown: () => void;
       exportHtml: () => void;
       saveProjectPackage: () => void;
@@ -344,7 +382,12 @@ function renderScreen(
       <SimulationScreen
         simulation={context.simulation}
         hasProject={context.hasProject}
-        onSimulation={context.actions.runSimulation}
+        ngspiceAvailability={context.ngspiceAvailability}
+        selectedEngine={context.selectedSimulationEngine}
+        isRunning={context.isSimulationRunning}
+        onCheckNgspice={context.actions.checkNgspice}
+        onRunSimulation={context.actions.runSimulationWithEngine}
+        onSetEngine={context.actions.setSimulationEngine}
       />
     );
   }
