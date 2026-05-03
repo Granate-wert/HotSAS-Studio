@@ -197,7 +197,7 @@ fn get_selected_component(
 
 #[tauri::command]
 fn update_component_parameter(
-    mut api: State<'_, HotSasApi>,
+    api: State<'_, HotSasApi>,
     instance_id: String,
     parameter_name: String,
     value: String,

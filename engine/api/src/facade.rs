@@ -231,7 +231,7 @@ impl HotSasApi {
     }
 
     pub fn update_component_parameter(
-        &mut self,
+        &self,
         instance_id: String,
         parameter_name: String,
         value: String,

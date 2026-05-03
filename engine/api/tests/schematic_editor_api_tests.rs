@@ -143,7 +143,7 @@ fn get_selected_component_missing_id_returns_error() {
 
 #[test]
 fn update_component_parameter_r1_resistance_changes_project() {
-    let mut api = fake_api();
+    let api = fake_api();
     api.create_rc_low_pass_demo_project().unwrap();
     let updated = api
         .update_component_parameter(
@@ -169,7 +169,7 @@ fn update_component_parameter_r1_resistance_changes_project() {
 
 #[test]
 fn update_component_parameter_invalid_value_returns_error() {
-    let mut api = fake_api();
+    let api = fake_api();
     api.create_rc_low_pass_demo_project().unwrap();
     let result = api.update_component_parameter(
         "R1".to_string(),
