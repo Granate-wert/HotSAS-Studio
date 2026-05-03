@@ -45,6 +45,7 @@ type HotSasState = {
   setValidationReport: (report: CircuitValidationReportDto | null) => void;
   setNotebookState: (state: NotebookStateDto | null) => void;
   setLastNotebookResult: (result: NotebookEvaluationResultDto | null) => void;
+  clearNotebookState: () => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -82,4 +83,5 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setValidationReport: (validationReport) => set({ validationReport }),
   setNotebookState: (notebookState) => set({ notebookState }),
   setLastNotebookResult: (lastNotebookResult) => set({ lastNotebookResult }),
+  clearNotebookState: () => set({ notebookState: null, lastNotebookResult: null }),
 }));

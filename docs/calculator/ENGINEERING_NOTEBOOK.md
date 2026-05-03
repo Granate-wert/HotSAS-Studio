@@ -1,12 +1,12 @@
 # Engineering Notebook / Calculator Foundations
 
-## Overview
+## Purpose
 
 The Engineering Notebook provides an interactive scratchpad for electrical-engineering calculations inside HotSAS Studio. Users type expressions, formula calls, or preferred-value commands and get immediate results that can be applied back to schematic components.
 
 ## Architecture
 
-### Backend (Rust)
+### Backend
 
 | Layer          | File                                                      | Responsibility                                                                                                     |
 | -------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -17,7 +17,7 @@ The Engineering Notebook provides an interactive scratchpad for electrical-engin
 | API facade     | `engine/api/src/facade.rs`                                | `HotSasApi::evaluate_notebook_input`, `get_notebook_state`, `clear_notebook`, `apply_notebook_output_to_component` |
 | Tauri commands | `apps/desktop-tauri/src-tauri/src/lib.rs`                 | Exposes notebook endpoints to the frontend                                                                         |
 
-### Frontend (React + TypeScript)
+### Frontend
 
 | Component                  | Path                                                   |
 | -------------------------- | ------------------------------------------------------ |
@@ -33,30 +33,67 @@ Store integration: `notebookState`, `lastNotebookResult`, `setNotebookState`, `s
 
 ## Supported Input Patterns
 
-| Pattern         | Example                                | Result                      |
-| --------------- | -------------------------------------- | --------------------------- |
-| Assignment      | `R = 10k`                              | Stores variable `R = 10 kΩ` |
-| Formula call    | `rc_low_pass_cutoff(R=10k, C=100n)`    | Computes `fc = 159.155 Hz`  |
-| Preferred value | `nearestE(15.93k, E24, Ohm)`           | Finds nearest E24 resistor  |
-| Free expression | (planned) engineering math expressions |
+### Assignments
+
+```text
+R = 10k
+C = 100n
+Vin = 5
+I = 2m
+```
+
+### Formula calls
+
+```text
+rc_low_pass_cutoff(R=10k, C=100n)
+rc_low_pass_cutoff(R=R, C=C)
+ohms_law(I=2m, R=10k)
+voltage_divider(Vin=5, R1=10k, R2=10k)
+```
+
+### Preferred values
+
+```text
+nearestE(15.93k, E24, Ohm)
+nearestE(15.93k, E96, Ohm)
+lowerE(15.93k, E96, Ohm)
+higherE(15.93k, E96, Ohm)
+```
+
+## Unsupported in v1.4
+
+- Free math expressions like `sin(...)`
+- Arbitrary algebra
+- Plotting
+- Symbolic solve
+
+Unsupported input returns a controlled result with a helpful hint:
+
+```text
+v1.4 supports assignments, formula calls and nearestE/lowerE/higherE commands. Free math expressions like sin(...) are planned later.
+```
 
 ## Data Flow
 
 1. User types input and presses Enter.
 2. Frontend calls `evaluateNotebookInput(input)`.
-3. Backend locks the in-memory `EngineeringNotebook`, evaluates input, updates `variables` and `history`, and returns a `NotebookEvaluationResultDto`.
+3. Backend locks the in-memory `EngineeringNotebook`, evaluates input, updates `variables` and `history`, creates a `NotebookBlock`, and returns a `NotebookEvaluationResultDto`.
 4. Frontend displays the result card and updates the variable table / history.
 5. User may select an output and apply it to a component parameter via `applyNotebookOutputToComponent`.
 
+## Apply output to component
+
+If a notebook result contains outputs and a component is selected in the schematic, the user can apply an output value directly to a component parameter.
+
 ## Tests
 
-- **Backend**: 101 tests pass (all existing + new notebook tests in `notebook_models_tests.rs`, `engineering_notebook_tests.rs`, `notebook_api_tests.rs`).
-- **Frontend**: 16 tests pass.
-- **Format / typecheck**: `cargo fmt`, `cargo test`, `prettier`, `tsc --noEmit`, `vitest run` all green.
+- **Core**: `engine/core/tests/notebook_models_tests.rs` — 4 tests
+- **Application**: `engine/application/tests/engineering_notebook_tests.rs` — 9 tests
+- **API**: `engine/api/tests/notebook_api_tests.rs` — 6 tests
+- **Frontend**: `src/components/notebook/__tests__/NotebookComponents.test.tsx` — 13 tests
 
-## Changelog (v1.4)
+## Limitations
 
-- Added `EngineeringNotebook` domain model and evaluation pipeline.
-- Added `EngineeringNotebookService` with parsers for assignment, formula calls, and preferred-value commands.
-- Added Tauri commands and frontend UI for notebook input, results, variables, history, and apply-to-component.
-- Integrated notebook into `CalculatorScreen`.
+- Notebook state is in-memory only (not persisted to disk).
+- Only a limited set of input patterns is supported.
+- Apply-to-component requires a project to be open.

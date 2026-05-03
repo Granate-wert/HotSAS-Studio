@@ -192,7 +192,7 @@ impl EngineeringNotebookService {
             _ => EngineeringUnit::Unitless,
         };
 
-        let value = self.resolve_value(value_str, variable_scope)?;
+        let value = self.resolve_argument_value(value_str, variable_scope)?;
         let value_with_unit = ValueWithUnit::new_si(value.si_value(), unit);
 
         let result = match command {
@@ -265,13 +265,13 @@ impl EngineeringNotebookService {
             }
             let name = kv[0].trim();
             let value_str = kv[1].trim();
-            let value = self.resolve_value(value_str, variable_scope)?;
+            let value = self.resolve_argument_value(value_str, variable_scope)?;
             result.insert(name.to_string(), value);
         }
         Some(result)
     }
 
-    fn resolve_value(
+    fn resolve_argument_value(
         &self,
         value_str: &str,
         variable_scope: &BTreeMap<String, ValueWithUnit>,

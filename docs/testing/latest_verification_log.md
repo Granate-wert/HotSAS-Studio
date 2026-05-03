@@ -1,93 +1,23 @@
-# HotSAS Studio Verification Log
+# HotSAS Studio — Latest Verification Log
 
-## Version / Task
+**Version:** v1.4-fix — Engineering Notebook Integration, Documentation, Verification  
+**Date:** 2026-05-03  
+**Commit:** (pending after push)
 
-v1.3 — Schematic Editor Foundations
+See full log: [`docs/testing/verification_logs/v1.4_engineering_notebook.md`](./verification_logs/v1.4_engineering_notebook.md)
 
-## Date
+## Quick Results
 
-2026-05-03
+| Check                | Result           |
+| -------------------- | ---------------- |
+| cargo fmt --check    | PASS             |
+| cargo test           | PASS (120 tests) |
+| npm run format:check | PASS             |
+| npm run typecheck    | PASS             |
+| npm run test         | PASS (29 tests)  |
+| npm run build        | PASS             |
 
-## Git
+## Status
 
-Branch: main
-Commit before changes: f34bb07
-Commit after changes: c90c90c
-Git status before: clean (untracked files only)
-Git status after: clean
-
-## Summary of changes
-
-- Added pin/symbol foundations.
-- Added circuit validation service.
-- Added selected component API.
-- Added update component parameter API.
-- Added validation API.
-- Added custom schematic nodes.
-- Added property panel.
-- Added validation panel.
-- Added tests and docs.
-
-## Rust checks
-
-### cargo fmt --check
-
-Status: PASS
-
-### cargo test
-
-Status: PASS (101 tests, 0 failures)
-
-## Frontend checks
-
-### npm.cmd run format:check
-
-Status: PASS
-
-### npm.cmd run typecheck
-
-Status: PASS
-
-### npm.cmd run test
-
-Status: PASS (16 tests)
-
-### npm.cmd run build
-
-Status: PASS
-
-## Manual / UI smoke test
-
-Status: NOT RUN
-
-Checks:
-
-- RC demo project still opens.
-- Custom nodes visible.
-- R1 can be selected.
-- PropertyPanel shows R1.resistance.
-- Update R1.resistance works.
-- Validate Circuit works.
-- Formula Library still works.
-- .circuit save/load still works.
-
-## Agent self-check
-
-- React Flow is still view adapter only: PASS
-- Backend remains source of truth: PASS
-- No PCB features added: PASS
-- No ngspice added: PASS
-- RC vertical slice still works: PASS
-
-## Supplement: v1.1.3 missing items completed
-
-- Added `FormulaPackSource` and `FormulaPackValidationError` to `hotsas_core::models`
-- Added `ohms_law_formula()` and `voltage_divider_formula()` seed factories to `hotsas_core::templates`
-- Added missing `FormulaPackLoader` tests: `basic_electronics.yaml`, `op_amp.yaml`, `smps.yaml`, missing formula id, no equations
-- Added missing `FormulaRegistry` tests: `ohms_law`, `voltage_divider`
-- `cargo test`: 101 tests, 0 failures
-
-## Final result
-
-Overall status: PASS
-Ready for next version: YES
+- v1.4 Engineering Notebook is complete and verified.
+- Ready for v1.5 — Component Library Foundation.

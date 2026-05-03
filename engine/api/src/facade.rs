@@ -9,7 +9,7 @@ use crate::{
 use hotsas_application::{AppServices, FormulaRegistryService};
 use hotsas_core::{
     rc_low_pass_formula, CircuitProject, EngineeringNotebook, EngineeringUnit, FormulaDefinition,
-    FormulaPack, NotebookEvaluationStatus, NotebookHistoryEntry, ValueWithUnit,
+    FormulaPack, NotebookBlock, NotebookEvaluationStatus, NotebookHistoryEntry, ValueWithUnit,
 };
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -391,6 +391,15 @@ impl HotSasApi {
             input: request.input.clone(),
             result_summary: summary,
             status: result.status.clone(),
+        });
+        let block_id = format!("blk-{}", notebook.blocks.len());
+        notebook.blocks.push(NotebookBlock {
+            id: block_id,
+            kind: result.kind.clone(),
+            input: request.input.clone(),
+            result: Some(result.clone()),
+            created_at: None,
+            updated_at: None,
         });
         Ok(NotebookEvaluationResultDto::from(&result))
     }

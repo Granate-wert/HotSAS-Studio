@@ -310,9 +310,50 @@ This stage verifies:
 
 ---
 
+## v1.4-fix — Engineering Notebook Integration, Documentation, Verification
+
+### Tests
+
+- **Core Notebook Models** (`core/tests/notebook_models_tests.rs`)
+  - `EngineeringNotebook` serializes/deserializes
+  - `NotebookBlock` stores result
+  - `NotebookEvaluationResult` stores outputs
+  - `NotebookHistoryEntry` stores status
+
+- **Engineering Notebook Service** (`application/tests/engineering_notebook_tests.rs`)
+  - Assignment `R = 10k` creates variable
+  - Formula call with literal values `rc_low_pass_cutoff(R=10k, C=100n)`
+  - Formula call with variables `rc_low_pass_cutoff(R=R, C=C)`
+  - `ohms_law(I=2m, R=10k)` returns `V=20V`
+  - `voltage_divider(Vin=5, R1=10k, R2=10k)` returns `Vout=2.5V`
+  - `nearestE(15.93k, E24, Ohm)` returns nearest E24 value
+  - `nearestE(15.93k, E96, Ohm)` returns nearest E96 value
+  - Unsupported expression `sin(5)` returns controlled unsupported
+  - Malformed input returns controlled error
+
+- **Notebook API** (`api/tests/notebook_api_tests.rs`)
+  - `evaluate_notebook_input` assignment returns variable
+  - `evaluate_notebook_input` formula returns output
+  - `get_notebook_state` returns variables/history
+  - `clear_notebook` clears state
+  - `apply_notebook_output_to_component` without project returns state error
+  - Unsupported input returns controlled unsupported result
+
+- **Frontend Notebook Components** (`src/components/notebook/__tests__/NotebookComponents.test.tsx`)
+  - `NotebookInput` renders placeholder and buttons
+  - Evaluate/Clear buttons call handlers
+  - `NotebookResultCard` displays output
+  - `NotebookResultCard` displays unsupported hint
+  - `NotebookVariableTable` displays variables
+  - `NotebookHistory` displays entries
+  - `PreferredValueQuickTools` renders buttons and inserts templates
+  - `ApplyNotebookOutputPanel` renders apply buttons
+
+---
+
 ## Test Summary
 
-As of v1.3, the Rust workspace runs **101 tests** across all crates with **zero failures**, and the frontend runs **16 UI tests** with **zero failures**.
+As of v1.4-fix, the Rust workspace runs **120 tests** across all crates with **zero failures**, and the frontend runs **29 UI tests** with **zero failures**.
 
 ---
 

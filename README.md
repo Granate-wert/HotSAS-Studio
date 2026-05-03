@@ -5,11 +5,12 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v1.4 in progress**
+**Current roadmap stage: v1.5 next**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
 - v1.3 — Schematic Editor Foundations
+- v1.4 — Engineering Notebook / Calculator Foundations
 
 ---
 
@@ -59,6 +60,16 @@ Completed:
 - API command `calculate_formula` + Tauri command.
 - Formula Library UI: variable inputs + **Calculate** button.
 - Old RC-specific commands preserved for compatibility.
+
+### v1.4 — Engineering Notebook / Calculator Foundations
+
+- Added `EngineeringNotebook` domain model with blocks, variables, history, and evaluation results.
+- Added `EngineeringNotebookService` with parsers for assignments, formula calls, and preferred-value commands.
+- Added backend API DTOs and facade methods: `evaluate_notebook_input`, `get_notebook_state`, `clear_notebook`, `apply_notebook_output_to_component`.
+- Added Tauri commands for notebook integration.
+- Added frontend notebook UI components: `NotebookInput`, `NotebookResultCard`, `NotebookVariableTable`, `NotebookHistory`, `PreferredValueQuickTools`, `ApplyNotebookOutputPanel`.
+- Integrated notebook into `CalculatorScreen`.
+- Unsupported expressions return controlled results with a helpful hint.
 
 ### v1.3 — Schematic Editor Foundations
 
