@@ -868,3 +868,362 @@ pub struct KeyValueDto {
     pub key: String,
     pub value: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionPortDto {
+    pub positive_net: String,
+    pub negative_net: Option<String>,
+    pub label: Option<String>,
+}
+
+impl From<&hotsas_core::RegionPort> for RegionPortDto {
+    fn from(port: &hotsas_core::RegionPort) -> Self {
+        Self {
+            positive_net: port.positive_net.clone(),
+            negative_net: port.negative_net.clone(),
+            label: port.label.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SelectedRegionAnalysisRequestDto {
+    pub component_ids: Vec<String>,
+    pub input_port: Option<RegionPortDto>,
+    pub output_port: Option<RegionPortDto>,
+    pub reference_node: Option<String>,
+    pub analysis_direction: String,
+    pub analysis_mode: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SelectedCircuitRegionDto {
+    pub id: String,
+    pub title: String,
+    pub component_ids: Vec<String>,
+    pub internal_nets: Vec<String>,
+    pub boundary_nets: Vec<String>,
+    pub input_port: Option<RegionPortDto>,
+    pub output_port: Option<RegionPortDto>,
+    pub reference_node: Option<String>,
+    pub analysis_direction: String,
+    pub analysis_mode: String,
+}
+
+impl From<&hotsas_core::SelectedCircuitRegion> for SelectedCircuitRegionDto {
+    fn from(region: &hotsas_core::SelectedCircuitRegion) -> Self {
+        Self {
+            id: region.id.clone(),
+            title: region.title.clone(),
+            component_ids: region.component_ids.clone(),
+            internal_nets: region.internal_nets.clone(),
+            boundary_nets: region.boundary_nets.clone(),
+            input_port: region.input_port.as_ref().map(RegionPortDto::from),
+            output_port: region.output_port.as_ref().map(RegionPortDto::from),
+            reference_node: region.reference_node.clone(),
+            analysis_direction: format!("{:?}", region.analysis_direction),
+            analysis_mode: format!("{:?}", region.analysis_mode),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionComponentSummaryDto {
+    pub instance_id: String,
+    pub definition_id: Option<String>,
+    pub component_kind: String,
+    pub display_label: String,
+    pub connected_nets: Vec<String>,
+}
+
+impl From<&hotsas_core::RegionComponentSummary> for RegionComponentSummaryDto {
+    fn from(summary: &hotsas_core::RegionComponentSummary) -> Self {
+        Self {
+            instance_id: summary.instance_id.clone(),
+            definition_id: summary.definition_id.clone(),
+            component_kind: summary.component_kind.clone(),
+            display_label: summary.display_label.clone(),
+            connected_nets: summary.connected_nets.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionNetSummaryDto {
+    pub net_id: String,
+    pub net_name: String,
+    pub connected_selected_components: Vec<String>,
+    pub connected_external_components: Vec<String>,
+    pub is_ground: bool,
+    pub role_hint: Option<String>,
+}
+
+impl From<&hotsas_core::RegionNetSummary> for RegionNetSummaryDto {
+    fn from(summary: &hotsas_core::RegionNetSummary) -> Self {
+        Self {
+            net_id: summary.net_id.clone(),
+            net_name: summary.net_name.clone(),
+            connected_selected_components: summary.connected_selected_components.clone(),
+            connected_external_components: summary.connected_external_components.clone(),
+            is_ground: summary.is_ground,
+            role_hint: summary.role_hint.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SelectedRegionIssueDto {
+    pub code: String,
+    pub severity: String,
+    pub message: String,
+    pub component_id: Option<String>,
+    pub net_id: Option<String>,
+}
+
+impl From<&hotsas_core::SelectedRegionIssue> for SelectedRegionIssueDto {
+    fn from(issue: &hotsas_core::SelectedRegionIssue) -> Self {
+        Self {
+            code: issue.code.clone(),
+            severity: format!("{:?}", issue.severity),
+            message: issue.message.clone(),
+            component_id: issue.component_id.clone(),
+            net_id: issue.net_id.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SelectedRegionPreviewDto {
+    pub region: SelectedCircuitRegionDto,
+    pub selected_components: Vec<RegionComponentSummaryDto>,
+    pub detected_internal_nets: Vec<RegionNetSummaryDto>,
+    pub detected_boundary_nets: Vec<RegionNetSummaryDto>,
+    pub suggested_input_nets: Vec<String>,
+    pub suggested_output_nets: Vec<String>,
+    pub suggested_reference_nodes: Vec<String>,
+    pub warnings: Vec<SelectedRegionIssueDto>,
+    pub errors: Vec<SelectedRegionIssueDto>,
+}
+
+impl From<&hotsas_core::SelectedRegionPreview> for SelectedRegionPreviewDto {
+    fn from(preview: &hotsas_core::SelectedRegionPreview) -> Self {
+        Self {
+            region: SelectedCircuitRegionDto::from(&preview.region),
+            selected_components: preview
+                .selected_components
+                .iter()
+                .map(RegionComponentSummaryDto::from)
+                .collect(),
+            detected_internal_nets: preview
+                .detected_internal_nets
+                .iter()
+                .map(RegionNetSummaryDto::from)
+                .collect(),
+            detected_boundary_nets: preview
+                .detected_boundary_nets
+                .iter()
+                .map(RegionNetSummaryDto::from)
+                .collect(),
+            suggested_input_nets: preview.suggested_input_nets.clone(),
+            suggested_output_nets: preview.suggested_output_nets.clone(),
+            suggested_reference_nodes: preview.suggested_reference_nodes.clone(),
+            warnings: preview
+                .warnings
+                .iter()
+                .map(SelectedRegionIssueDto::from)
+                .collect(),
+            errors: preview
+                .errors
+                .iter()
+                .map(SelectedRegionIssueDto::from)
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MatchedRegionTemplateDto {
+    pub template_id: String,
+    pub title: String,
+    pub confidence: f64,
+    pub formula_ids: Vec<String>,
+    pub explanation: String,
+}
+
+impl From<&hotsas_core::MatchedRegionTemplate> for MatchedRegionTemplateDto {
+    fn from(template: &hotsas_core::MatchedRegionTemplate) -> Self {
+        Self {
+            template_id: template.template_id.clone(),
+            title: template.title.clone(),
+            confidence: template.confidence,
+            formula_ids: template.formula_ids.clone(),
+            explanation: template.explanation.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EquivalentCircuitSummaryDto {
+    pub title: String,
+    pub description: String,
+    pub assumptions: Vec<String>,
+    pub limitations: Vec<String>,
+}
+
+impl From<&hotsas_core::EquivalentCircuitSummary> for EquivalentCircuitSummaryDto {
+    fn from(summary: &hotsas_core::EquivalentCircuitSummary) -> Self {
+        Self {
+            title: summary.title.clone(),
+            description: summary.description.clone(),
+            assumptions: summary.assumptions.clone(),
+            limitations: summary.limitations.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionTransferFunctionDto {
+    pub expression: String,
+    pub latex: Option<String>,
+    pub output_name: String,
+    pub unit: Option<String>,
+    pub availability_note: Option<String>,
+}
+
+impl From<&hotsas_core::RegionTransferFunction> for RegionTransferFunctionDto {
+    fn from(tf: &hotsas_core::RegionTransferFunction) -> Self {
+        Self {
+            expression: tf.expression.clone(),
+            latex: tf.latex.clone(),
+            output_name: tf.output_name.clone(),
+            unit: tf.unit.map(|u| u.symbol().to_string()),
+            availability_note: tf.availability_note.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionMeasurementDto {
+    pub name: String,
+    pub value: Option<ValueDto>,
+    pub description: String,
+    pub source: String,
+}
+
+impl From<&hotsas_core::RegionMeasurement> for RegionMeasurementDto {
+    fn from(m: &hotsas_core::RegionMeasurement) -> Self {
+        Self {
+            name: m.name.clone(),
+            value: m.value.as_ref().map(ValueDto::from),
+            description: m.description.clone(),
+            source: m.source.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionGraphSpecDto {
+    pub id: String,
+    pub title: String,
+    pub x_unit: Option<String>,
+    pub y_unit: Option<String>,
+    pub description: String,
+    pub available: bool,
+    pub unavailable_reason: Option<String>,
+}
+
+impl From<&hotsas_core::RegionGraphSpec> for RegionGraphSpecDto {
+    fn from(spec: &hotsas_core::RegionGraphSpec) -> Self {
+        Self {
+            id: spec.id.clone(),
+            title: spec.title.clone(),
+            x_unit: spec.x_unit.map(|u| u.symbol().to_string()),
+            y_unit: spec.y_unit.map(|u| u.symbol().to_string()),
+            description: spec.description.clone(),
+            available: spec.available,
+            unavailable_reason: spec.unavailable_reason.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionNetlistFragmentDto {
+    pub title: String,
+    pub format: String,
+    pub content: String,
+    pub warnings: Vec<String>,
+}
+
+impl From<&hotsas_core::RegionNetlistFragment> for RegionNetlistFragmentDto {
+    fn from(fragment: &hotsas_core::RegionNetlistFragment) -> Self {
+        Self {
+            title: fragment.title.clone(),
+            format: fragment.format.clone(),
+            content: fragment.content.clone(),
+            warnings: fragment.warnings.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SelectedRegionAnalysisResultDto {
+    pub region: SelectedCircuitRegionDto,
+    pub status: String,
+    pub summary: String,
+    pub matched_template: Option<MatchedRegionTemplateDto>,
+    pub equivalent_circuit: Option<EquivalentCircuitSummaryDto>,
+    pub transfer_function: Option<RegionTransferFunctionDto>,
+    pub measurements: Vec<RegionMeasurementDto>,
+    pub graph_specs: Vec<RegionGraphSpecDto>,
+    pub netlist_fragment: Option<RegionNetlistFragmentDto>,
+    pub warnings: Vec<SelectedRegionIssueDto>,
+    pub errors: Vec<SelectedRegionIssueDto>,
+    pub report_section_markdown: Option<String>,
+}
+
+impl From<&hotsas_core::SelectedRegionAnalysisResult> for SelectedRegionAnalysisResultDto {
+    fn from(result: &hotsas_core::SelectedRegionAnalysisResult) -> Self {
+        Self {
+            region: SelectedCircuitRegionDto::from(&result.region),
+            status: format!("{:?}", result.status),
+            summary: result.summary.clone(),
+            matched_template: result
+                .matched_template
+                .as_ref()
+                .map(MatchedRegionTemplateDto::from),
+            equivalent_circuit: result
+                .equivalent_circuit
+                .as_ref()
+                .map(EquivalentCircuitSummaryDto::from),
+            transfer_function: result
+                .transfer_function
+                .as_ref()
+                .map(RegionTransferFunctionDto::from),
+            measurements: result
+                .measurements
+                .iter()
+                .map(RegionMeasurementDto::from)
+                .collect(),
+            graph_specs: result
+                .graph_specs
+                .iter()
+                .map(RegionGraphSpecDto::from)
+                .collect(),
+            netlist_fragment: result
+                .netlist_fragment
+                .as_ref()
+                .map(RegionNetlistFragmentDto::from),
+            warnings: result
+                .warnings
+                .iter()
+                .map(SelectedRegionIssueDto::from)
+                .collect(),
+            errors: result
+                .errors
+                .iter()
+                .map(SelectedRegionIssueDto::from)
+                .collect(),
+            report_section_markdown: result.report_section_markdown.clone(),
+        }
+    }
+}

@@ -10,7 +10,8 @@ use hotsas_api::{
     FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi, NotebookEvaluationRequestDto,
     NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto, ProjectDto,
     ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
-    SelectedComponentDto, SimulationResultDto, VerticalSliceDto,
+    SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
+    SelectedRegionIssueDto, SelectedRegionPreviewDto, SimulationResultDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -57,6 +58,39 @@ fn init_logging(app: &tauri::App) {
     } else {
         log::info!("HotSAS Studio starting up. Log file: {log_file:?}");
     }
+}
+
+#[tauri::command]
+fn preview_selected_region(
+    api: State<'_, HotSasApi>,
+    component_ids: Vec<String>,
+) -> Result<SelectedRegionPreviewDto, String> {
+    log::info!("COMMAND preview_selected_region: {} components", component_ids.len());
+    let result = api.preview_selected_region(component_ids).map_err(tauri_error);
+    log_command_result("preview_selected_region", &result);
+    result
+}
+
+#[tauri::command]
+fn analyze_selected_region(
+    api: State<'_, HotSasApi>,
+    request: SelectedRegionAnalysisRequestDto,
+) -> Result<SelectedRegionAnalysisResultDto, String> {
+    log::info!("COMMAND analyze_selected_region");
+    let result = api.analyze_selected_region(request).map_err(tauri_error);
+    log_command_result("analyze_selected_region", &result);
+    result
+}
+
+#[tauri::command]
+fn validate_selected_region(
+    api: State<'_, HotSasApi>,
+    request: SelectedRegionAnalysisRequestDto,
+) -> Result<Vec<SelectedRegionIssueDto>, String> {
+    log::info!("COMMAND validate_selected_region");
+    let result = api.validate_selected_region(request).map_err(tauri_error);
+    log_command_result("validate_selected_region", &result);
+    result
 }
 
 #[tauri::command]
@@ -454,6 +488,9 @@ pub fn run() {
             search_components,
             get_component_details,
             assign_component_to_selected_instance,
+            preview_selected_region,
+            analyze_selected_region,
+            validate_selected_region,
             write_log
         ])
         .run(tauri::generate_context!())

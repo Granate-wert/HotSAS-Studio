@@ -383,3 +383,133 @@ export type KeyValueDto = {
   key: string;
   value: string;
 };
+
+export type RegionPortDto = {
+  positive_net: string;
+  negative_net: string | null;
+  label: string | null;
+};
+
+export type RegionAnalysisDirection = "LeftToRight" | "RightToLeft" | "Custom";
+export type RegionAnalysisMode = "Structural" | "TemplateBased" | "NumericMock" | "AllAvailable";
+
+export type SelectedCircuitRegionDto = {
+  id: string;
+  title: string;
+  component_ids: string[];
+  internal_nets: string[];
+  boundary_nets: string[];
+  input_port: RegionPortDto | null;
+  output_port: RegionPortDto | null;
+  reference_node: string | null;
+  analysis_direction: string;
+  analysis_mode: string;
+};
+
+export type RegionComponentSummaryDto = {
+  instance_id: string;
+  definition_id: string | null;
+  component_kind: string;
+  display_label: string;
+  connected_nets: string[];
+};
+
+export type RegionNetSummaryDto = {
+  net_id: string;
+  net_name: string;
+  connected_selected_components: string[];
+  connected_external_components: string[];
+  is_ground: boolean;
+  role_hint: string | null;
+};
+
+export type SelectedRegionIssueDto = {
+  code: string;
+  severity: string;
+  message: string;
+  component_id: string | null;
+  net_id: string | null;
+};
+
+export type SelectedRegionPreviewDto = {
+  region: SelectedCircuitRegionDto;
+  selected_components: RegionComponentSummaryDto[];
+  detected_internal_nets: RegionNetSummaryDto[];
+  detected_boundary_nets: RegionNetSummaryDto[];
+  suggested_input_nets: string[];
+  suggested_output_nets: string[];
+  suggested_reference_nodes: string[];
+  warnings: SelectedRegionIssueDto[];
+  errors: SelectedRegionIssueDto[];
+};
+
+export type MatchedRegionTemplateDto = {
+  template_id: string;
+  title: string;
+  confidence: number;
+  formula_ids: string[];
+  explanation: string;
+};
+
+export type EquivalentCircuitSummaryDto = {
+  title: string;
+  description: string;
+  assumptions: string[];
+  limitations: string[];
+};
+
+export type RegionTransferFunctionDto = {
+  expression: string;
+  latex: string | null;
+  output_name: string;
+  unit: string | null;
+  availability_note: string | null;
+};
+
+export type RegionMeasurementDto = {
+  name: string;
+  value: ValueDto | null;
+  description: string;
+  source: string;
+};
+
+export type RegionGraphSpecDto = {
+  id: string;
+  title: string;
+  x_unit: string | null;
+  y_unit: string | null;
+  description: string;
+  available: boolean;
+  unavailable_reason: string | null;
+};
+
+export type RegionNetlistFragmentDto = {
+  title: string;
+  format: string;
+  content: string;
+  warnings: string[];
+};
+
+export type SelectedRegionAnalysisResultDto = {
+  region: SelectedCircuitRegionDto;
+  status: string;
+  summary: string;
+  matched_template: MatchedRegionTemplateDto | null;
+  equivalent_circuit: EquivalentCircuitSummaryDto | null;
+  transfer_function: RegionTransferFunctionDto | null;
+  measurements: RegionMeasurementDto[];
+  graph_specs: RegionGraphSpecDto[];
+  netlist_fragment: RegionNetlistFragmentDto | null;
+  warnings: SelectedRegionIssueDto[];
+  errors: SelectedRegionIssueDto[];
+  report_section_markdown: string | null;
+};
+
+export type SelectedRegionAnalysisRequestDto = {
+  component_ids: string[];
+  input_port: RegionPortDto | null;
+  output_port: RegionPortDto | null;
+  reference_node: string | null;
+  analysis_direction: string;
+  analysis_mode: string;
+};

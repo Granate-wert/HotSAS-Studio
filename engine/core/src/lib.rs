@@ -8,6 +8,7 @@ pub mod notebook;
 pub mod preferred_value_tables;
 pub mod preferred_values;
 pub mod project_package;
+pub mod selected_region;
 pub mod symbol;
 pub mod templates;
 pub mod value;
@@ -21,6 +22,7 @@ pub use models::*;
 pub use notebook::*;
 pub use preferred_values::*;
 pub use project_package::*;
+pub use selected_region::*;
 pub use symbol::{
     bjt_npn_symbol, bjt_pnp_symbol, capacitor_symbol, diode_symbol, ground_symbol, inductor_symbol,
     led_symbol, mosfet_n_symbol, mosfet_p_symbol, op_amp_symbol, resistor_symbol,

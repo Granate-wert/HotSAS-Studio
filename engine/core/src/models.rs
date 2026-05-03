@@ -310,18 +310,6 @@ pub struct FormulaCircuitBinding {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct SelectedCircuitRegion {
-    pub component_ids: Vec<String>,
-    pub internal_nets: Vec<String>,
-    pub boundary_nets: Vec<String>,
-    pub input_port: String,
-    pub output_port: String,
-    pub reference_node: String,
-    pub analysis_direction: String,
-    pub analysis_mode: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SimulationProfile {
     pub id: String,
     pub simulation_type: SimulationType,

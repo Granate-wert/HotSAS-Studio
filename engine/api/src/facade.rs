@@ -6,7 +6,8 @@ use crate::{
     FormulaResultDto, FormulaSummaryDto, KeyValueDto, NotebookEvaluationRequestDto,
     NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto, ProjectDto,
     ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
-    SelectedComponentDto, SimulationModelDto, SimulationResultDto, SymbolDto, ValueDto,
+    SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
+    SelectedRegionPreviewDto, SimulationModelDto, SimulationResultDto, SymbolDto, ValueDto,
     VerticalSliceDto,
 };
 use hotsas_application::{AppServices, FormulaRegistryService};
@@ -655,6 +656,101 @@ impl HotSasApi {
             )?;
         self.replace_current_project(project.clone())?;
         Ok(ProjectDto::from(&project))
+    }
+
+    pub fn preview_selected_region(
+        &self,
+        component_ids: Vec<String>,
+    ) -> Result<SelectedRegionPreviewDto, ApiError> {
+        let project = self.current_project()?;
+        let preview = self
+            .services
+            .selected_region_analysis_service()
+            .preview_selected_region(&project.schematic, component_ids)
+            .map_err(ApiError::Application)?;
+        Ok(SelectedRegionPreviewDto::from(&preview))
+    }
+
+    pub fn analyze_selected_region(
+        &self,
+        request: SelectedRegionAnalysisRequestDto,
+    ) -> Result<SelectedRegionAnalysisResultDto, ApiError> {
+        let project = self.current_project()?;
+        let direction = match request.analysis_direction.as_str() {
+            "LeftToRight" => hotsas_core::RegionAnalysisDirection::LeftToRight,
+            "RightToLeft" => hotsas_core::RegionAnalysisDirection::RightToLeft,
+            _ => hotsas_core::RegionAnalysisDirection::Custom,
+        };
+        let mode = match request.analysis_mode.as_str() {
+            "Structural" => hotsas_core::RegionAnalysisMode::Structural,
+            "TemplateBased" => hotsas_core::RegionAnalysisMode::TemplateBased,
+            "NumericMock" => hotsas_core::RegionAnalysisMode::NumericMock,
+            _ => hotsas_core::RegionAnalysisMode::AllAvailable,
+        };
+        let core_request = hotsas_core::SelectedRegionAnalysisRequest {
+            component_ids: request.component_ids,
+            input_port: request.input_port.map(|p| hotsas_core::RegionPort {
+                positive_net: p.positive_net,
+                negative_net: p.negative_net,
+                label: p.label,
+            }),
+            output_port: request.output_port.map(|p| hotsas_core::RegionPort {
+                positive_net: p.positive_net,
+                negative_net: p.negative_net,
+                label: p.label,
+            }),
+            reference_node: request.reference_node,
+            analysis_direction: direction,
+            analysis_mode: mode,
+        };
+        let result = self
+            .services
+            .selected_region_analysis_service()
+            .analyze_selected_region(&project.schematic, core_request)
+            .map_err(ApiError::Application)?;
+        Ok(SelectedRegionAnalysisResultDto::from(&result))
+    }
+
+    pub fn validate_selected_region(
+        &self,
+        request: SelectedRegionAnalysisRequestDto,
+    ) -> Result<Vec<crate::SelectedRegionIssueDto>, ApiError> {
+        let project = self.current_project()?;
+        let direction = match request.analysis_direction.as_str() {
+            "LeftToRight" => hotsas_core::RegionAnalysisDirection::LeftToRight,
+            "RightToLeft" => hotsas_core::RegionAnalysisDirection::RightToLeft,
+            _ => hotsas_core::RegionAnalysisDirection::Custom,
+        };
+        let mode = match request.analysis_mode.as_str() {
+            "Structural" => hotsas_core::RegionAnalysisMode::Structural,
+            "TemplateBased" => hotsas_core::RegionAnalysisMode::TemplateBased,
+            "NumericMock" => hotsas_core::RegionAnalysisMode::NumericMock,
+            _ => hotsas_core::RegionAnalysisMode::AllAvailable,
+        };
+        let core_request = hotsas_core::SelectedRegionAnalysisRequest {
+            component_ids: request.component_ids,
+            input_port: request.input_port.map(|p| hotsas_core::RegionPort {
+                positive_net: p.positive_net,
+                negative_net: p.negative_net,
+                label: p.label,
+            }),
+            output_port: request.output_port.map(|p| hotsas_core::RegionPort {
+                positive_net: p.positive_net,
+                negative_net: p.negative_net,
+                label: p.label,
+            }),
+            reference_node: request.reference_node,
+            analysis_direction: direction,
+            analysis_mode: mode,
+        };
+        let issues = self
+            .services
+            .selected_region_analysis_service()
+            .validate_selected_region(&project.schematic, &core_request);
+        Ok(issues
+            .iter()
+            .map(crate::SelectedRegionIssueDto::from)
+            .collect())
     }
 
     fn replace_current_project(&self, project: CircuitProject) -> Result<(), ApiError> {

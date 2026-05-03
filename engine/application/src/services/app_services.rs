@@ -1,7 +1,8 @@
 use crate::{
     ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
     EngineeringNotebookService, ExportService, FormulaService, NetlistGenerationService,
-    PreferredValuesService, ProjectPackageService, ProjectService, SimulationService,
+    PreferredValuesService, ProjectPackageService, ProjectService, SelectedRegionAnalysisService,
+    SimulationService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
@@ -27,6 +28,7 @@ pub struct AppServices {
     simulation_service: SimulationService,
     export_service: ExportService,
     component_library_service: ComponentLibraryService,
+    selected_region_analysis_service: SelectedRegionAnalysisService,
 }
 
 impl AppServices {
@@ -51,6 +53,7 @@ impl AppServices {
             simulation_service: SimulationService::new(simulation_engine),
             export_service: ExportService::new(report_exporter),
             component_library_service: ComponentLibraryService::new(component_library_port),
+            selected_region_analysis_service: SelectedRegionAnalysisService::new(),
         }
     }
 
@@ -96,6 +99,10 @@ impl AppServices {
 
     pub fn component_library_service(&self) -> &ComponentLibraryService {
         &self.component_library_service
+    }
+
+    pub fn selected_region_analysis_service(&self) -> &SelectedRegionAnalysisService {
+        &self.selected_region_analysis_service
     }
 
     pub fn create_rc_low_pass_demo_project(&self) -> CircuitProject {

@@ -24,6 +24,10 @@ import type {
   ProjectPackageValidationReportDto,
   SaveProjectDto,
   SelectedComponentDto,
+  SelectedRegionAnalysisRequestDto,
+  SelectedRegionAnalysisResultDto,
+  SelectedRegionIssueDto,
+  SelectedRegionPreviewDto,
   SimulationResultDto,
   VerticalSliceDto,
 } from "../types";
@@ -105,6 +109,12 @@ export const backend = {
     invokeCommand<ComponentDetailsDto>("get_component_details", { componentId }),
   assignComponentToSelectedInstance: (request: AssignComponentRequestDto) =>
     invokeCommand<ProjectDto>("assign_component_to_selected_instance", { request }),
+  previewSelectedRegion: (componentIds: string[]) =>
+    invokeCommand<SelectedRegionPreviewDto>("preview_selected_region", { componentIds }),
+  analyzeSelectedRegion: (request: SelectedRegionAnalysisRequestDto) =>
+    invokeCommand<SelectedRegionAnalysisResultDto>("analyze_selected_region", { request }),
+  validateSelectedRegion: (request: SelectedRegionAnalysisRequestDto) =>
+    invokeCommand<SelectedRegionIssueDto[]>("validate_selected_region", { request }),
   writeLog: (level: string, message: string) =>
     invokeCommand<void>("write_log", { level, message }),
 };

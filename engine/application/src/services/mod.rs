@@ -10,6 +10,7 @@ mod netlist_generation;
 mod preferred_values;
 mod project;
 mod project_package;
+mod selected_region_analysis;
 mod simulation;
 
 pub use app_services::AppServices;
@@ -24,4 +25,5 @@ pub use netlist_generation::NetlistGenerationService;
 pub use preferred_values::{parse_requested_e24_value, PreferredValuesService};
 pub use project::ProjectService;
 pub use project_package::ProjectPackageService;
+pub use selected_region_analysis::SelectedRegionAnalysisService;
 pub use simulation::SimulationService;

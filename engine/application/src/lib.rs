@@ -7,5 +7,5 @@ pub use services::{
     AppServices, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
     EngineeringNotebookService, ExportService, FormulaRegistryService, FormulaService,
     NetlistGenerationService, PreferredValuesService, ProjectPackageService, ProjectService,
-    SimulationService,
+    SelectedRegionAnalysisService, SimulationService,
 };

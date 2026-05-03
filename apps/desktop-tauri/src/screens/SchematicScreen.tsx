@@ -5,6 +5,7 @@ import { PreBlock } from "../components/PreBlock";
 import { ProjectMetrics } from "../components/ProjectMetrics";
 import { ReportPanel } from "../components/ReportPanel";
 import { SchematicCanvas } from "../components/SchematicCanvas";
+import { SelectedRegionPanel } from "../components/selected-region";
 import { CircuitValidationPanel } from "../components/schematic/CircuitValidationPanel";
 import { SchematicPropertyPanel } from "../components/schematic/SchematicPropertyPanel";
 import { SimulationChart } from "../components/SimulationChart";
@@ -54,6 +55,7 @@ export function SchematicScreen({
             <Tabs.Tab value="properties">Properties</Tabs.Tab>
             <Tabs.Tab value="validation">Validation</Tabs.Tab>
             <Tabs.Tab value="metrics">Metrics</Tabs.Tab>
+            <Tabs.Tab value="region">Region</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="properties">
             <SchematicPropertyPanel component={selectedComponent} onUpdate={onPropertyUpdate} />
@@ -68,6 +70,9 @@ export function SchematicScreen({
               preferredValue={preferredValue}
               simulation={simulation}
             />
+          </Tabs.Panel>
+          <Tabs.Panel value="region">
+            <SelectedRegionPanel project={project} />
           </Tabs.Panel>
         </Tabs>
       </aside>

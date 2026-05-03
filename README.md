@@ -5,13 +5,14 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v1.6 next**
+**Current roadmap stage: v1.7 next**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
 - v1.3 — Schematic Editor Foundations
 - v1.4 — Engineering Notebook / Calculator Foundations
 - v1.5 — Component Library Foundation
+- v1.6 — Selected Region Analysis Foundation
 
 ---
 
@@ -72,6 +73,21 @@ Completed:
 - Integrated notebook into `CalculatorScreen`.
 - Unsupported expressions return controlled results with a helpful hint.
 
+### v1.6 — Selected Region Analysis Foundation
+
+- Added core domain models: `SelectedCircuitRegion`, `RegionPort`, `SelectedRegionPreview`, `SelectedRegionAnalysisResult`, `MatchedRegionTemplate`, net topology helpers.
+- Added `SelectedRegionAnalysisService` with:
+  - `preview_selected_region` — builds subcircuit view, detects internal/boundary/external nets, suggests ports
+  - `analyze_selected_region` — validates, matches RC low-pass / voltage divider templates, generates SPICE netlist fragment
+  - `validate_selected_region` — returns structured issues (empty selection, unknown components, missing ports)
+- Added API DTOs and facade methods for preview, analyze, validate.
+- Added Tauri commands: `preview_selected_region`, `analyze_selected_region`, `validate_selected_region`.
+- Added frontend types, API wrappers, Zustand store fields, and UI components:
+  - `SelectedRegionPanel` with component checkboxes and Preview/Analyze/Clear buttons
+  - `SelectedRegionPreviewCard` and `SelectedRegionResultCard`
+- Integrated **Region** tab into `SchematicScreen` side panel.
+- React remains view adapter only; all topology detection and template matching live in Rust.
+
 ### v1.3 — Schematic Editor Foundations
 
 - Added pin/symbol foundations: `PinDefinition`, `ElectricalPinType`, `PinPosition`, `PinSide`, `SymbolDefinition`.
@@ -123,6 +139,7 @@ HotSAS Studio/
     ├── component_library/
     ├── export/
     ├── formula_library/
+    ├── selected_region/
     └── testing/
 ```
 

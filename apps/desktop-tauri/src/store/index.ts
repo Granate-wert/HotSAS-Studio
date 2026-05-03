@@ -10,6 +10,8 @@ import type {
   PreferredValueDto,
   ProjectDto,
   SelectedComponentDto,
+  SelectedRegionAnalysisResultDto,
+  SelectedRegionPreviewDto,
   SimulationResultDto,
 } from "../types";
 
@@ -35,6 +37,9 @@ type HotSasState = {
   componentSearchResult: ComponentSearchResultDto | null;
   selectedLibraryComponentId: string | null;
   selectedLibraryComponent: ComponentDetailsDto | null;
+  selectedRegionComponentIds: string[];
+  selectedRegionPreview: SelectedRegionPreviewDto | null;
+  selectedRegionAnalysisResult: SelectedRegionAnalysisResultDto | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -57,6 +62,9 @@ type HotSasState = {
   setComponentSearchResult: (result: ComponentSearchResultDto | null) => void;
   setSelectedLibraryComponentId: (id: string | null) => void;
   setSelectedLibraryComponent: (component: ComponentDetailsDto | null) => void;
+  setSelectedRegionComponentIds: (ids: string[]) => void;
+  setSelectedRegionPreview: (preview: SelectedRegionPreviewDto | null) => void;
+  setSelectedRegionAnalysisResult: (result: SelectedRegionAnalysisResultDto | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -81,6 +89,9 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   componentSearchResult: null,
   selectedLibraryComponentId: null,
   selectedLibraryComponent: null,
+  selectedRegionComponentIds: [],
+  selectedRegionPreview: null,
+  selectedRegionAnalysisResult: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -104,4 +115,8 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setSelectedLibraryComponentId: (selectedLibraryComponentId) =>
     set({ selectedLibraryComponentId }),
   setSelectedLibraryComponent: (selectedLibraryComponent) => set({ selectedLibraryComponent }),
+  setSelectedRegionComponentIds: (selectedRegionComponentIds) => set({ selectedRegionComponentIds }),
+  setSelectedRegionPreview: (selectedRegionPreview) => set({ selectedRegionPreview }),
+  setSelectedRegionAnalysisResult: (selectedRegionAnalysisResult) =>
+    set({ selectedRegionAnalysisResult }),
 }));
