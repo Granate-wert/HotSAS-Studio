@@ -2,7 +2,7 @@
 
 **Version:** v1.4-fix — Engineering Notebook Integration, Documentation, Verification  
 **Date:** 2026-05-03  
-**Commit:** (pending after push)
+**Commit:** bd51e23
 
 See full log: [`docs/testing/verification_logs/v1.4_engineering_notebook.md`](./verification_logs/v1.4_engineering_notebook.md)
 
