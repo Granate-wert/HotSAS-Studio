@@ -2,7 +2,7 @@
 
 **Version:** v1.5 — Component Library Foundation  
 **Date:** 2026-05-03  
-**Commit:** 2df2dc0 (implementation) / TBD (v1.5-fix log update)
+**Commit:** 2df2dc0 (implementation) / ae7b3fd (v1.5-fix log update)
 
 See full log: [`docs/testing/verification_logs/v1.5_component_library_foundation.md`](./verification_logs/v1.5_component_library_foundation.md)
 
