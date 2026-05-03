@@ -2,7 +2,7 @@
 
 **Version:** v1.9 — SPICE/Touchstone Import Foundation
 **Date:** 2026-05-03
-**Commit:** <to be filled after push>
+**Commit:** 1805f28
 
 See full log: [`docs/testing/verification_logs/v1.9_spice_touchstone_import_foundation.md`](./verification_logs/v1.9_spice_touchstone_import_foundation.md)
 
