@@ -13,7 +13,9 @@ use std::f64::consts::PI;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+pub mod component_library_storage;
 pub mod project_package_storage;
+pub use component_library_storage::JsonComponentLibraryStorage;
 pub use project_package_storage::CircuitProjectPackageStorage;
 
 #[derive(Debug, Default)]

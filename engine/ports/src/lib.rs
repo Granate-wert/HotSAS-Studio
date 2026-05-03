@@ -1,7 +1,8 @@
 use hotsas_core::{
-    CircuitProject, FormulaDefinition, FormulaEvaluationResult, FormulaExpressionValidationResult,
-    FormulaOutput, ProjectPackageManifest, ProjectPackageValidationReport, ReportModel,
-    SimulationProfile, SimulationResult, ValueWithUnit,
+    CircuitProject, ComponentLibrary, FormulaDefinition, FormulaEvaluationResult,
+    FormulaExpressionValidationResult, FormulaOutput, ProjectPackageManifest,
+    ProjectPackageValidationReport, ReportModel, SimulationProfile, SimulationResult,
+    ValueWithUnit,
 };
 use std::collections::BTreeMap;
 use std::fmt;
@@ -114,4 +115,16 @@ pub trait ProjectPackageStoragePort: Send + Sync {
         &self,
         package_dir: &Path,
     ) -> Result<ProjectPackageValidationReport, PortError>;
+}
+
+pub trait ComponentLibraryPort: Send + Sync {
+    fn load_builtin_library(&self) -> Result<ComponentLibrary, PortError>;
+
+    fn load_library_from_path(&self, path: &Path) -> Result<ComponentLibrary, PortError>;
+
+    fn save_library_to_path(
+        &self,
+        path: &Path,
+        library: &ComponentLibrary,
+    ) -> Result<(), PortError>;
 }

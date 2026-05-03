@@ -1,11 +1,13 @@
 use hotsas_adapters::{
-    CircuitProjectPackageStorage, FormulaPackFileLoader, JsonProjectStorage, MarkdownReportExporter,
-    MockSimulationEngine, SimpleFormulaEngine, SpiceNetlistExporter,
+    CircuitProjectPackageStorage, FormulaPackFileLoader, JsonComponentLibraryStorage,
+    JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine, SimpleFormulaEngine,
+    SpiceNetlistExporter,
 };
 use hotsas_api::{
-    ApiError, ApplyNotebookValueRequestDto, CircuitValidationReportDto,
-    FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto, FormulaPackDto,
-    FormulaResultDto, FormulaSummaryDto, HotSasApi, NotebookEvaluationRequestDto,
+    ApiError, ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitValidationReportDto,
+    ComponentDetailsDto, ComponentLibraryDto, ComponentSearchRequestDto, ComponentSearchResultDto,
+    ComponentSummaryDto, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
+    FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi, NotebookEvaluationRequestDto,
     NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto, ProjectDto,
     ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
     SelectedComponentDto, SimulationResultDto, VerticalSliceDto,
@@ -332,6 +334,63 @@ fn apply_notebook_output_to_component(
     result
 }
 
+#[tauri::command]
+fn load_builtin_component_library(
+    api: State<'_, HotSasApi>,
+) -> Result<ComponentLibraryDto, String> {
+    log::info!("COMMAND load_builtin_component_library");
+    let result = api.load_builtin_component_library().map_err(tauri_error);
+    log_command_result("load_builtin_component_library", &result);
+    result
+}
+
+#[tauri::command]
+fn list_components(api: State<'_, HotSasApi>) -> Result<Vec<ComponentSummaryDto>, String> {
+    log::info!("COMMAND list_components");
+    let result = api.list_components().map_err(tauri_error);
+    log_command_result("list_components", &result);
+    result
+}
+
+#[tauri::command]
+fn search_components(
+    api: State<'_, HotSasApi>,
+    request: ComponentSearchRequestDto,
+) -> Result<ComponentSearchResultDto, String> {
+    log::info!("COMMAND search_components");
+    let result = api.search_components(request).map_err(tauri_error);
+    log_command_result("search_components", &result);
+    result
+}
+
+#[tauri::command]
+fn get_component_details(
+    api: State<'_, HotSasApi>,
+    component_id: String,
+) -> Result<ComponentDetailsDto, String> {
+    log::info!("COMMAND get_component_details component_id={component_id}");
+    let result = api.get_component_details(component_id).map_err(tauri_error);
+    log_command_result("get_component_details", &result);
+    result
+}
+
+#[tauri::command]
+fn assign_component_to_selected_instance(
+    api: State<'_, HotSasApi>,
+    request: AssignComponentRequestDto,
+) -> Result<ProjectDto, String> {
+    log::info!(
+        "COMMAND assign_component_to_selected_instance instance_id={} component_definition_id={}",
+        request.instance_id,
+        request.component_definition_id
+    );
+    let result = api
+        .assign_component_to_selected_instance(request)
+        .map_err(tauri_error);
+    log_command_result("assign_component_to_selected_instance", &result);
+    result
+}
+
 fn log_command_result<T>(name: &str, result: &Result<T, String>) {
     match result {
         Ok(_) => log::info!("Command {name} succeeded"),
@@ -351,6 +410,7 @@ fn build_api() -> HotSasApi {
         Arc::new(SpiceNetlistExporter),
         Arc::new(MockSimulationEngine),
         Arc::new(MarkdownReportExporter),
+        Arc::new(JsonComponentLibraryStorage),
     ))
 }
 
@@ -389,6 +449,11 @@ pub fn run() {
             get_notebook_state,
             clear_notebook,
             apply_notebook_output_to_component,
+            load_builtin_component_library,
+            list_components,
+            search_components,
+            get_component_details,
+            assign_component_to_selected_instance,
             write_log
         ])
         .run(tauri::generate_context!())

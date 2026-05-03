@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import type {
   CircuitValidationReportDto,
+  ComponentDetailsDto,
+  ComponentLibraryDto,
+  ComponentSearchResultDto,
   FormulaResultDto,
   NotebookEvaluationResultDto,
   NotebookStateDto,
@@ -28,6 +31,10 @@ type HotSasState = {
   validationReport: CircuitValidationReportDto | null;
   notebookState: NotebookStateDto | null;
   lastNotebookResult: NotebookEvaluationResultDto | null;
+  componentLibrary: ComponentLibraryDto | null;
+  componentSearchResult: ComponentSearchResultDto | null;
+  selectedLibraryComponentId: string | null;
+  selectedLibraryComponent: ComponentDetailsDto | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -46,6 +53,10 @@ type HotSasState = {
   setNotebookState: (state: NotebookStateDto | null) => void;
   setLastNotebookResult: (result: NotebookEvaluationResultDto | null) => void;
   clearNotebookState: () => void;
+  setComponentLibrary: (library: ComponentLibraryDto | null) => void;
+  setComponentSearchResult: (result: ComponentSearchResultDto | null) => void;
+  setSelectedLibraryComponentId: (id: string | null) => void;
+  setSelectedLibraryComponent: (component: ComponentDetailsDto | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -66,6 +77,10 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   validationReport: null,
   notebookState: null,
   lastNotebookResult: null,
+  componentLibrary: null,
+  componentSearchResult: null,
+  selectedLibraryComponentId: null,
+  selectedLibraryComponent: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -84,4 +99,9 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setNotebookState: (notebookState) => set({ notebookState }),
   setLastNotebookResult: (lastNotebookResult) => set({ lastNotebookResult }),
   clearNotebookState: () => set({ notebookState: null, lastNotebookResult: null }),
+  setComponentLibrary: (componentLibrary) => set({ componentLibrary }),
+  setComponentSearchResult: (componentSearchResult) => set({ componentSearchResult }),
+  setSelectedLibraryComponentId: (selectedLibraryComponentId) =>
+    set({ selectedLibraryComponentId }),
+  setSelectedLibraryComponent: (selectedLibraryComponent) => set({ selectedLibraryComponent }),
 }));

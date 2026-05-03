@@ -2,7 +2,13 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   ApiErrorDto,
   ApplyNotebookValueRequestDto,
+  AssignComponentRequestDto,
   CircuitValidationReportDto,
+  ComponentDetailsDto,
+  ComponentLibraryDto,
+  ComponentSearchRequestDto,
+  ComponentSearchResultDto,
+  ComponentSummaryDto,
   FormulaCalculationRequestDto,
   FormulaDetailsDto,
   FormulaEvaluationResultDto,
@@ -90,6 +96,15 @@ export const backend = {
   clearNotebook: () => invokeCommand<NotebookStateDto>("clear_notebook"),
   applyNotebookOutputToComponent: (request: ApplyNotebookValueRequestDto) =>
     invokeCommand<ProjectDto>("apply_notebook_output_to_component", { request }),
+  loadBuiltinComponentLibrary: () =>
+    invokeCommand<ComponentLibraryDto>("load_builtin_component_library"),
+  listComponents: () => invokeCommand<ComponentSummaryDto[]>("list_components"),
+  searchComponents: (request: ComponentSearchRequestDto) =>
+    invokeCommand<ComponentSearchResultDto>("search_components", { request }),
+  getComponentDetails: (componentId: string) =>
+    invokeCommand<ComponentDetailsDto>("get_component_details", { componentId }),
+  assignComponentToSelectedInstance: (request: AssignComponentRequestDto) =>
+    invokeCommand<ProjectDto>("assign_component_to_selected_instance", { request }),
   writeLog: (level: string, message: string) =>
     invokeCommand<void>("write_log", { level, message }),
 };

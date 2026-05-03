@@ -1,15 +1,19 @@
 use crate::{
-    ApiError, ApplyNotebookValueRequestDto, CircuitValidationReportDto, ComponentParameterDto,
-    FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
-    FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto,
-    NotebookEvaluationRequestDto, NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto,
-    ProjectDto, ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
-    SelectedComponentDto, SimulationResultDto, SymbolDto, ValueDto, VerticalSliceDto,
+    ApiError, ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitValidationReportDto,
+    ComponentDetailsDto, ComponentLibraryDto, ComponentParameterDto, ComponentSearchRequestDto,
+    ComponentSearchResultDto, ComponentSummaryDto, FootprintDto, FormulaCalculationRequestDto,
+    FormulaDetailsDto, FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto,
+    FormulaResultDto, FormulaSummaryDto, KeyValueDto, NotebookEvaluationRequestDto,
+    NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto, ProjectDto,
+    ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
+    SelectedComponentDto, SimulationModelDto, SimulationResultDto, SymbolDto, ValueDto,
+    VerticalSliceDto,
 };
 use hotsas_application::{AppServices, FormulaRegistryService};
 use hotsas_core::{
-    rc_low_pass_formula, CircuitProject, EngineeringNotebook, EngineeringUnit, FormulaDefinition,
-    FormulaPack, NotebookBlock, NotebookEvaluationStatus, NotebookHistoryEntry, ValueWithUnit,
+    rc_low_pass_formula, CircuitProject, ComponentAssignment, ComponentLibrary,
+    ComponentLibraryQuery, EngineeringNotebook, EngineeringUnit, FormulaDefinition, FormulaPack,
+    NotebookBlock, NotebookEvaluationStatus, NotebookHistoryEntry, ValueWithUnit,
 };
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -20,15 +24,30 @@ pub struct HotSasApi {
     current_project: Mutex<Option<CircuitProject>>,
     formula_registry: Mutex<FormulaRegistryService>,
     notebook: Mutex<EngineeringNotebook>,
+    component_library: Mutex<ComponentLibrary>,
 }
 
 impl HotSasApi {
     pub fn new(services: AppServices) -> Self {
+        let library = services
+            .component_library_service()
+            .load_builtin_library()
+            .unwrap_or_else(|_| ComponentLibrary {
+                id: "fallback".to_string(),
+                title: "Fallback Library".to_string(),
+                version: "0.0.0".to_string(),
+                components: vec![],
+                symbols: vec![],
+                footprints: vec![],
+                simulation_models: vec![],
+                metadata: std::collections::BTreeMap::new(),
+            });
         Self {
             services,
             current_project: Mutex::new(None),
             formula_registry: Mutex::new(fallback_formula_registry()),
             notebook: Mutex::new(EngineeringNotebook::new("default", "Engineering Notebook")),
+            component_library: Mutex::new(library),
         }
     }
 
@@ -457,6 +476,182 @@ impl HotSasApi {
                 &request.instance_id,
                 &request.parameter_name,
                 value,
+            )?;
+        self.replace_current_project(project.clone())?;
+        Ok(ProjectDto::from(&project))
+    }
+
+    pub fn load_builtin_component_library(&self) -> Result<ComponentLibraryDto, ApiError> {
+        let library = self
+            .component_library
+            .lock()
+            .map_err(|_| ApiError::State("component library lock poisoned".to_string()))?;
+        Ok(ComponentLibraryDto {
+            id: library.id.clone(),
+            title: library.title.clone(),
+            version: library.version.clone(),
+            components: library
+                .components
+                .iter()
+                .map(ComponentSummaryDto::from)
+                .collect(),
+            categories: library
+                .components
+                .iter()
+                .map(|c| c.category.clone())
+                .collect::<std::collections::HashSet<_>>()
+                .into_iter()
+                .collect(),
+            tags: library
+                .components
+                .iter()
+                .flat_map(|c| c.tags.clone())
+                .collect::<std::collections::HashSet<_>>()
+                .into_iter()
+                .collect(),
+        })
+    }
+
+    pub fn list_components(&self) -> Result<Vec<ComponentSummaryDto>, ApiError> {
+        let library = self
+            .component_library
+            .lock()
+            .map_err(|_| ApiError::State("component library lock poisoned".to_string()))?;
+        Ok(library
+            .components
+            .iter()
+            .map(ComponentSummaryDto::from)
+            .collect())
+    }
+
+    pub fn search_components(
+        &self,
+        request: ComponentSearchRequestDto,
+    ) -> Result<ComponentSearchResultDto, ApiError> {
+        let library = self
+            .component_library
+            .lock()
+            .map_err(|_| ApiError::State("component library lock poisoned".to_string()))?;
+        let query = ComponentLibraryQuery {
+            search: request.search,
+            category: request.category,
+            tags: request.tags,
+            manufacturer: request.manufacturer,
+            has_symbol: request.has_symbol,
+            has_footprint: request.has_footprint,
+            has_simulation_model: request.has_simulation_model,
+        };
+        let result = self
+            .services
+            .component_library_service()
+            .search_components(&library, query);
+        Ok(ComponentSearchResultDto {
+            components: result
+                .components
+                .iter()
+                .map(ComponentSummaryDto::from)
+                .collect(),
+            total_count: result.total_count,
+            categories: result.categories,
+            tags: result.tags,
+        })
+    }
+
+    pub fn get_component_details(
+        &self,
+        component_id: String,
+    ) -> Result<ComponentDetailsDto, ApiError> {
+        let library = self
+            .component_library
+            .lock()
+            .map_err(|_| ApiError::State("component library lock poisoned".to_string()))?;
+        let component = self
+            .services
+            .component_library_service()
+            .get_component(&library, &component_id)?;
+        let symbol_preview = self
+            .services
+            .component_library_service()
+            .get_symbol_for_component(&library, &component_id)
+            .map(|s| SymbolDto::from(&s));
+        let footprint_previews = self
+            .services
+            .component_library_service()
+            .get_footprints_for_component(&library, &component_id)
+            .iter()
+            .map(FootprintDto::from)
+            .collect();
+        Ok(ComponentDetailsDto {
+            id: component.id.clone(),
+            name: component.name.clone(),
+            category: component.category.clone(),
+            manufacturer: component.manufacturer.clone(),
+            part_number: component.part_number.clone(),
+            description: component.description.clone(),
+            parameters: component
+                .parameters
+                .iter()
+                .map(|(name, value)| ComponentParameterDto {
+                    name: name.clone(),
+                    value: value.value.original.clone(),
+                    unit: Some(value.unit.symbol().to_string()),
+                })
+                .collect(),
+            ratings: component
+                .ratings
+                .iter()
+                .map(|(name, value)| ComponentParameterDto {
+                    name: name.clone(),
+                    value: value.value.original.clone(),
+                    unit: Some(value.unit.symbol().to_string()),
+                })
+                .collect(),
+            symbol_ids: component.symbol_ids.clone(),
+            footprint_ids: component.footprint_ids.clone(),
+            simulation_models: component
+                .simulation_models
+                .iter()
+                .map(SimulationModelDto::from)
+                .collect(),
+            datasheets: component.datasheets.clone(),
+            tags: component.tags.clone(),
+            metadata: component
+                .metadata
+                .iter()
+                .map(|(k, v)| KeyValueDto {
+                    key: k.clone(),
+                    value: v.clone(),
+                })
+                .collect(),
+            symbol_preview,
+            footprint_previews,
+        })
+    }
+
+    pub fn assign_component_to_selected_instance(
+        &self,
+        request: AssignComponentRequestDto,
+    ) -> Result<ProjectDto, ApiError> {
+        let mut project = self.current_project()?;
+        let library = self
+            .component_library
+            .lock()
+            .map_err(|_| ApiError::State("component library lock poisoned".to_string()))?;
+        // Verify component exists
+        self.services
+            .component_library_service()
+            .get_component(&library, &request.component_definition_id)?;
+        self.services
+            .component_library_service()
+            .assign_component_to_instance(
+                &mut project,
+                ComponentAssignment {
+                    instance_id: request.instance_id,
+                    component_definition_id: request.component_definition_id,
+                    selected_symbol_id: request.selected_symbol_id,
+                    selected_footprint_id: request.selected_footprint_id,
+                    selected_simulation_model_id: request.selected_simulation_model_id,
+                },
             )?;
         self.replace_current_project(project.clone())?;
         Ok(ProjectDto::from(&project))

@@ -298,3 +298,88 @@ export type ApplyNotebookValueRequestDto = {
   parameter_name: string;
   output_name: string;
 };
+
+export type ComponentLibraryDto = {
+  id: string;
+  title: string;
+  version: string;
+  components: ComponentSummaryDto[];
+  categories: string[];
+  tags: string[];
+};
+
+export type ComponentSummaryDto = {
+  id: string;
+  name: string;
+  category: string;
+  manufacturer?: string | null;
+  part_number?: string | null;
+  description?: string | null;
+  tags: string[];
+  has_symbol: boolean;
+  has_footprint: boolean;
+  has_simulation_model: boolean;
+};
+
+export type ComponentDetailsDto = {
+  id: string;
+  name: string;
+  category: string;
+  manufacturer?: string | null;
+  part_number?: string | null;
+  description?: string | null;
+  parameters: ComponentParameterDto[];
+  ratings: ComponentParameterDto[];
+  symbol_ids: string[];
+  footprint_ids: string[];
+  simulation_models: SimulationModelDto[];
+  datasheets: string[];
+  tags: string[];
+  metadata: KeyValueDto[];
+  symbol_preview?: SymbolDto | null;
+  footprint_previews: FootprintDto[];
+};
+
+export type ComponentSearchRequestDto = {
+  search?: string | null;
+  category?: string | null;
+  tags: string[];
+  manufacturer?: string | null;
+  has_symbol?: boolean | null;
+  has_footprint?: boolean | null;
+  has_simulation_model?: boolean | null;
+};
+
+export type ComponentSearchResultDto = {
+  components: ComponentSummaryDto[];
+  total_count: number;
+  categories: string[];
+  tags: string[];
+};
+
+export type AssignComponentRequestDto = {
+  instance_id: string;
+  component_definition_id: string;
+  selected_symbol_id?: string | null;
+  selected_footprint_id?: string | null;
+  selected_simulation_model_id?: string | null;
+};
+
+export type FootprintDto = {
+  id: string;
+  name: string;
+  package_name: string;
+  pad_count: number;
+  metadata: KeyValueDto[];
+};
+
+export type SimulationModelDto = {
+  id: string;
+  model_type: string;
+  source_path?: string | null;
+};
+
+export type KeyValueDto = {
+  key: string;
+  value: string;
+};

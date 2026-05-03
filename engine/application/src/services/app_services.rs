@@ -1,15 +1,15 @@
 use crate::{
-    ApplicationError, CircuitTemplateService, CircuitValidationService, EngineeringNotebookService,
-    ExportService, FormulaService, NetlistGenerationService, PreferredValuesService,
-    ProjectPackageService, ProjectService, SimulationService,
+    ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
+    EngineeringNotebookService, ExportService, FormulaService, NetlistGenerationService,
+    PreferredValuesService, ProjectPackageService, ProjectService, SimulationService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
     ReportModel, SimulationResult, ValueWithUnit,
 };
 use hotsas_ports::{
-    FormulaEnginePort, NetlistExporterPort, ProjectPackageStoragePort, ReportExporterPort,
-    SimulationEnginePort, StoragePort,
+    ComponentLibraryPort, FormulaEnginePort, NetlistExporterPort, ProjectPackageStoragePort,
+    ReportExporterPort, SimulationEnginePort, StoragePort,
 };
 use std::path::Path;
 use std::sync::Arc;
@@ -26,6 +26,7 @@ pub struct AppServices {
     netlist_generation_service: NetlistGenerationService,
     simulation_service: SimulationService,
     export_service: ExportService,
+    component_library_service: ComponentLibraryService,
 }
 
 impl AppServices {
@@ -36,6 +37,7 @@ impl AppServices {
         netlist_exporter: Arc<dyn NetlistExporterPort>,
         simulation_engine: Arc<dyn SimulationEnginePort>,
         report_exporter: Arc<dyn ReportExporterPort>,
+        component_library_port: Arc<dyn ComponentLibraryPort>,
     ) -> Self {
         Self {
             project_service: ProjectService::new(storage),
@@ -48,6 +50,7 @@ impl AppServices {
             netlist_generation_service: NetlistGenerationService::new(netlist_exporter),
             simulation_service: SimulationService::new(simulation_engine),
             export_service: ExportService::new(report_exporter),
+            component_library_service: ComponentLibraryService::new(component_library_port),
         }
     }
 
@@ -89,6 +92,10 @@ impl AppServices {
 
     pub fn export_service(&self) -> &ExportService {
         &self.export_service
+    }
+
+    pub fn component_library_service(&self) -> &ComponentLibraryService {
+        &self.component_library_service
     }
 
     pub fn create_rc_low_pass_demo_project(&self) -> CircuitProject {

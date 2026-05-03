@@ -728,3 +728,143 @@ pub struct ApplyNotebookValueRequestDto {
     pub parameter_name: String,
     pub output_name: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentLibraryDto {
+    pub id: String,
+    pub title: String,
+    pub version: String,
+    pub components: Vec<ComponentSummaryDto>,
+    pub categories: Vec<String>,
+    pub tags: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentSummaryDto {
+    pub id: String,
+    pub name: String,
+    pub category: String,
+    pub manufacturer: Option<String>,
+    pub part_number: Option<String>,
+    pub description: Option<String>,
+    pub tags: Vec<String>,
+    pub has_symbol: bool,
+    pub has_footprint: bool,
+    pub has_simulation_model: bool,
+}
+
+impl From<&hotsas_core::ComponentDefinition> for ComponentSummaryDto {
+    fn from(def: &hotsas_core::ComponentDefinition) -> Self {
+        Self {
+            id: def.id.clone(),
+            name: def.name.clone(),
+            category: def.category.clone(),
+            manufacturer: def.manufacturer.clone(),
+            part_number: def.part_number.clone(),
+            description: def.description.clone(),
+            tags: def.tags.clone(),
+            has_symbol: !def.symbol_ids.is_empty(),
+            has_footprint: !def.footprint_ids.is_empty(),
+            has_simulation_model: !def.simulation_models.is_empty(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentDetailsDto {
+    pub id: String,
+    pub name: String,
+    pub category: String,
+    pub manufacturer: Option<String>,
+    pub part_number: Option<String>,
+    pub description: Option<String>,
+    pub parameters: Vec<ComponentParameterDto>,
+    pub ratings: Vec<ComponentParameterDto>,
+    pub symbol_ids: Vec<String>,
+    pub footprint_ids: Vec<String>,
+    pub simulation_models: Vec<SimulationModelDto>,
+    pub datasheets: Vec<String>,
+    pub tags: Vec<String>,
+    pub metadata: Vec<KeyValueDto>,
+    pub symbol_preview: Option<SymbolDto>,
+    pub footprint_previews: Vec<FootprintDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentSearchRequestDto {
+    pub search: Option<String>,
+    pub category: Option<String>,
+    pub tags: Vec<String>,
+    pub manufacturer: Option<String>,
+    pub has_symbol: Option<bool>,
+    pub has_footprint: Option<bool>,
+    pub has_simulation_model: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentSearchResultDto {
+    pub components: Vec<ComponentSummaryDto>,
+    pub total_count: usize,
+    pub categories: Vec<String>,
+    pub tags: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AssignComponentRequestDto {
+    pub instance_id: String,
+    pub component_definition_id: String,
+    pub selected_symbol_id: Option<String>,
+    pub selected_footprint_id: Option<String>,
+    pub selected_simulation_model_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FootprintDto {
+    pub id: String,
+    pub name: String,
+    pub package_name: String,
+    pub pad_count: usize,
+    pub metadata: Vec<KeyValueDto>,
+}
+
+impl From<&hotsas_core::FootprintDefinition> for FootprintDto {
+    fn from(fp: &hotsas_core::FootprintDefinition) -> Self {
+        Self {
+            id: fp.id.clone(),
+            name: fp.name.clone(),
+            package_name: fp.package_name.clone(),
+            pad_count: fp.pads.len(),
+            metadata: fp
+                .metadata
+                .iter()
+                .map(|(k, v)| KeyValueDto {
+                    key: k.clone(),
+                    value: v.clone(),
+                })
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationModelDto {
+    pub id: String,
+    pub model_type: String,
+    pub source_path: Option<String>,
+}
+
+impl From<&hotsas_core::SimulationModel> for SimulationModelDto {
+    fn from(model: &hotsas_core::SimulationModel) -> Self {
+        Self {
+            id: model.id.clone(),
+            model_type: model.model_type.clone(),
+            source_path: model.source_path.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KeyValueDto {
+    pub key: String,
+    pub value: String,
+}

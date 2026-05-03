@@ -8,6 +8,32 @@ use std::path::Path;
 use std::sync::Arc;
 
 #[derive(Debug, Default)]
+struct FakeComponentLibraryStorage;
+
+impl hotsas_ports::ComponentLibraryPort for FakeComponentLibraryStorage {
+    fn load_builtin_library(
+        &self,
+    ) -> Result<hotsas_core::ComponentLibrary, hotsas_ports::PortError> {
+        Ok(hotsas_core::built_in_component_library())
+    }
+    fn load_library_from_path(
+        &self,
+        _path: &std::path::Path,
+    ) -> Result<hotsas_core::ComponentLibrary, hotsas_ports::PortError> {
+        Err(hotsas_ports::PortError::Storage(
+            "not implemented".to_string(),
+        ))
+    }
+    fn save_library_to_path(
+        &self,
+        _path: &std::path::Path,
+        _library: &hotsas_core::ComponentLibrary,
+    ) -> Result<(), hotsas_ports::PortError> {
+        Ok(())
+    }
+}
+
+#[derive(Debug, Default)]
 struct FakeStorage;
 
 impl StoragePort for FakeStorage {
@@ -119,6 +145,7 @@ fn fake_api() -> HotSasApi {
         Arc::new(FakeNetlistExporter),
         Arc::new(FakeSimulationEngine),
         Arc::new(FakeReportExporter),
+        Arc::new(FakeComponentLibraryStorage),
     ))
 }
 

@@ -1,6 +1,7 @@
 mod app_services;
 mod circuit_template;
 mod circuit_validation;
+mod component_library;
 mod engineering_notebook;
 mod export;
 mod formula;
@@ -14,6 +15,7 @@ mod simulation;
 pub use app_services::AppServices;
 pub use circuit_template::CircuitTemplateService;
 pub use circuit_validation::CircuitValidationService;
+pub use component_library::ComponentLibraryService;
 pub use engineering_notebook::EngineeringNotebookService;
 pub use export::ExportService;
 pub use formula::FormulaService;

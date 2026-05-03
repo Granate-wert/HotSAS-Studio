@@ -57,6 +57,9 @@ pub enum EngineeringUnit {
     Hertz,
     Volt,
     Ampere,
+    Watt,
+    Percent,
+    Henry,
 }
 
 impl EngineeringUnit {
@@ -68,6 +71,9 @@ impl EngineeringUnit {
             "Hz" | "hertz" | "Hertz" => Ok(Self::Hertz),
             "V" | "volt" | "Volt" => Ok(Self::Volt),
             "A" | "amp" | "Ampere" => Ok(Self::Ampere),
+            "W" | "watt" | "Watt" => Ok(Self::Watt),
+            "%" | "percent" | "Percent" => Ok(Self::Percent),
+            "H" | "henry" | "Henry" => Ok(Self::Henry),
             other => Err(CoreError::InvalidUnit(other.to_string())),
         }
     }
@@ -80,6 +86,9 @@ impl EngineeringUnit {
             Self::Hertz => "Hz",
             Self::Volt => "V",
             Self::Ampere => "A",
+            Self::Watt => "W",
+            Self::Percent => "%",
+            Self::Henry => "H",
         }
     }
 }
