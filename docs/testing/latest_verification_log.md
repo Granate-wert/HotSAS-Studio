@@ -2,7 +2,7 @@
 
 **Version:** v1.8 — ngspice Adapter v1
 **Date:** 2026-05-03
-**Commit:** (to be filled after commit)
+**Commit:** 76c8b19
 
 See full log: [`docs/testing/verification_logs/v1.8_ngspice_adapter_v1.md`](./verification_logs/v1.8_ngspice_adapter_v1.md)
 
