@@ -351,9 +351,64 @@ This stage verifies:
 
 ---
 
+## v1.5 — Component Library Foundation
+
+### Tests
+
+- **Core Component Library** (`core/tests/component_library_tests.rs`)
+  - Built-in library has at least 12 components
+  - Component IDs are unique
+  - Every component has id, name, category
+  - Every component has at least one tag
+  - Generic resistor, capacitor, op-amp exist
+  - Resistor has resistance parameter
+  - Capacitor has capacitance parameter
+  - Symbol IDs referenced by components exist in seed symbols
+  - Footprint IDs referenced by components exist in library
+  - Footprints exist for common packages
+
+- **Component Library Storage Adapter** (`adapters/tests/component_library_storage_tests.rs`)
+  - Load built-in library returns non-empty library
+  - Save and load library JSON roundtrip preserves components
+  - Save library creates parent directories
+  - Load missing library returns controlled error
+  - Load invalid JSON returns controlled error
+
+- **Component Library Service** (`application/tests/component_library_service_tests.rs`)
+  - List components returns all definitions
+  - Search by name returns matching component
+  - Search is case-insensitive
+  - Filter by category works
+  - Filter by has_footprint works
+  - Get component by ID returns definition
+  - Get missing component returns error
+  - Assign component to instance updates definition_id
+  - Assign preserves existing overridden parameters
+
+- **Component Library API** (`api/tests/component_library_api_tests.rs`)
+  - Load built-in component library returns metadata
+  - List components returns non-empty list
+  - Search components returns filtered results
+  - Get component details returns parameters and previews
+  - Assign without project returns state error
+  - Create RC demo then assign generic resistor to R1 works
+  - Assign unknown component returns error
+  - Assign unknown instance returns error
+
+- **Frontend Component Library** (`src/components/component-library/__tests__/ComponentLibrary.test.tsx`)
+  - Screen renders and loads built-in library on mount
+  - Search input calls searchComponents
+  - Component table displays components
+  - Selecting component calls getComponentDetails
+  - Details panel displays parameters
+  - Empty state renders without crash
+  - Error state renders readable message
+
+---
+
 ## Test Summary
 
-As of v1.4-fix, the Rust workspace runs **120 tests** across all crates with **zero failures**, and the frontend runs **29 UI tests** with **zero failures**.
+As of v1.5, the Rust workspace runs **120+ tests** across all crates with **zero failures**, and the frontend runs **36 UI tests** with **zero failures**.
 
 ---
 

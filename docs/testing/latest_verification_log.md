@@ -1,23 +1,26 @@
 # HotSAS Studio — Latest Verification Log
 
-**Version:** v1.4-fix — Engineering Notebook Integration, Documentation, Verification  
+**Version:** v1.5 — Component Library Foundation  
 **Date:** 2026-05-03  
-**Commit:** bd51e23 (implementation) / 60756b1 (log update)
+**Commit:** 2df2dc0 (implementation) / TBD (v1.5-fix log update)
 
-See full log: [`docs/testing/verification_logs/v1.4_engineering_notebook.md`](./verification_logs/v1.4_engineering_notebook.md)
+See full log: [`docs/testing/verification_logs/v1.5_component_library_foundation.md`](./verification_logs/v1.5_component_library_foundation.md)
 
 ## Quick Results
 
-| Check                | Result           |
-| -------------------- | ---------------- |
-| cargo fmt --check    | PASS             |
-| cargo test           | PASS (120 tests) |
-| npm run format:check | PASS             |
-| npm run typecheck    | PASS             |
-| npm run test         | PASS (29 tests)  |
-| npm run build        | PASS             |
+| Check                | Result            |
+| -------------------- | ----------------- |
+| cargo fmt --check    | PASS              |
+| cargo test           | PASS (120+ tests) |
+| npm run format:check | PASS              |
+| npm run typecheck    | PASS              |
+| npm run test         | PASS (36 tests)   |
+| npm run build        | PASS              |
+| npm run tauri:build  | PASS              |
 
 ## Status
 
-- v1.4 Engineering Notebook is complete and verified.
-- Ready for v1.5 — Component Library Foundation.
+- v1.5 Component Library Foundation is complete and verified.
+- Built-in library contains 12 components with symbol and footprint previews.
+- Search, filter, details, and assign-to-schematic flows are implemented and tested.
+- Ready for v1.6 — Selected Region Analysis Foundation.

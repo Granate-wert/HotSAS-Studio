@@ -5,12 +5,13 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v1.5 in progress**
+**Current roadmap stage: v1.6 next**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
 - v1.3 — Schematic Editor Foundations
 - v1.4 — Engineering Notebook / Calculator Foundations
+- v1.5 — Component Library Foundation
 
 ---
 
