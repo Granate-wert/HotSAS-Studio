@@ -1,5 +1,5 @@
 use hotsas_adapters::{
-    AltiumWorkflowPackageExporter, BomCsvExporter, CircuitProjectPackageStorage,
+    BomCsvExporter, CircuitProjectPackageStorage,
     ComponentLibraryJsonExporter, CsvSimulationDataExporter, FormulaPackFileLoader,
     JsonComponentLibraryStorage, JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine,
     NgspiceSimulationAdapter, SimpleFormulaEngine, SpiceNetlistExporter, SvgSchematicExporter,
@@ -9,11 +9,11 @@ use hotsas_api::{
     ComponentDetailsDto, ComponentLibraryDto, ComponentSearchRequestDto, ComponentSearchResultDto,
     ComponentSummaryDto, ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto,
     ExportResultDto, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
-    FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi, NotebookEvaluationRequestDto,
+    FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi, NgspiceAvailabilityDto, NotebookEvaluationRequestDto,
     NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto, ProjectDto,
     ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
     SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
-    SelectedRegionIssueDto, SelectedRegionPreviewDto, SimulationResultDto, VerticalSliceDto,
+    SelectedRegionIssueDto, SelectedRegionPreviewDto, SimulationResultDto, SimulationRunRequestDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
