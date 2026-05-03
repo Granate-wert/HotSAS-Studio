@@ -1,5 +1,5 @@
 use hotsas_application::{ApplicationError, FormulaRegistryService};
-use hotsas_core::{rc_low_pass_formula, FormulaPack};
+use hotsas_core::{ohms_law_formula, rc_low_pass_formula, voltage_divider_formula, FormulaPack};
 
 #[test]
 fn registry_lists_formulas_categories_and_pack_metadata() {
@@ -52,6 +52,34 @@ fn registry_rejects_duplicate_formula_ids_and_missing_formulas() {
         registry.get_formula("missing").unwrap_err(),
         ApplicationError::FormulaNotFound(id) if id == "missing"
     ));
+}
+
+#[test]
+fn registry_finds_ohms_law_and_voltage_divider() {
+    let registry = FormulaRegistryService::new(vec![pack(
+        "basic_electronics",
+        vec![ohms_law_formula(), voltage_divider_formula()],
+    )])
+    .unwrap();
+
+    let ohms = registry.get_formula("ohms_law").unwrap();
+    let divider = registry.get_formula("voltage_divider").unwrap();
+
+    assert_eq!(ohms.title, "Ohm's Law");
+    assert_eq!(ohms.category, "basic_electronics/passive");
+    assert!(ohms.variables.contains_key("I"));
+    assert!(ohms.variables.contains_key("R"));
+    assert!(ohms.outputs.contains_key("V"));
+
+    assert_eq!(divider.title, "Voltage Divider");
+    assert_eq!(divider.category, "basic_electronics/passive");
+    assert!(divider.variables.contains_key("Vin"));
+    assert!(divider.variables.contains_key("R1"));
+    assert!(divider.variables.contains_key("R2"));
+    assert!(divider.outputs.contains_key("Vout"));
+
+    let by_category = registry.list_by_category("basic_electronics/passive");
+    assert_eq!(by_category.len(), 2);
 }
 
 #[test]

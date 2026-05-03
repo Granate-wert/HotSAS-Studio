@@ -155,13 +155,18 @@ On this Windows PowerShell setup, `npm.ps1` can be blocked by Execution Policy. 
 
 - **FormulaPack Loader** (`adapters/tests/formula_pack_loader_tests.rs`)
   - Load `filters.yaml` with RC low-pass formula
+  - Load `basic_electronics.yaml` with `ohms_law` and `voltage_divider`
+  - Load `op_amp.yaml` and `smps.yaml`
   - Load JSON formula pack
   - Load all builtin packs from directory in deterministic order
   - Reject invalid YAML and invalid packs
+  - Reject formula with missing `id`
+  - Reject formula with no equations
 
 - **FormulaRegistry** (`application/tests/formula_registry_tests.rs`)
   - List formulas, categories, pack metadata
   - Find formula by id, category, linked template
+  - Find `ohms_law` and `voltage_divider`
   - Validate linked template bindings
   - Reject duplicate formula ids and missing formulas
 
@@ -307,7 +312,7 @@ This stage verifies:
 
 ## Test Summary
 
-As of v1.3, the Rust workspace runs **96 tests** across all crates with **zero failures**, and the frontend runs **16 UI tests** with **zero failures**.
+As of v1.3, the Rust workspace runs **101 tests** across all crates with **zero failures**, and the frontend runs **16 UI tests** with **zero failures**.
 
 ---
 

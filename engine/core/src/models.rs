@@ -211,6 +211,22 @@ pub struct FormulaPackMetadata {
     pub categories: Vec<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FormulaPackSource {
+    BuiltIn,
+    FilePath(String),
+    DirectoryPath(String),
+    UserProvided,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FormulaPackValidationError {
+    pub code: String,
+    pub message: String,
+    pub formula_id: Option<String>,
+    pub field: Option<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FormulaEquation {
     pub id: String,

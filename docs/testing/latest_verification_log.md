@@ -36,7 +36,7 @@ Status: PASS
 
 ### cargo test
 
-Status: PASS (96 tests, 0 failures)
+Status: PASS (101 tests, 0 failures)
 
 ## Frontend checks
 
@@ -78,6 +78,14 @@ Checks:
 - No PCB features added: PASS
 - No ngspice added: PASS
 - RC vertical slice still works: PASS
+
+## Supplement: v1.1.3 missing items completed
+
+- Added `FormulaPackSource` and `FormulaPackValidationError` to `hotsas_core::models`
+- Added `ohms_law_formula()` and `voltage_divider_formula()` seed factories to `hotsas_core::templates`
+- Added missing `FormulaPackLoader` tests: `basic_electronics.yaml`, `op_amp.yaml`, `smps.yaml`, missing formula id, no equations
+- Added missing `FormulaRegistry` tests: `ohms_law`, `voltage_divider`
+- `cargo test`: 101 tests, 0 failures
 
 ## Final result
 

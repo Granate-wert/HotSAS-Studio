@@ -225,6 +225,116 @@ pub fn rc_low_pass_formula() -> FormulaDefinition {
     }
 }
 
+pub fn ohms_law_formula() -> FormulaDefinition {
+    let mut variables = BTreeMap::new();
+    variables.insert(
+        "I".to_string(),
+        FormulaVariable {
+            unit: EngineeringUnit::Ampere,
+            description: "Current".to_string(),
+            default: Some(
+                ValueWithUnit::parse_with_default("10m", EngineeringUnit::Ampere).unwrap(),
+            ),
+        },
+    );
+    variables.insert(
+        "R".to_string(),
+        FormulaVariable {
+            unit: EngineeringUnit::Ohm,
+            description: "Resistance".to_string(),
+            default: Some(ValueWithUnit::parse_with_default("1k", EngineeringUnit::Ohm).unwrap()),
+        },
+    );
+
+    let mut outputs = BTreeMap::new();
+    outputs.insert(
+        "V".to_string(),
+        FormulaOutput {
+            unit: EngineeringUnit::Volt,
+            description: "Voltage drop".to_string(),
+        },
+    );
+
+    FormulaDefinition {
+        id: "ohms_law".to_string(),
+        title: "Ohm's Law".to_string(),
+        category: "basic_electronics/passive".to_string(),
+        description: "Voltage across a resistor given current and resistance.".to_string(),
+        equations: vec![FormulaEquation {
+            id: "voltage".to_string(),
+            latex: "V = I R".to_string(),
+            expression: "V = I * R".to_string(),
+            solve_for: vec!["V".to_string(), "I".to_string(), "R".to_string()],
+        }],
+        variables,
+        outputs,
+        assumptions: vec!["Linear resistor".to_string()],
+        limitations: vec!["Temperature effects ignored".to_string()],
+        linked_circuit_template_id: None,
+        mapping: None,
+        default_simulation_profile: None,
+        examples: vec!["I = 10mA, R = 1k -> V = 10V".to_string()],
+    }
+}
+
+pub fn voltage_divider_formula() -> FormulaDefinition {
+    let mut variables = BTreeMap::new();
+    variables.insert(
+        "Vin".to_string(),
+        FormulaVariable {
+            unit: EngineeringUnit::Volt,
+            description: "Input voltage".to_string(),
+            default: Some(ValueWithUnit::parse_with_default("5", EngineeringUnit::Volt).unwrap()),
+        },
+    );
+    variables.insert(
+        "R1".to_string(),
+        FormulaVariable {
+            unit: EngineeringUnit::Ohm,
+            description: "Top resistor".to_string(),
+            default: Some(ValueWithUnit::parse_with_default("10k", EngineeringUnit::Ohm).unwrap()),
+        },
+    );
+    variables.insert(
+        "R2".to_string(),
+        FormulaVariable {
+            unit: EngineeringUnit::Ohm,
+            description: "Bottom resistor".to_string(),
+            default: Some(ValueWithUnit::parse_with_default("10k", EngineeringUnit::Ohm).unwrap()),
+        },
+    );
+
+    let mut outputs = BTreeMap::new();
+    outputs.insert(
+        "Vout".to_string(),
+        FormulaOutput {
+            unit: EngineeringUnit::Volt,
+            description: "Output voltage".to_string(),
+        },
+    );
+
+    FormulaDefinition {
+        id: "voltage_divider".to_string(),
+        title: "Voltage Divider".to_string(),
+        category: "basic_electronics/passive".to_string(),
+        description: "Output voltage of a resistive voltage divider.".to_string(),
+        equations: vec![FormulaEquation {
+            id: "vout".to_string(),
+            latex: "V_{out} = V_{in} \\frac{R_2}{R_1 + R_2}".to_string(),
+            expression: "Vout = Vin * R2 / (R1 + R2)".to_string(),
+            solve_for: vec!["Vout".to_string()],
+        }],
+        variables,
+        outputs,
+        assumptions: vec!["No load current".to_string()],
+        limitations: vec!["Loading effects ignored".to_string()],
+        linked_circuit_template_id: None,
+        mapping: None,
+        default_simulation_profile: None,
+        examples: vec!["Vin = 5V, R1 = 10k, R2 = 10k -> Vout = 2.5V".to_string()],
+    }
+}
+
 pub fn rc_low_pass_ac_profile() -> SimulationProfile {
     let mut parameters = BTreeMap::new();
     parameters.insert(
