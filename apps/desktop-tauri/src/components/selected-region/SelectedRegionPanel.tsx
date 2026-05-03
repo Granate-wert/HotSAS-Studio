@@ -107,10 +107,21 @@ export function SelectedRegionPanel({ project }: { project: ProjectDto | null })
       </Paper>
 
       <Group gap="xs">
-        <Button size="xs" onClick={handlePreview} disabled={selectionCount === 0 || busy} loading={busy}>
+        <Button
+          size="xs"
+          onClick={handlePreview}
+          disabled={selectionCount === 0 || busy}
+          loading={busy}
+        >
           Preview
         </Button>
-        <Button size="xs" variant="light" onClick={handleAnalyze} disabled={selectionCount === 0 || busy} loading={busy}>
+        <Button
+          size="xs"
+          variant="light"
+          onClick={handleAnalyze}
+          disabled={selectionCount === 0 || busy}
+          loading={busy}
+        >
           Analyze
         </Button>
         <Button size="xs" variant="subtle" color="gray" onClick={handleClear} disabled={busy}>
@@ -118,9 +129,7 @@ export function SelectedRegionPanel({ project }: { project: ProjectDto | null })
         </Button>
       </Group>
 
-      {selectedRegionPreview && (
-        <SelectedRegionPreviewCard preview={selectedRegionPreview} />
-      )}
+      {selectedRegionPreview && <SelectedRegionPreviewCard preview={selectedRegionPreview} />}
 
       {selectedRegionAnalysisResult && (
         <SelectedRegionResultCard result={selectedRegionAnalysisResult} />

@@ -115,7 +115,8 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setSelectedLibraryComponentId: (selectedLibraryComponentId) =>
     set({ selectedLibraryComponentId }),
   setSelectedLibraryComponent: (selectedLibraryComponent) => set({ selectedLibraryComponent }),
-  setSelectedRegionComponentIds: (selectedRegionComponentIds) => set({ selectedRegionComponentIds }),
+  setSelectedRegionComponentIds: (selectedRegionComponentIds) =>
+    set({ selectedRegionComponentIds }),
   setSelectedRegionPreview: (selectedRegionPreview) => set({ selectedRegionPreview }),
   setSelectedRegionAnalysisResult: (selectedRegionAnalysisResult) =>
     set({ selectedRegionAnalysisResult }),

@@ -18,13 +18,13 @@ frontend (React)
 
 ### Layers
 
-| Layer | Responsibility |
-|-------|---------------|
-| `core` | Domain models: `SelectedCircuitRegion`, `RegionPort`, `SelectedRegionPreview`, `SelectedRegionAnalysisResult`, `MatchedRegionTemplate`, net topology helpers |
-| `application` | `SelectedRegionAnalysisService`: preview, validate, analyze, build subcircuit view, detect boundary nets, match known templates, generate netlist fragments |
-| `api` | DTOs + facade methods: `preview_selected_region`, `analyze_selected_region`, `validate_selected_region` |
-| `src-tauri` | Tauri commands exposing the three facade methods |
-| frontend | Types, API wrappers, Zustand store fields, `SelectedRegionPanel` + preview/result cards |
+| Layer         | Responsibility                                                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `core`        | Domain models: `SelectedCircuitRegion`, `RegionPort`, `SelectedRegionPreview`, `SelectedRegionAnalysisResult`, `MatchedRegionTemplate`, net topology helpers |
+| `application` | `SelectedRegionAnalysisService`: preview, validate, analyze, build subcircuit view, detect boundary nets, match known templates, generate netlist fragments  |
+| `api`         | DTOs + facade methods: `preview_selected_region`, `analyze_selected_region`, `validate_selected_region`                                                      |
+| `src-tauri`   | Tauri commands exposing the three facade methods                                                                                                             |
+| frontend      | Types, API wrappers, Zustand store fields, `SelectedRegionPanel` + preview/result cards                                                                      |
 
 ## Core Models
 
@@ -54,6 +54,7 @@ Builds a `SubcircuitView`, detects internal/boundary/external nets, and suggests
 ### `validate_selected_region(circuit, request)`
 
 Returns issues for:
+
 - Empty selection
 - Unknown components
 - Missing ports (when mode != Structural)
@@ -62,6 +63,7 @@ Returns issues for:
 ### Template Matching (v1.6 scope)
 
 Only two templates are recognized:
+
 - **RC low-pass**: R + C with signal path `net_in → R → net_out → C → gnd`
 - **Voltage divider**: R1 + R2 with `Vin → R1 → Vout → R2 → GND`
 
@@ -70,6 +72,7 @@ All other selections return `Status::Partial` with a netlist fragment and warnin
 ## API / DTOs
 
 New DTOs added to `engine/api/src/dto.rs`:
+
 - `RegionPortDto`
 - `SelectedRegionAnalysisRequestDto`
 - `SelectedCircuitRegionDto`
@@ -86,6 +89,7 @@ New DTOs added to `engine/api/src/dto.rs`:
 - `SelectedRegionAnalysisResultDto`
 
 Facade methods added to `HotSasApi`:
+
 - `preview_selected_region(component_ids)` → `SelectedRegionPreviewDto`
 - `analyze_selected_region(request)` → `SelectedRegionAnalysisResultDto`
 - `validate_selected_region(request)` → `Vec<SelectedRegionIssueDto>`
@@ -93,6 +97,7 @@ Facade methods added to `HotSasApi`:
 ## Tauri Commands
 
 Three new commands registered in `generate_handler!`:
+
 - `preview_selected_region`
 - `analyze_selected_region`
 - `validate_selected_region`
@@ -102,11 +107,13 @@ Three new commands registered in `generate_handler!`:
 ### Types
 
 Added to `apps/desktop-tauri/src/types/index.ts`:
+
 - All selected-region DTO TypeScript types
 
 ### API
 
 Added to `apps/desktop-tauri/src/api/index.ts`:
+
 - `previewSelectedRegion(componentIds)`
 - `analyzeSelectedRegion(request)`
 - `validateSelectedRegion(request)`
@@ -114,6 +121,7 @@ Added to `apps/desktop-tauri/src/api/index.ts`:
 ### Store
 
 Added to `useHotSasStore`:
+
 - `selectedRegionComponentIds`
 - `selectedRegionPreview`
 - `selectedRegionAnalysisResult`

@@ -7,18 +7,16 @@ export function SelectedRegionPreviewCard({ preview }: { preview: SelectedRegion
       <Stack gap="xs">
         <Title order={6}>Preview</Title>
         <Text size="xs">
-          Components: {preview.selected_components.length} | Internal nets: {preview.detected_internal_nets.length} | Boundary nets: {preview.detected_boundary_nets.length}
+          Components: {preview.selected_components.length} | Internal nets:{" "}
+          {preview.detected_internal_nets.length} | Boundary nets:{" "}
+          {preview.detected_boundary_nets.length}
         </Text>
 
         {preview.suggested_input_nets.length > 0 && (
-          <Text size="xs">
-            Suggested inputs: {preview.suggested_input_nets.join(", ")}
-          </Text>
+          <Text size="xs">Suggested inputs: {preview.suggested_input_nets.join(", ")}</Text>
         )}
         {preview.suggested_output_nets.length > 0 && (
-          <Text size="xs">
-            Suggested outputs: {preview.suggested_output_nets.join(", ")}
-          </Text>
+          <Text size="xs">Suggested outputs: {preview.suggested_output_nets.join(", ")}</Text>
         )}
         {preview.suggested_reference_nodes.length > 0 && (
           <Text size="xs">

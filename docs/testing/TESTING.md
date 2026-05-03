@@ -85,6 +85,15 @@ On this Windows PowerShell setup, `npm.ps1` can be blocked by Execution Policy. 
 11. Export the HTML report.
 12. Save the project JSON.
 
+## Manual v1.6 Selected Region Smoke Check
+
+1. Open the **Schematic** screen.
+2. Switch to the **Region** tab in the side panel.
+3. Select `R1` and `C1` via checkboxes.
+4. Click **Preview** — verify preview card appears with component/net info.
+5. Click **Analyze** — verify result card appears with status, template match, netlist fragment.
+6. Click **Clear** — verify selection resets.
+
 ---
 
 ## Backend Test Coverage
@@ -406,9 +415,27 @@ This stage verifies:
 
 ---
 
+### v1.6 — Selected Region Analysis Foundation
+
+- **Selected Region Analysis Service** (`application/tests/selected_region_analysis_tests.rs`)
+  - Preview selected region returns components and nets
+  - Analyze selected region matches RC low-pass template
+  - Validate empty selection returns error
+  - Preview single component has boundary nets
+  - Analyze unsupported region returns partial result with netlist/warnings
+
+- **Frontend Selected Region** (`src/components/selected-region/__tests__/SelectedRegionPanel.test.tsx`)
+  - Renders component checkboxes
+  - Selecting components updates count
+  - Preview button calls backend and shows preview card
+  - Analyze button calls backend and shows result card
+  - Clear button resets selection
+
+---
+
 ## Test Summary
 
-As of v1.5, the Rust workspace runs **120+ tests** across all crates with **zero failures**, and the frontend runs **36 UI tests** with **zero failures**.
+As of v1.6, the Rust workspace runs **125+ tests** across all crates with **zero failures**, and the frontend runs **41 UI tests** with **zero failures**.
 
 ---
 
