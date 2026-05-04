@@ -1,8 +1,8 @@
 use crate::{
     CircuitEndpoint, CircuitLabel, CircuitModel, CircuitProject, CircuitTemplate,
     ComponentInstance, ConnectedPin, EngineeringUnit, FormulaDefinition, FormulaEquation,
-    FormulaOutput, FormulaVariable, Net, Point, Probe, ProbeType, SimulationProfile,
-    SimulationType, ValueWithUnit, Wire,
+    FormulaExample, FormulaOutput, FormulaVariable, Net, Point, Probe, ProbeType,
+    SimulationProfile, SimulationType, ValueWithUnit, Wire,
 };
 use std::collections::BTreeMap;
 
@@ -221,7 +221,15 @@ pub fn rc_low_pass_formula() -> FormulaDefinition {
             ("Vout".to_string(), "net_out".to_string()),
         ])),
         default_simulation_profile: Some(rc_low_pass_ac_profile()),
-        examples: vec!["R = 10k, C = 100n -> fc ~= 159.15 Hz".to_string()],
+        examples: vec![FormulaExample {
+            title: "R = 10k, C = 100n -> fc ~= 159.15 Hz".to_string(),
+            inputs: BTreeMap::from([
+                ("R".to_string(), "10k".to_string()),
+                ("C".to_string(), "100n".to_string()),
+            ]),
+            expected_outputs: BTreeMap::from([("fc".to_string(), "159.15".to_string())]),
+            notes: None,
+        }],
     }
 }
 
@@ -273,7 +281,15 @@ pub fn ohms_law_formula() -> FormulaDefinition {
         linked_circuit_template_id: None,
         mapping: None,
         default_simulation_profile: None,
-        examples: vec!["I = 10mA, R = 1k -> V = 10V".to_string()],
+        examples: vec![FormulaExample {
+            title: "I = 10mA, R = 1k -> V = 10V".to_string(),
+            inputs: BTreeMap::from([
+                ("I".to_string(), "10m".to_string()),
+                ("R".to_string(), "1k".to_string()),
+            ]),
+            expected_outputs: BTreeMap::from([("V".to_string(), "10".to_string())]),
+            notes: None,
+        }],
     }
 }
 
@@ -331,7 +347,16 @@ pub fn voltage_divider_formula() -> FormulaDefinition {
         linked_circuit_template_id: None,
         mapping: None,
         default_simulation_profile: None,
-        examples: vec!["Vin = 5V, R1 = 10k, R2 = 10k -> Vout = 2.5V".to_string()],
+        examples: vec![FormulaExample {
+            title: "Vin = 5V, R1 = 10k, R2 = 10k -> Vout = 2.5V".to_string(),
+            inputs: BTreeMap::from([
+                ("Vin".to_string(), "5".to_string()),
+                ("R1".to_string(), "10k".to_string()),
+                ("R2".to_string(), "10k".to_string()),
+            ]),
+            expected_outputs: BTreeMap::from([("Vout".to_string(), "2.5".to_string())]),
+            notes: None,
+        }],
     }
 }
 

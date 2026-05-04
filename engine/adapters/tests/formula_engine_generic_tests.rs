@@ -125,7 +125,7 @@ fn generic_engine_reports_supported_and_unsupported_expressions() {
         assert!(validation.supported, "{expression} must be supported");
     }
 
-    let validation = engine.validate_expression("X = sqrt(Y)").unwrap();
+    let validation = engine.validate_expression("X = @Y").unwrap();
     assert!(!validation.supported);
     assert!(validation.reason.unwrap().contains("unsupported"));
 }
@@ -135,7 +135,7 @@ fn generic_engine_rejects_unsupported_expression() {
     let engine = SimpleFormulaEngine;
     let mut formula = formula("ohms_law");
     formula.id = "custom".to_string();
-    formula.equations[0].expression = "X = sqrt(Y)".to_string();
+    formula.equations[0].expression = "X = @Y".to_string();
     formula.outputs = BTreeMap::from([(
         "X".to_string(),
         FormulaOutput {
@@ -152,10 +152,7 @@ fn generic_engine_rejects_unsupported_expression() {
         )]),
     );
 
-    assert!(result
-        .unwrap_err()
-        .to_string()
-        .contains("unsupported expression"));
+    assert!(result.unwrap_err().to_string().contains("unexpected"));
 }
 
 fn formula(id: &str) -> FormulaDefinition {

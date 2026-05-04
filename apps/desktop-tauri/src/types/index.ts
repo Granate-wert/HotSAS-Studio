@@ -120,6 +120,18 @@ export type FormulaOutputDto = {
   description: string;
 };
 
+export type FormulaExampleValueDto = {
+  name: string;
+  value: string;
+};
+
+export type FormulaExampleDto = {
+  title: string;
+  inputs: FormulaExampleValueDto[];
+  expected_outputs: FormulaExampleValueDto[];
+  notes: string | null;
+};
+
 export type FormulaDetailsDto = {
   id: string;
   title: string;
@@ -128,6 +140,9 @@ export type FormulaDetailsDto = {
   variables: FormulaVariableDto[];
   equations: FormulaEquationDto[];
   outputs: FormulaOutputDto[];
+  assumptions: string[];
+  limitations: string[];
+  examples: FormulaExampleDto[];
   linked_circuit_template_id: string | null;
   mapping: Record<string, string> | null;
   default_simulation: string | null;

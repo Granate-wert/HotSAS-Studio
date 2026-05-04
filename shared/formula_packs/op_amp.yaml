@@ -1,56 +1,246 @@
 packId: op_amp
 title: Operational Amplifiers
-version: 0.1.0
+version: "0.2.0"
 formulas:
   - id: op_amp_inverting_gain
     title: Inverting Op-Amp Gain
     category: op_amp/gain
-    description: Ideal inverting amplifier gain placeholder.
+    description: Ideal voltage gain of an inverting op-amp configuration.
     variables:
-      Rin:
-        unit: Ohm
-        description: Input resistor
-        default: 10k
       Rf:
         unit: Ohm
         description: Feedback resistor
         default: 100k
+      Rin:
+        unit: Ohm
+        description: Input resistor
+        default: 10k
     equations:
       - id: gain
         latex: "A_v = -\\frac{R_f}{R_{in}}"
         expression: "Av = -Rf / Rin"
         solve_for:
           - Av
-          - Rf
-          - Rin
     outputs:
       Av:
         unit: ""
         description: Voltage gain
     linkedCircuitTemplateId: inverting_op_amp_template
+    assumptions:
+      - "Ideal op-amp with infinite open-loop gain."
+    limitations:
+      - "Finite bandwidth and slew rate are ignored."
+    examples:
+      - title: "Rf = 100 kΩ, Rin = 10 kΩ"
+        inputs:
+          Rf: 100k
+          Rin: 10k
+        expected_outputs:
+          Av: "-10"
+
   - id: op_amp_non_inverting_gain
     title: Non-Inverting Op-Amp Gain
     category: op_amp/gain
-    description: Ideal non-inverting amplifier gain placeholder.
+    description: Ideal voltage gain of a non-inverting op-amp configuration.
     variables:
-      Rg:
-        unit: Ohm
-        description: Gain resistor
-        default: 10k
       Rf:
         unit: Ohm
         description: Feedback resistor
-        default: 100k
+        default: 90k
+      Rg:
+        unit: Ohm
+        description: Gain resistor to ground
+        default: 10k
     equations:
       - id: gain
         latex: "A_v = 1 + \\frac{R_f}{R_g}"
         expression: "Av = 1 + Rf / Rg"
         solve_for:
           - Av
-          - Rf
-          - Rg
     outputs:
       Av:
         unit: ""
         description: Voltage gain
     linkedCircuitTemplateId: non_inverting_op_amp_template
+    examples:
+      - title: "Rf = 90 kΩ, Rg = 10 kΩ"
+        inputs:
+          Rf: 90k
+          Rg: 10k
+        expected_outputs:
+          Av: "10"
+
+  - id: op_amp_voltage_follower
+    title: Op-Amp Voltage Follower
+    category: op_amp/gain
+    description: Unity-gain buffer using an op-amp.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+        default: "5"
+    equations:
+      - id: vout
+        latex: "V_{out} = V_{in}"
+        expression: "Vout = Vin"
+        solve_for:
+          - Vout
+    outputs:
+      Vout:
+        unit: V
+        description: Output voltage
+    examples:
+      - title: "5 V input"
+        inputs:
+          Vin: "5"
+        expected_outputs:
+          Vout: "5"
+
+  - id: summing_amplifier_two_inputs
+    title: Summing Amplifier (Two Inputs)
+    category: op_amp/gain
+    description: Inverting summing amplifier with two input channels.
+    variables:
+      Rf:
+        unit: Ohm
+        description: Feedback resistor
+        default: 100k
+      V1:
+        unit: V
+        description: Input voltage 1
+        default: "1"
+      R1:
+        unit: Ohm
+        description: Input resistor 1
+        default: 10k
+      V2:
+        unit: V
+        description: Input voltage 2
+        default: "2"
+      R2:
+        unit: Ohm
+        description: Input resistor 2
+        default: 10k
+    equations:
+      - id: vout
+        latex: "V_{out} = -R_f \\left(\\frac{V_1}{R_1} + \\frac{V_2}{R_2}\\right)"
+        expression: "Vout = -Rf * (V1 / R1 + V2 / R2)"
+        solve_for:
+          - Vout
+    outputs:
+      Vout:
+        unit: V
+        description: Output voltage
+    examples:
+      - title: "Rf = 100 kΩ, V1 = 1 V, R1 = 10 kΩ, V2 = 2 V, R2 = 10 kΩ"
+        inputs:
+          Rf: 100k
+          V1: "1"
+          R1: 10k
+          V2: "2"
+          R2: 10k
+        expected_outputs:
+          Vout: "-30"
+
+  - id: differential_amplifier_gain
+    title: Differential Amplifier Gain
+    category: op_amp/gain
+    description: Differential amplifier with matched resistor ratios.
+    variables:
+      R2:
+        unit: Ohm
+        description: Feedback / upper resistor
+        default: 100k
+      R1:
+        unit: Ohm
+        description: Input resistor
+        default: 10k
+      V2:
+        unit: V
+        description: Non-inverting input voltage
+        default: "3"
+      V1:
+        unit: V
+        description: Inverting input voltage
+        default: "2"
+    equations:
+      - id: vout
+        latex: "V_{out} = \\frac{R_2}{R_1} (V_2 - V_1)"
+        expression: "Vout = (R2 / R1) * (V2 - V1)"
+        solve_for:
+          - Vout
+    outputs:
+      Vout:
+        unit: V
+        description: Output voltage
+    examples:
+      - title: "R2 = 100 kΩ, R1 = 10 kΩ, V2 = 3 V, V1 = 2 V"
+        inputs:
+          R2: 100k
+          R1: 10k
+          V2: "3"
+          V1: "2"
+        expected_outputs:
+          Vout: "10"
+
+  - id: integrator_time_constant
+    title: Op-Amp Integrator Time Constant
+    category: op_amp/time
+    description: Time constant of an op-amp integrator.
+    variables:
+      R:
+        unit: Ohm
+        description: Input resistor
+        default: 10k
+      C:
+        unit: F
+        description: Feedback capacitor
+        default: 100n
+    equations:
+      - id: tau
+        latex: "\\tau = R C"
+        expression: "tau = R * C"
+        solve_for:
+          - tau
+    outputs:
+      tau:
+        unit: s
+        description: Time constant
+    examples:
+      - title: "10 kΩ, 100 nF"
+        inputs:
+          R: 10k
+          C: 100n
+        expected_outputs:
+          tau: 1m
+
+  - id: differentiator_gain_factor
+    title: Op-Amp Differentiator Gain Factor
+    category: op_amp/time
+    description: Gain factor of an op-amp differentiator.
+    variables:
+      R:
+        unit: Ohm
+        description: Feedback resistor
+        default: 10k
+      C:
+        unit: F
+        description: Input capacitor
+        default: 100n
+    equations:
+      - id: k
+        latex: "K = R C"
+        expression: "K = R * C"
+        solve_for:
+          - K
+    outputs:
+      K:
+        unit: s
+        description: Gain factor
+    examples:
+      - title: "10 kΩ, 100 nF"
+        inputs:
+          R: 10k
+          C: 100n
+        expected_outputs:
+          K: 1m

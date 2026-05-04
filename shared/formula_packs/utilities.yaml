@@ -1,0 +1,107 @@
+packId: utilities
+title: Engineering Utilities
+version: "0.2.0"
+formulas:
+  - id: decibel_voltage_gain
+    title: Voltage Gain in dB
+    category: utilities/signals
+    description: Convert voltage gain ratio to decibels.
+    variables:
+      Av:
+        unit: ""
+        description: Voltage gain ratio
+        default: "10"
+    equations:
+      - id: gdb
+        latex: "G_{dB} = 20 \\log_{10}(A_v)"
+        expression: "GdB = 20 * log10(Av)"
+        solve_for:
+          - GdB
+    outputs:
+      GdB:
+        unit: dB
+        description: Gain in decibels
+    examples:
+      - title: "Gain of 10"
+        inputs:
+          Av: "10"
+        expected_outputs:
+          GdB: "20"
+
+  - id: decibel_power_gain
+    title: Power Gain in dB
+    category: utilities/signals
+    description: Convert power gain ratio to decibels.
+    variables:
+      Ap:
+        unit: ""
+        description: Power gain ratio
+        default: "10"
+    equations:
+      - id: gdb
+        latex: "G_{dB} = 10 \\log_{10}(A_p)"
+        expression: "GdB = 10 * log10(Ap)"
+        solve_for:
+          - GdB
+    outputs:
+      GdB:
+        unit: dB
+        description: Gain in decibels
+    examples:
+      - title: "Power gain of 10"
+        inputs:
+          Ap: "10"
+        expected_outputs:
+          GdB: "10"
+
+  - id: rms_sine_wave
+    title: RMS of Sine Wave
+    category: utilities/signals
+    description: RMS voltage from peak voltage of a sine wave.
+    variables:
+      Vpeak:
+        unit: V
+        description: Peak voltage
+        default: "10"
+    equations:
+      - id: vrms
+        latex: "V_{rms} = \\frac{V_{peak}}{\\sqrt{2}}"
+        expression: "Vrms = Vpeak / sqrt(2)"
+        solve_for:
+          - Vrms
+    outputs:
+      Vrms:
+        unit: V
+        description: RMS voltage
+    examples:
+      - title: "10 V peak"
+        inputs:
+          Vpeak: "10"
+        expected_outputs:
+          Vrms: "7.0711"
+
+  - id: wavelength_from_frequency
+    title: Wavelength from Frequency
+    category: utilities/rf
+    description: Wavelength in free space from frequency.
+    variables:
+      f:
+        unit: Hz
+        description: Frequency
+        default: 1G
+    equations:
+      - id: lambda
+        latex: "\\lambda = \\frac{c}{f}"
+        expression: "lambda = 299792458 / f"
+        solve_for:
+          - lambda
+    outputs:
+      lambda:
+        unit: m
+        description: Wavelength
+    examples:
+      - title: "1 GHz"
+        inputs:
+          f: 1G
+        expected_outputs:
+          lambda: "0.2998"

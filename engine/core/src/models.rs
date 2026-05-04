@@ -178,6 +178,17 @@ pub enum ProbeType {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FormulaExample {
+    pub title: String,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub inputs: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub expected_outputs: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FormulaDefinition {
     pub id: String,
     pub title: String,
@@ -186,13 +197,16 @@ pub struct FormulaDefinition {
     pub equations: Vec<FormulaEquation>,
     pub variables: BTreeMap<String, FormulaVariable>,
     pub outputs: BTreeMap<String, FormulaOutput>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub assumptions: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub limitations: Vec<String>,
     pub linked_circuit_template_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mapping: Option<BTreeMap<String, String>>,
     pub default_simulation_profile: Option<SimulationProfile>,
-    pub examples: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub examples: Vec<FormulaExample>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

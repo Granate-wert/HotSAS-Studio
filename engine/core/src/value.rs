@@ -11,6 +11,8 @@ pub enum EngineeringPrefix {
     Milli,
     Kilo,
     Mega,
+    Giga,
+    Tera,
 }
 
 impl EngineeringPrefix {
@@ -22,6 +24,8 @@ impl EngineeringPrefix {
             Self::Milli => 1e-3,
             Self::Kilo => 1e3,
             Self::Mega => 1e6,
+            Self::Giga => 1e9,
+            Self::Tera => 1e12,
         }
     }
 
@@ -33,6 +37,8 @@ impl EngineeringPrefix {
             Self::Milli => "m",
             Self::Kilo => "k",
             Self::Mega => "M",
+            Self::Giga => "G",
+            Self::Tera => "T",
         }
     }
 
@@ -44,6 +50,8 @@ impl EngineeringPrefix {
             'm' => Some(Self::Milli),
             'k' | 'K' => Some(Self::Kilo),
             'M' => Some(Self::Mega),
+            'G' => Some(Self::Giga),
+            'T' => Some(Self::Tera),
             _ => None,
         }
     }
@@ -61,6 +69,11 @@ pub enum EngineeringUnit {
     Percent,
     Henry,
     Second,
+    Kelvin,
+    Celsius,
+    Meter,
+    KelvinPerWatt,
+    Decibel,
 }
 
 impl EngineeringUnit {
@@ -76,6 +89,11 @@ impl EngineeringUnit {
             "%" | "percent" | "Percent" => Ok(Self::Percent),
             "H" | "henry" | "Henry" => Ok(Self::Henry),
             "s" | "sec" | "second" | "Second" => Ok(Self::Second),
+            "K" | "kelvin" | "Kelvin" => Ok(Self::Kelvin),
+            "°C" | "C" | "celsius" | "Celsius" => Ok(Self::Celsius),
+            "m" | "meter" | "metre" | "Meter" | "Metre" => Ok(Self::Meter),
+            "K/W" | "K/Watt" | "Kelvin/Watt" => Ok(Self::KelvinPerWatt),
+            "dB" | "decibel" | "Decibel" => Ok(Self::Decibel),
             other => Err(CoreError::InvalidUnit(other.to_string())),
         }
     }
@@ -92,6 +110,11 @@ impl EngineeringUnit {
             Self::Percent => "%",
             Self::Henry => "H",
             Self::Second => "s",
+            Self::Kelvin => "K",
+            Self::Celsius => "°C",
+            Self::Meter => "m",
+            Self::KelvinPerWatt => "K/W",
+            Self::Decibel => "dB",
         }
     }
 }

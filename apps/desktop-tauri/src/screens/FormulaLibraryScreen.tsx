@@ -39,10 +39,30 @@ export function FormulaLibraryScreen() {
   const [loading, setLoading] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const filteredFormulas = useMemo(() => {
+    let result = formulas;
+    if (selectedCategory) {
+      result = result.filter((f) => f.category === selectedCategory);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (f) =>
+          f.title.toLowerCase().includes(q) ||
+          f.id.toLowerCase().includes(q) ||
+          f.description.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [formulas, selectedCategory, searchQuery]);
 
   const selectedFormula = useMemo(
-    () => formulas.find((formula) => formula.id === selectedId) ?? formulas[0] ?? null,
-    [formulas, selectedId],
+    () =>
+      filteredFormulas.find((formula) => formula.id === selectedId) ?? filteredFormulas[0] ?? null,
+    [filteredFormulas, selectedId],
   );
 
   useEffect(() => {
@@ -190,8 +210,22 @@ export function FormulaLibraryScreen() {
             ))}
             <Title order={4}>Categories</Title>
             <Group gap="xs">
+              <Badge
+                color={selectedCategory === null ? "blue" : "gray"}
+                variant={selectedCategory === null ? "filled" : "outline"}
+                style={{ cursor: "pointer" }}
+                onClick={() => setSelectedCategory(null)}
+              >
+                All
+              </Badge>
               {categories.map((category) => (
-                <Badge key={category} color="gray" variant="outline">
+                <Badge
+                  key={category}
+                  color={selectedCategory === category ? "blue" : "gray"}
+                  variant={selectedCategory === category ? "filled" : "outline"}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setSelectedCategory(category)}
+                >
                   {category}
                 </Badge>
               ))}
@@ -200,7 +234,12 @@ export function FormulaLibraryScreen() {
 
           <Stack gap="sm" className="sub-panel">
             <Title order={4}>Formulas</Title>
-            {formulas.map((formula) => (
+            <TextInput
+              placeholder="Search formulas..."
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.currentTarget.value)}
+            />
+            {filteredFormulas.map((formula) => (
               <Button
                 key={formula.id}
                 justify="flex-start"
@@ -271,6 +310,57 @@ export function FormulaLibraryScreen() {
                 <Button loading={calculating} onClick={() => void calculateSelectedFormula()}>
                   Calculate
                 </Button>
+
+                {details.assumptions.length > 0 ? (
+                  <Alert color="blue" variant="light">
+                    <Text size="sm" fw={500}>
+                      Assumptions
+                    </Text>
+                    {details.assumptions.map((a) => (
+                      <Text key={a} size="sm">
+                        • {a}
+                      </Text>
+                    ))}
+                  </Alert>
+                ) : null}
+
+                {details.limitations.length > 0 ? (
+                  <Alert color="orange" variant="light">
+                    <Text size="sm" fw={500}>
+                      Limitations
+                    </Text>
+                    {details.limitations.map((l) => (
+                      <Text key={l} size="sm">
+                        • {l}
+                      </Text>
+                    ))}
+                  </Alert>
+                ) : null}
+
+                {details.examples.length > 0 ? (
+                  <Stack gap="xs">
+                    <Text size="sm" fw={500}>
+                      Examples
+                    </Text>
+                    {details.examples.map((example, index) => (
+                      <Button
+                        key={index}
+                        variant="light"
+                        size="xs"
+                        onClick={() => {
+                          const inputs: Record<string, string> = {};
+                          for (const input of example.inputs) {
+                            inputs[input.name] = input.value;
+                          }
+                          setVariableInputs(inputs);
+                          setCalculationResult(null);
+                        }}
+                      >
+                        {example.title}
+                      </Button>
+                    ))}
+                  </Stack>
+                ) : null}
 
                 {safeDetailsOutputs.length > 0 ? (
                   <Group gap="xs">

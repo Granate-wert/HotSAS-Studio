@@ -1,6 +1,6 @@
 packId: filters
 title: Filters
-version: 0.1.0
+version: "0.2.0"
 formulas:
   - id: rc_low_pass_cutoff
     title: RC Low-Pass Cutoff Frequency
@@ -21,8 +21,6 @@ formulas:
         expression: "fc = 1 / (2*pi*R*C)"
         solve_for:
           - fc
-          - R
-          - C
     outputs:
       fc:
         unit: Hz
@@ -38,10 +36,18 @@ formulas:
       start: 10 Hz
       stop: 1 MHz
       pointsPerDecade: 100
+    examples:
+      - title: "10 kΩ, 100 nF"
+        inputs:
+          R: 10k
+          C: 100n
+        expected_outputs:
+          fc: "159.155"
+
   - id: rc_high_pass_cutoff
     title: RC High-Pass Cutoff Frequency
     category: filters/passive
-    description: Placeholder for RC high-pass formula/template binding.
+    description: Cutoff frequency of a first-order RC high-pass filter.
     variables:
       R:
         unit: Ohm
@@ -57,10 +63,175 @@ formulas:
         expression: "fc = 1 / (2*pi*R*C)"
         solve_for:
           - fc
-          - R
-          - C
     outputs:
       fc:
         unit: Hz
         description: Cutoff frequency
     linkedCircuitTemplateId: rc_high_pass_template
+    examples:
+      - title: "10 kΩ, 100 nF"
+        inputs:
+          R: 10k
+          C: 100n
+        expected_outputs:
+          fc: "159.155"
+
+  - id: rl_low_pass_cutoff
+    title: RL Low-Pass Cutoff Frequency
+    category: filters/passive
+    description: Cutoff frequency of a first-order RL low-pass filter.
+    variables:
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 1k
+      L:
+        unit: H
+        description: Inductance
+        default: 10m
+    equations:
+      - id: cutoff
+        latex: "f_c = \\frac{R}{2\\pi L}"
+        expression: "fc = R / (2*pi*L)"
+        solve_for:
+          - fc
+    outputs:
+      fc:
+        unit: Hz
+        description: Cutoff frequency
+    examples:
+      - title: "1 kΩ, 10 mH"
+        inputs:
+          R: 1k
+          L: 10m
+        expected_outputs:
+          fc: "15915.5"
+
+  - id: rl_high_pass_cutoff
+    title: RL High-Pass Cutoff Frequency
+    category: filters/passive
+    description: Cutoff frequency of a first-order RL high-pass filter.
+    variables:
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 1k
+      L:
+        unit: H
+        description: Inductance
+        default: 10m
+    equations:
+      - id: cutoff
+        latex: "f_c = \\frac{R}{2\\pi L}"
+        expression: "fc = R / (2*pi*L)"
+        solve_for:
+          - fc
+    outputs:
+      fc:
+        unit: Hz
+        description: Cutoff frequency
+    examples:
+      - title: "1 kΩ, 10 mH"
+        inputs:
+          R: 1k
+          L: 10m
+        expected_outputs:
+          fc: "15915.5"
+
+  - id: lc_resonant_frequency
+    title: LC Resonant Frequency
+    category: filters/passive
+    description: Resonant frequency of an LC tank circuit.
+    variables:
+      L:
+        unit: H
+        description: Inductance
+        default: 10m
+      C:
+        unit: F
+        description: Capacitance
+        default: 100n
+    equations:
+      - id: f0
+        latex: "f_0 = \\frac{1}{2\\pi \\sqrt{L C}}"
+        expression: "f0 = 1 / (2*pi*sqrt(L*C))"
+        solve_for:
+          - f0
+    outputs:
+      f0:
+        unit: Hz
+        description: Resonant frequency
+    examples:
+      - title: "10 mH, 100 nF"
+        inputs:
+          L: 10m
+          C: 100n
+        expected_outputs:
+          f0: "5032.92"
+
+  - id: rlc_quality_factor_series
+    title: Series RLC Quality Factor
+    category: filters/passive
+    description: Quality factor of a series RLC circuit.
+    variables:
+      R:
+        unit: Ohm
+        description: Resistance
+        default: "10"
+      L:
+        unit: H
+        description: Inductance
+        default: 10m
+      C:
+        unit: F
+        description: Capacitance
+        default: 100n
+    equations:
+      - id: q
+        latex: "Q = \\frac{1}{R} \\sqrt{\\frac{L}{C}}"
+        expression: "Q = (1 / R) * sqrt(L / C)"
+        solve_for:
+          - Q
+    outputs:
+      Q:
+        unit: ""
+        description: Quality factor
+    examples:
+      - title: "10 Ω, 10 mH, 100 nF"
+        inputs:
+          R: "10"
+          L: 10m
+          C: 100n
+        expected_outputs:
+          Q: "316.228"
+
+  - id: rlc_bandwidth
+    title: RLC Bandwidth
+    category: filters/passive
+    description: Bandwidth of a resonant RLC circuit.
+    variables:
+      f0:
+        unit: Hz
+        description: Resonant frequency
+        default: 5032.92
+      Q:
+        unit: ""
+        description: Quality factor
+        default: "316.228"
+    equations:
+      - id: bw
+        latex: "BW = \\frac{f_0}{Q}"
+        expression: "BW = f0 / Q"
+        solve_for:
+          - BW
+    outputs:
+      BW:
+        unit: Hz
+        description: Bandwidth
+    examples:
+      - title: "5032.92 Hz, Q = 316.228"
+        inputs:
+          f0: "5032.92"
+          Q: "316.228"
+        expected_outputs:
+          BW: "15.9155"

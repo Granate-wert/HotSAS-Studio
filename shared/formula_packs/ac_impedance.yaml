@@ -1,0 +1,191 @@
+packId: ac_impedance
+title: AC & Impedance
+version: "0.2.0"
+formulas:
+  - id: capacitive_reactance
+    title: Capacitive Reactance
+    category: ac/impedance
+    description: Reactance of a capacitor at a given frequency.
+    variables:
+      f:
+        unit: Hz
+        description: Frequency
+        default: 1k
+      C:
+        unit: F
+        description: Capacitance
+        default: 100n
+    equations:
+      - id: xc
+        latex: "X_C = \\frac{1}{2\\pi f C}"
+        expression: "Xc = 1 / (2 * pi * f * C)"
+        solve_for:
+          - Xc
+    outputs:
+      Xc:
+        unit: Ohm
+        description: Capacitive reactance
+    assumptions:
+      - "Ideal capacitor with no ESR or ESL."
+    examples:
+      - title: "1 kHz, 100 nF"
+        inputs:
+          f: 1k
+          C: 100n
+        expected_outputs:
+          Xc: "1591.55"
+
+  - id: inductive_reactance
+    title: Inductive Reactance
+    category: ac/impedance
+    description: Reactance of an inductor at a given frequency.
+    variables:
+      f:
+        unit: Hz
+        description: Frequency
+        default: 1k
+      L:
+        unit: H
+        description: Inductance
+        default: 10m
+    equations:
+      - id: xl
+        latex: "X_L = 2\\pi f L"
+        expression: "Xl = 2 * pi * f * L"
+        solve_for:
+          - Xl
+    outputs:
+      Xl:
+        unit: Ohm
+        description: Inductive reactance
+    examples:
+      - title: "1 kHz, 10 mH"
+        inputs:
+          f: 1k
+          L: 10m
+        expected_outputs:
+          Xl: "62.8319"
+
+  - id: rc_time_constant
+    title: RC Time Constant
+    category: ac/impedance
+    description: Time constant of an RC network.
+    variables:
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 10k
+      C:
+        unit: F
+        description: Capacitance
+        default: 100n
+    equations:
+      - id: tau
+        latex: "\\tau = R C"
+        expression: "tau = R * C"
+        solve_for:
+          - tau
+    outputs:
+      tau:
+        unit: s
+        description: Time constant
+    examples:
+      - title: "10 kΩ, 100 nF"
+        inputs:
+          R: 10k
+          C: 100n
+        expected_outputs:
+          tau: 1m
+
+  - id: rl_time_constant
+    title: RL Time Constant
+    category: ac/impedance
+    description: Time constant of an RL network.
+    variables:
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 1k
+      L:
+        unit: H
+        description: Inductance
+        default: 10m
+    equations:
+      - id: tau
+        latex: "\\tau = \\frac{L}{R}"
+        expression: "tau = L / R"
+        solve_for:
+          - tau
+    outputs:
+      tau:
+        unit: s
+        description: Time constant
+    examples:
+      - title: "1 kΩ, 10 mH"
+        inputs:
+          R: 1k
+          L: 10m
+        expected_outputs:
+          tau: 10u
+
+  - id: series_rl_impedance_magnitude
+    title: Series RL Impedance Magnitude
+    category: ac/impedance
+    description: Magnitude of impedance for a series RL circuit.
+    variables:
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 1k
+      Xl:
+        unit: Ohm
+        description: Inductive reactance
+        default: 1k
+    equations:
+      - id: z
+        latex: "|Z| = \\sqrt{R^2 + X_L^2}"
+        expression: "Z = sqrt(R ^ 2 + Xl ^ 2)"
+        solve_for:
+          - Z
+    outputs:
+      Z:
+        unit: Ohm
+        description: Impedance magnitude
+    examples:
+      - title: "R = 1 kΩ, Xl = 1 kΩ"
+        inputs:
+          R: 1k
+          Xl: 1k
+        expected_outputs:
+          Z: "1414.21"
+
+  - id: series_rc_impedance_magnitude
+    title: Series RC Impedance Magnitude
+    category: ac/impedance
+    description: Magnitude of impedance for a series RC circuit.
+    variables:
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 1k
+      Xc:
+        unit: Ohm
+        description: Capacitive reactance
+        default: 1k
+    equations:
+      - id: z
+        latex: "|Z| = \\sqrt{R^2 + X_C^2}"
+        expression: "Z = sqrt(R ^ 2 + Xc ^ 2)"
+        solve_for:
+          - Z
+    outputs:
+      Z:
+        unit: Ohm
+        description: Impedance magnitude
+    examples:
+      - title: "R = 1 kΩ, Xc = 1 kΩ"
+        inputs:
+          R: 1k
+          Xc: 1k
+        expected_outputs:
+          Z: "1414.21"

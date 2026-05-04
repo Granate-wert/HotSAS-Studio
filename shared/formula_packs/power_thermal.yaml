@@ -1,0 +1,177 @@
+packId: power_thermal
+title: Power & Thermal
+version: "0.2.0"
+formulas:
+  - id: resistor_temperature_rise
+    title: Resistor Temperature Rise
+    category: power/thermal
+    description: Temperature rise of a resistor from power dissipation.
+    variables:
+      P:
+        unit: W
+        description: Power dissipated
+        default: "0.1"
+      theta:
+        unit: "K/W"
+        description: Thermal resistance
+        default: "100"
+    equations:
+      - id: dt
+        latex: "\\Delta T = P \\theta"
+        expression: "dT = P * theta"
+        solve_for:
+          - dT
+    outputs:
+      dT:
+        unit: "K"
+        description: Temperature rise
+    examples:
+      - title: "0.1 W, 100 K/W"
+        inputs:
+          P: "0.1"
+          theta: "100"
+        expected_outputs:
+          dT: "10"
+
+  - id: led_series_resistor
+    title: LED Series Resistor
+    category: power/thermal
+    description: Series resistor for driving an LED from a voltage source.
+    variables:
+      Vs:
+        unit: V
+        description: Supply voltage
+        default: "5"
+      Vf:
+        unit: V
+        description: LED forward voltage
+        default: "2"
+      I:
+        unit: A
+        description: LED current
+        default: 20m
+    equations:
+      - id: r
+        latex: "R = \\frac{V_s - V_f}{I}"
+        expression: "R = (Vs - Vf) / I"
+        solve_for:
+          - R
+    outputs:
+      R:
+        unit: Ohm
+        description: Series resistance
+    assumptions:
+      - "LED forward voltage is constant."
+    limitations:
+      - "Does not account for temperature-dependent Vf."
+    examples:
+      - title: "5 V supply, 2 V LED, 20 mA"
+        inputs:
+          Vs: "5"
+          Vf: "2"
+          I: 20m
+        expected_outputs:
+          R: "150"
+
+  - id: linear_regulator_power_loss
+    title: Linear Regulator Power Loss
+    category: power/thermal
+    description: Power dissipated as heat in a linear voltage regulator.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+        default: "12"
+      Vout:
+        unit: V
+        description: Output voltage
+        default: "5"
+      Iout:
+        unit: A
+        description: Output current
+        default: "0.5"
+    equations:
+      - id: ploss
+        latex: "P_{loss} = (V_{in} - V_{out}) I_{out}"
+        expression: "Ploss = (Vin - Vout) * Iout"
+        solve_for:
+          - Ploss
+    outputs:
+      Ploss:
+        unit: W
+        description: Power loss
+    examples:
+      - title: "12 V to 5 V at 0.5 A"
+        inputs:
+          Vin: "12"
+          Vout: "5"
+          Iout: "0.5"
+        expected_outputs:
+          Ploss: "3.5"
+
+  - id: efficiency_percent
+    title: Efficiency Percent
+    category: power/thermal
+    description: Conversion efficiency as a percentage.
+    variables:
+      Pout:
+        unit: W
+        description: Output power
+        default: "8"
+      Pin:
+        unit: W
+        description: Input power
+        default: "10"
+    equations:
+      - id: eta
+        latex: "\\eta = \\frac{P_{out}}{P_{in}} \\times 100"
+        expression: "eta = Pout / Pin * 100"
+        solve_for:
+          - eta
+    outputs:
+      eta:
+        unit: "%"
+        description: Efficiency
+    examples:
+      - title: "8 W out, 10 W in"
+        inputs:
+          Pout: "8"
+          Pin: "10"
+        expected_outputs:
+          eta: "80"
+
+  - id: heatsink_required_theta
+    title: Heatsink Required Thermal Resistance
+    category: power/thermal
+    description: Maximum allowable thermal resistance for a heatsink.
+    variables:
+      Tmax:
+        unit: "°C"
+        description: Maximum junction temperature
+        default: "125"
+      Tambient:
+        unit: "°C"
+        description: Ambient temperature
+        default: "25"
+      P:
+        unit: W
+        description: Power dissipated
+        default: "10"
+    equations:
+      - id: theta
+        latex: "\\theta = \\frac{T_{max} - T_{ambient}}{P}"
+        expression: "theta = (Tmax - Tambient) / P"
+        solve_for:
+          - theta
+    outputs:
+      theta:
+        unit: "K/W"
+        description: Thermal resistance
+    examples:
+      - title: "125 °C max, 25 °C ambient, 10 W"
+        inputs:
+          Tmax: "125"
+          Tambient: "25"
+          P: "10"
+        expected_outputs:
+          theta: "10"

@@ -1,0 +1,212 @@
+packId: transient
+title: Transient Analysis
+version: "0.2.0"
+formulas:
+  - id: capacitor_charge_voltage
+    title: Capacitor Charge Voltage
+    category: transient/rc
+    description: Voltage across a charging capacitor in an RC circuit.
+    variables:
+      Vfinal:
+        unit: V
+        description: Final voltage
+        default: "5"
+      t:
+        unit: s
+        description: Time
+        default: 1m
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 10k
+      C:
+        unit: F
+        description: Capacitance
+        default: 100n
+    equations:
+      - id: vc
+        latex: "V_C = V_{final} \\left(1 - e^{-t / (R C)}\\right)"
+        expression: "Vc = Vfinal * (1 - exp(-t / (R * C)))"
+        solve_for:
+          - Vc
+    outputs:
+      Vc:
+        unit: V
+        description: Capacitor voltage
+    assumptions:
+      - "Ideal capacitor and resistor."
+    limitations:
+      - "Does not account for ESR or parasitic inductance."
+    examples:
+      - title: "5 V, 1 ms, 10 kΩ, 100 nF"
+        inputs:
+          Vfinal: "5"
+          t: 1m
+          R: 10k
+          C: 100n
+        expected_outputs:
+          Vc: "3.1606"
+
+  - id: capacitor_discharge_voltage
+    title: Capacitor Discharge Voltage
+    category: transient/rc
+    description: Voltage across a discharging capacitor in an RC circuit.
+    variables:
+      Vinitial:
+        unit: V
+        description: Initial voltage
+        default: "5"
+      t:
+        unit: s
+        description: Time
+        default: 1m
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 10k
+      C:
+        unit: F
+        description: Capacitance
+        default: 100n
+    equations:
+      - id: vc
+        latex: "V_C = V_{initial} e^{-t / (R C)}"
+        expression: "Vc = Vinitial * exp(-t / (R * C))"
+        solve_for:
+          - Vc
+    outputs:
+      Vc:
+        unit: V
+        description: Capacitor voltage
+    examples:
+      - title: "5 V initial, 1 ms, 10 kΩ, 100 nF"
+        inputs:
+          Vinitial: "5"
+          t: 1m
+          R: 10k
+          C: 100n
+        expected_outputs:
+          Vc: "1.8394"
+
+  - id: time_to_capacitor_threshold
+    title: Time to Capacitor Threshold
+    category: transient/rc
+    description: Time for a charging RC circuit to reach a target voltage.
+    variables:
+      Vtarget:
+        unit: V
+        description: Target voltage
+        default: "3.5"
+      Vfinal:
+        unit: V
+        description: Final voltage
+        default: "5"
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 10k
+      C:
+        unit: F
+        description: Capacitance
+        default: 100n
+    equations:
+      - id: t
+        latex: "t = -R C \\ln\\left(1 - \\frac{V_{target}}{V_{final}}\\right)"
+        expression: "t = -R * C * ln(1 - Vtarget / Vfinal)"
+        solve_for:
+          - t
+    outputs:
+      t:
+        unit: s
+        description: Time to threshold
+    examples:
+      - title: "3.5 V from 5 V, 10 kΩ, 100 nF"
+        inputs:
+          Vtarget: "3.5"
+          Vfinal: "5"
+          R: 10k
+          C: 100n
+        expected_outputs:
+          t: "1.2528m"
+
+  - id: inductor_current_rise
+    title: Inductor Current Rise
+    category: transient/rl
+    description: Current through a charging inductor in an RL circuit.
+    variables:
+      Ifinal:
+        unit: A
+        description: Final current
+        default: 10m
+      t:
+        unit: s
+        description: Time
+        default: 10u
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 1k
+      L:
+        unit: H
+        description: Inductance
+        default: 10m
+    equations:
+      - id: i
+        latex: "I = I_{final} \\left(1 - e^{-t R / L}\\right)"
+        expression: "I = Ifinal * (1 - exp(-t * R / L))"
+        solve_for:
+          - I
+    outputs:
+      I:
+        unit: A
+        description: Inductor current
+    examples:
+      - title: "10 mA final, 10 µs, 1 kΩ, 10 mH"
+        inputs:
+          Ifinal: 10m
+          t: 10u
+          R: 1k
+          L: 10m
+        expected_outputs:
+          I: "6.3212m"
+
+  - id: inductor_current_decay
+    title: Inductor Current Decay
+    category: transient/rl
+    description: Current through a decaying inductor in an RL circuit.
+    variables:
+      Iinitial:
+        unit: A
+        description: Initial current
+        default: 10m
+      t:
+        unit: s
+        description: Time
+        default: 10u
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 1k
+      L:
+        unit: H
+        description: Inductance
+        default: 10m
+    equations:
+      - id: i
+        latex: "I = I_{initial} e^{-t R / L}"
+        expression: "I = Iinitial * exp(-t * R / L)"
+        solve_for:
+          - I
+    outputs:
+      I:
+        unit: A
+        description: Inductor current
+    examples:
+      - title: "10 mA initial, 10 µs, 1 kΩ, 10 mH"
+        inputs:
+          Iinitial: 10m
+          t: 10u
+          R: 1k
+          L: 10m
+        expected_outputs:
+          I: "3.6788m"

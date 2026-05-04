@@ -78,6 +78,19 @@ const mockDetails: Record<string, FormulaDetailsDto> = {
         description: "Cutoff frequency",
       },
     ],
+    assumptions: ["Ideal resistor and capacitor"],
+    limitations: ["Parasitics ignored"],
+    examples: [
+      {
+        title: "10 kΩ, 100 nF",
+        inputs: [
+          { name: "R", value: "10k" },
+          { name: "C", value: "100n" },
+        ],
+        expected_outputs: [{ name: "fc", value: "159.15" }],
+        notes: null,
+      },
+    ],
     linked_circuit_template_id: "rc_low_pass_template",
     mapping: {
       R: "R1.resistance",
@@ -122,6 +135,19 @@ const mockDetails: Record<string, FormulaDetailsDto> = {
         name: "V",
         unit: "V",
         description: "Voltage",
+      },
+    ],
+    assumptions: ["DC or RMS values"],
+    limitations: ["Temperature effects ignored"],
+    examples: [
+      {
+        title: "10 mA through 1 kΩ",
+        inputs: [
+          { name: "I", value: "10m" },
+          { name: "R", value: "1k" },
+        ],
+        expected_outputs: [{ name: "V", value: "10" }],
+        notes: null,
       },
     ],
     linked_circuit_template_id: null,

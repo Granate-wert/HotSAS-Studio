@@ -1,6 +1,6 @@
 packId: basic_electronics
 title: Basic Electronics
-version: 0.1.0
+version: "0.2.0"
 formulas:
   - id: ohms_law
     title: Ohm's Law
@@ -29,6 +29,18 @@ formulas:
       V:
         unit: V
         description: Voltage
+    assumptions:
+      - "DC or RMS values are used consistently."
+    limitations:
+      - "Does not model temperature dependence or non-linear effects."
+    examples:
+      - title: "10 mA through 1 kΩ"
+        inputs:
+          I: 10m
+          R: 1k
+        expectedOutputs:
+          V: "10"
+
   - id: voltage_divider
     title: Voltage Divider
     category: basic/dc
@@ -51,10 +63,218 @@ formulas:
         expression: "Vout = Vin * R2 / (R1 + R2)"
         solve_for:
           - Vout
-          - Vin
-          - R1
-          - R2
     outputs:
       Vout:
         unit: V
         description: Output voltage
+    assumptions:
+      - "No load current drawn from the output node."
+    limitations:
+      - "Loading effects are ignored."
+    examples:
+      - title: "5 V input, equal 10 kΩ resistors"
+        inputs:
+          Vin: "5"
+          R1: 10k
+          R2: 10k
+        expectedOutputs:
+          Vout: "2.5"
+
+  - id: power_from_voltage_current
+    title: Power from Voltage and Current
+    category: basic/dc
+    description: Electrical power calculated from voltage and current.
+    variables:
+      V:
+        unit: V
+        description: Voltage
+        default: "5"
+      I:
+        unit: A
+        description: Current
+        default: 20m
+    equations:
+      - id: power
+        latex: "P = V I"
+        expression: "P = V * I"
+        solve_for:
+          - P
+    outputs:
+      P:
+        unit: W
+        description: Power
+    assumptions:
+      - "DC or RMS values are used consistently."
+    limitations:
+      - "Does not model transient or reactive power."
+    examples:
+      - title: "5 V at 20 mA"
+        inputs:
+          V: "5"
+          I: 20m
+        expectedOutputs:
+          P: 100m
+
+  - id: power_from_current_resistance
+    title: Power from Current and Resistance
+    category: basic/dc
+    description: Power dissipated in a resistor from current.
+    variables:
+      I:
+        unit: A
+        description: Current
+        default: 2m
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 10k
+    equations:
+      - id: power
+        latex: "P = I^2 R"
+        expression: "P = I ^ 2 * R"
+        solve_for:
+          - P
+    outputs:
+      P:
+        unit: W
+        description: Power
+    assumptions:
+      - "Resistor is linear and temperature is constant."
+    examples:
+      - title: "2 mA through 10 kΩ"
+        inputs:
+          I: 2m
+          R: 10k
+        expectedOutputs:
+          P: 40m
+
+  - id: power_from_voltage_resistance
+    title: Power from Voltage and Resistance
+    category: basic/dc
+    description: Power dissipated in a resistor from voltage.
+    variables:
+      V:
+        unit: V
+        description: Voltage
+        default: "5"
+      R:
+        unit: Ohm
+        description: Resistance
+        default: 10k
+    equations:
+      - id: power
+        latex: "P = \\frac{V^2}{R}"
+        expression: "P = V ^ 2 / R"
+        solve_for:
+          - P
+    outputs:
+      P:
+        unit: W
+        description: Power
+    assumptions:
+      - "Resistor is linear and temperature is constant."
+    examples:
+      - title: "5 V across 10 kΩ"
+        inputs:
+          V: "5"
+          R: 10k
+        expectedOutputs:
+          P: 2.5m
+
+  - id: series_resistors
+    title: Series Resistors
+    category: basic/dc
+    description: Total resistance of resistors in series.
+    variables:
+      R1:
+        unit: Ohm
+        description: First resistor
+        default: 1k
+      R2:
+        unit: Ohm
+        description: Second resistor
+        default: 2k
+    equations:
+      - id: total
+        latex: "R_{total} = R_1 + R_2"
+        expression: "R = R1 + R2"
+        solve_for:
+          - R
+    outputs:
+      R:
+        unit: Ohm
+        description: Total resistance
+    examples:
+      - title: "1 kΩ + 2 kΩ"
+        inputs:
+          R1: 1k
+          R2: 2k
+        expectedOutputs:
+          R: 3k
+
+  - id: parallel_resistors
+    title: Parallel Resistors
+    category: basic/dc
+    description: Total resistance of two resistors in parallel.
+    variables:
+      R1:
+        unit: Ohm
+        description: First resistor
+        default: 10k
+      R2:
+        unit: Ohm
+        description: Second resistor
+        default: 10k
+    equations:
+      - id: total
+        latex: "R_{total} = \\frac{R_1 R_2}{R_1 + R_2}"
+        expression: "R = (R1 * R2) / (R1 + R2)"
+        solve_for:
+          - R
+    outputs:
+      R:
+        unit: Ohm
+        description: Total resistance
+    examples:
+      - title: "10 kΩ || 10 kΩ"
+        inputs:
+          R1: 10k
+          R2: 10k
+        expectedOutputs:
+          R: 5k
+
+  - id: current_divider_two_resistors
+    title: Current Divider (Two Resistors)
+    category: basic/dc
+    description: Current through R2 in a two-branch current divider.
+    variables:
+      I_total:
+        unit: A
+        description: Total current
+        default: 10m
+      R1:
+        unit: Ohm
+        description: First resistor
+        default: 1k
+      R2:
+        unit: Ohm
+        description: Second resistor
+        default: 2k
+    equations:
+      - id: current
+        latex: "I_{R2} = I_{total} \\frac{R_1}{R_1 + R_2}"
+        expression: "I_R2 = I_total * R1 / (R1 + R2)"
+        solve_for:
+          - I_R2
+    outputs:
+      I_R2:
+        unit: A
+        description: Current through R2
+    examples:
+      - title: "10 mA into 1 kΩ || 2 kΩ"
+        inputs:
+          I_total: 10m
+          R1: 1k
+          R2: 2k
+        expectedOutputs:
+          I_R2: 3.333m

@@ -2,15 +2,15 @@
 
 ## Current Version
 
-[v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build](./verification_logs/v2.0_product_beta_integration.md)
+[v2.1 — Formula Library Expansion & Formula UX Hardening](./verification_logs/v2.1_formula_library_expansion.md)
 
-## v2.0 Summary
+## v2.1 Summary
 
 ```text
-Version: v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build
-Implementation commit: ca5d11e
-Verification log update commit: 3f05fb5
-Verification log: docs/testing/verification_logs/v2.0_product_beta_integration.md
+Version: v2.1 — Formula Library Expansion & Formula UX Hardening
+Implementation commit: f13ec26
+Verification log update commit: f13ec26
+Verification log: docs/testing/verification_logs/v2.1_formula_library_expansion.md
 
 Checks:
 - cargo fmt --check — PASS
@@ -23,14 +23,15 @@ Checks:
 
 Internal build:
 - EXE path: apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
-- EXE SHA256: 15D1145D6031AD8A29B6404FFEEABD16A2CA87BFCC7A8FF46D15FECF8A8E064C
-- ZIP path: apps/desktop-tauri/src-tauri/target/release/HotSAS-Studio-v2.0-internal-rc-windows-x64.zip
-- ZIP SHA256: A998030BBCD54A6D5E3FF512A473857A435D2F735624EB260860920AC7750FEA
+- EXE SHA256: 1423262166135F13A95CE117ED23BE0E33616CC84CD716A2745B7F496FBF29D8
+- ZIP path: apps/desktop-tauri/src-tauri/target/release/HotSAS-Studio-v2.1-internal-rc-windows-x64.zip
+- ZIP SHA256: ED73C5140DC2087F2BE6B71254AE2E6868A530D21F845DE463686905244B9BD0
 - Public GitHub Release: NO
 ```
 
 ## Previous Versions
 
+- [v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build](./verification_logs/v2.0_product_beta_integration.md)
 - [v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate](./verification_logs/v1.10_internal_alpha_build_and_v2_readiness_gate.md)
 - [v1.9 — SPICE/Touchstone Import Foundation](./verification_logs/v1.9_spice_touchstone_import_foundation.md)
 - [v1.8 — ngspice Adapter v1](./verification_logs/v1.8_ngspice_adapter_v1.md)

@@ -353,6 +353,20 @@ impl From<&FormulaDefinition> for FormulaSummaryDto {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaExampleDto {
+    pub title: String,
+    pub inputs: Vec<FormulaExampleValueDto>,
+    pub expected_outputs: Vec<FormulaExampleValueDto>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormulaExampleValueDto {
+    pub name: String,
+    pub value: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FormulaDetailsDto {
     pub id: String,
     pub title: String,
@@ -361,6 +375,9 @@ pub struct FormulaDetailsDto {
     pub variables: Vec<FormulaVariableDto>,
     pub equations: Vec<FormulaEquationDto>,
     pub outputs: Vec<FormulaOutputDto>,
+    pub assumptions: Vec<String>,
+    pub limitations: Vec<String>,
+    pub examples: Vec<FormulaExampleDto>,
     pub linked_circuit_template_id: Option<String>,
     pub mapping: Option<BTreeMap<String, String>>,
     pub default_simulation: Option<String>,
@@ -387,6 +404,32 @@ impl From<&FormulaDefinition> for FormulaDetailsDto {
                 .outputs
                 .iter()
                 .map(|(name, output)| FormulaOutputDto::from_pair(name, output))
+                .collect(),
+            assumptions: formula.assumptions.clone(),
+            limitations: formula.limitations.clone(),
+            examples: formula
+                .examples
+                .iter()
+                .map(|e| FormulaExampleDto {
+                    title: e.title.clone(),
+                    inputs: e
+                        .inputs
+                        .iter()
+                        .map(|(k, v)| FormulaExampleValueDto {
+                            name: k.clone(),
+                            value: v.clone(),
+                        })
+                        .collect(),
+                    expected_outputs: e
+                        .expected_outputs
+                        .iter()
+                        .map(|(k, v)| FormulaExampleValueDto {
+                            name: k.clone(),
+                            value: v.clone(),
+                        })
+                        .collect(),
+                    notes: e.notes.clone(),
+                })
                 .collect(),
             linked_circuit_template_id: formula.linked_circuit_template_id.clone(),
             mapping: formula.mapping.clone(),

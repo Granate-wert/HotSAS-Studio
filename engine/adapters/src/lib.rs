@@ -1,8 +1,8 @@
 use hotsas_core::{
     CircuitProject, CircuitQueryService, EngineeringUnit, FormulaDefinition, FormulaEquation,
-    FormulaEvaluationResult, FormulaExpressionValidationResult, FormulaOutput, FormulaPack,
-    FormulaVariable, GraphPoint, GraphSeries, ReportModel, SimulationProfile, SimulationResult,
-    SimulationStatus, SimulationType, ValueWithUnit,
+    FormulaEvaluationResult, FormulaExample, FormulaExpressionValidationResult, FormulaOutput,
+    FormulaPack, FormulaVariable, GraphPoint, GraphSeries, ReportModel, SimulationProfile,
+    SimulationResult, SimulationStatus, SimulationType, ValueWithUnit,
 };
 use hotsas_ports::{
     FormulaEnginePort, NetlistExporterPort, PortError, ReportExporterPort, SimulationEnginePort,
@@ -15,6 +15,7 @@ use std::path::{Path, PathBuf};
 
 pub mod component_library_storage;
 pub mod export_center;
+pub mod expression_evaluator;
 pub mod ngspice;
 pub mod project_package_storage;
 pub mod spice_model_parser;
@@ -196,7 +197,22 @@ struct RawFormulaDefinition {
     #[serde(rename = "defaultSimulation")]
     default_simulation: Option<RawDefaultSimulation>,
     #[serde(default)]
-    examples: Vec<String>,
+    examples: Vec<RawFormulaExample>,
+}
+
+#[derive(serde::Deserialize)]
+struct RawFormulaExample {
+    title: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    inputs: Option<BTreeMap<String, String>>,
+    #[serde(
+        default,
+        rename = "expectedOutputs",
+        skip_serializing_if = "Option::is_none"
+    )]
+    expected_outputs: Option<BTreeMap<String, String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    notes: Option<String>,
 }
 
 impl RawFormulaDefinition {
@@ -225,7 +241,16 @@ impl RawFormulaDefinition {
                 .default_simulation
                 .map(RawDefaultSimulation::into_simulation_profile)
                 .transpose()?,
-            examples: self.examples,
+            examples: self
+                .examples
+                .into_iter()
+                .map(|e| FormulaExample {
+                    title: e.title,
+                    inputs: e.inputs.unwrap_or_default(),
+                    expected_outputs: e.expected_outputs.unwrap_or_default(),
+                    notes: e.notes,
+                })
+                .collect(),
         })
     }
 }
@@ -395,26 +420,44 @@ impl FormulaEnginePort for SimpleFormulaEngine {
         &self,
         expression: &str,
         variables: &BTreeMap<String, ValueWithUnit>,
-        _expected_outputs: &BTreeMap<String, FormulaOutput>,
+        expected_outputs: &BTreeMap<String, FormulaOutput>,
     ) -> Result<BTreeMap<String, ValueWithUnit>, PortError> {
-        match normalize_expression(expression).as_str() {
-            "fc=1/(2*pi*R*C)" => self.evaluate_rc_low_pass(variables),
-            "V=I*R" => self.evaluate_ohms_law(variables),
-            "Vout=Vin*R2/(R1+R2)" => self.evaluate_voltage_divider(variables),
-            _ => Err(PortError::Formula(format!(
-                "unsupported expression: {expression}"
-            ))),
-        }
+        // Convert ValueWithUnit variables to f64 SI values for generic evaluation
+        let si_variables: BTreeMap<String, f64> = variables
+            .iter()
+            .map(|(k, v)| (k.clone(), v.si_value()))
+            .collect();
+
+        let result = expression_evaluator::evaluate_expression(expression, &si_variables)
+            .map_err(|error| PortError::Formula(error))?;
+
+        // Map result to the first expected output with appropriate unit
+        let first_output = expected_outputs
+            .keys()
+            .next()
+            .cloned()
+            .unwrap_or_else(|| "result".to_string());
+        let unit = expected_outputs
+            .get(&first_output)
+            .map(|o| o.unit)
+            .unwrap_or(EngineeringUnit::Unitless);
+
+        Ok(BTreeMap::from([(
+            first_output,
+            ValueWithUnit::new_si(result, unit),
+        )]))
     }
 
     fn validate_expression(
         &self,
         expression: &str,
     ) -> Result<FormulaExpressionValidationResult, PortError> {
-        let supported = matches!(
-            normalize_expression(expression).as_str(),
-            "fc=1/(2*pi*R*C)" | "V=I*R" | "Vout=Vin*R2/(R1+R2)"
-        );
+        let expr_part = if let Some(pos) = expression.find('=') {
+            &expression[pos + 1..]
+        } else {
+            expression
+        };
+        let supported = expression_evaluator::tokenize(expr_part).is_ok();
         Ok(FormulaExpressionValidationResult {
             expression: expression.to_string(),
             supported,

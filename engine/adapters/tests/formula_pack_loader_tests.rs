@@ -43,7 +43,19 @@ fn loads_all_builtin_formula_pack_files_from_directory_in_deterministic_order() 
     let packs = loader.load_pack_from_dir(&formula_packs_dir()).unwrap();
     let ids: Vec<_> = packs.iter().map(|pack| pack.pack_id.as_str()).collect();
 
-    assert_eq!(ids, ["basic_electronics", "filters", "op_amp", "smps"]);
+    assert_eq!(
+        ids,
+        [
+            "ac_impedance",
+            "basic_electronics",
+            "filters",
+            "op_amp",
+            "power_thermal",
+            "smps",
+            "transient",
+            "utilities"
+        ]
+    );
     assert!(packs
         .iter()
         .any(|pack| pack.formulas.iter().any(|formula| formula.id == "ohms_law")));
