@@ -488,6 +488,24 @@ This stage verifies:
 
 ---
 
+## Manual v1.10 Internal Alpha Smoke Check
+
+- [ ] Release EXE starts.
+- [ ] No console window appears for release EXE.
+- [ ] Start screen opens.
+- [ ] Diagnostics screen opens.
+- [ ] Refresh diagnostics works.
+- [ ] Run readiness self-check works.
+- [ ] Formula Library screen opens.
+- [ ] Engineering Notebook screen opens.
+- [ ] Component Library screen opens.
+- [ ] Simulation screen opens.
+- [ ] Import Models screen opens.
+- [ ] Export Center screen opens.
+- [ ] ngspice unavailable is shown as controlled warning/limited status.
+
+---
+
 ## Test Summary
 
 As of v1.10, the Rust workspace runs **166+ tests** across all crates with **zero failures**, and the frontend runs **68 UI tests** with **zero failures**.

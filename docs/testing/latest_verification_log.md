@@ -4,6 +4,30 @@
 
 [v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate](./verification_logs/v1.10_internal_alpha_build_and_v2_readiness_gate.md)
 
+## v1.10 Summary
+
+```text
+Version: v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate
+Implementation commit: e44830b
+Verification log: docs/testing/verification_logs/v1.10_internal_alpha_build_and_v2_readiness_gate.md
+
+Checks:
+- cargo fmt --check — PASS
+- cargo test — PASS (166+ Rust tests)
+- npm run format:check — PASS
+- npm run typecheck — PASS
+- npm run test — PASS (68 frontend tests)
+- npm run build — PASS
+- npm run tauri:build — PASS
+
+Internal build:
+- EXE path: apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
+- EXE SHA256: 866E006D2DB2881ABBB3DCF0AFD655BE1643F6DD9D1E0E82CADF6D42764D0145
+- ZIP path: apps/desktop-tauri/src-tauri/target/release/HotSAS-Studio-v1.10-internal-alpha-windows-x64.zip
+- ZIP SHA256: 5B3777A47C4F0575D4077F850EF114C07714609363FA7AB4E4883F95208506DA
+- Public GitHub Release: NO
+```
+
 ## Previous Versions
 
 - [v1.9 — SPICE/Touchstone Import Foundation](./verification_logs/v1.9_spice_touchstone_import_foundation.md)
