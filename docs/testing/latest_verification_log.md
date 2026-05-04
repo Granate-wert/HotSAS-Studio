@@ -9,6 +9,7 @@
 ```text
 Version: v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build
 Implementation commit: ca5d11e
+Verification log update commit: 3f05fb5
 Verification log: docs/testing/verification_logs/v2.0_product_beta_integration.md
 
 Checks:
