@@ -8,6 +8,7 @@ import {
   Sigma,
   TableProperties,
   Upload,
+  Zap,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -21,7 +22,8 @@ export type ScreenId =
   | "export"
   | "import"
   | "diagnostics"
-  | "product-beta";
+  | "product-beta"
+  | "dcdc";
 
 export const navigationItems: Array<{ id: ScreenId; label: string; icon: ReactNode }> = [
   { id: "start", label: "Start", icon: <CircuitBoard size={18} /> },
@@ -30,6 +32,7 @@ export const navigationItems: Array<{ id: ScreenId; label: string; icon: ReactNo
   { id: "formulas", label: "Formula Library", icon: <Sigma size={18} /> },
   { id: "components", label: "E Component Library", icon: <TableProperties size={18} /> },
   { id: "simulation", label: "Simulation Results", icon: <Activity size={18} /> },
+  { id: "dcdc", label: "DC-DC Calculators", icon: <Zap size={18} /> },
   { id: "export", label: "Export Center", icon: <FileText size={18} /> },
   { id: "import", label: "Import Models", icon: <Upload size={18} /> },
   { id: "diagnostics", label: "Diagnostics", icon: <HeartPulse size={18} /> },

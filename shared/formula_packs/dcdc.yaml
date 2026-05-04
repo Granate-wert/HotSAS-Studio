@@ -1,0 +1,408 @@
+packId: dcdc
+title: DC-DC Converters
+version: "0.2.0"
+formulas:
+  - id: buck_duty_cycle
+    title: Buck Duty Cycle
+    category: dcdc/buck
+    description: Ideal duty cycle of a buck converter.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+      Vout:
+        unit: V
+        description: Output voltage
+    equations:
+      - id: duty
+        latex: "D = \\frac{V_{out}}{V_{in}}"
+        expression: "D = Vout / Vin"
+        solve_for:
+          - D
+          - Vin
+          - Vout
+    outputs:
+      D:
+        unit: ""
+        description: Duty cycle
+    assumptions:
+      - "Ideal components"
+    limitations:
+      - "No losses or parasitics"
+    examples:
+      - title: "12V to 5V"
+        inputs:
+          Vin: "12"
+          Vout: "5"
+        expectedOutputs:
+          D: "0.4167"
+    linkedCircuitTemplateId: buck_converter_template
+
+  - id: buck_inductor_ripple
+    title: Buck Inductor Ripple Current
+    category: dcdc/buck
+    description: Peak-to-peak inductor ripple current for a buck converter.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+      Vout:
+        unit: V
+        description: Output voltage
+      L:
+        unit: H
+        description: Inductance
+      fs:
+        unit: Hz
+        description: Switching frequency
+    equations:
+      - id: ripple
+        latex: "\\Delta I_L = \\frac{(V_{in} - V_{out}) D}{L f_s}"
+        expression: "dIL = (Vin - Vout) * (Vout / Vin) / (L * fs)"
+        solve_for:
+          - dIL
+    outputs:
+      dIL:
+        unit: A
+        description: Inductor ripple current
+    assumptions:
+      - "CCM operation"
+    limitations:
+      - "Ideal components"
+    examples:
+      - title: "12V to 5V, 47uH, 100kHz"
+        inputs:
+          Vin: "12"
+          Vout: "5"
+          L: "47u"
+          fs: "100k"
+        expectedOutputs:
+          dIL: "0.372"
+
+  - id: buck_min_inductance
+    title: Buck Minimum Inductance
+    category: dcdc/buck
+    description: Minimum inductance for a target ripple current.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+      Vout:
+        unit: V
+        description: Output voltage
+      Iout:
+        unit: A
+        description: Output current
+      ripple_percent:
+        unit: "%"
+        description: Target ripple percentage
+      fs:
+        unit: Hz
+        description: Switching frequency
+    equations:
+      - id: lmin
+        latex: "L_{min} = \\frac{(V_{in} - V_{out}) D}{\\Delta I_{L,target} f_s}"
+        expression: "Lmin = (Vin - Vout) * (Vout / Vin) / ((Iout * ripple_percent / 100) * fs)"
+        solve_for:
+          - Lmin
+    outputs:
+      Lmin:
+        unit: H
+        description: Minimum inductance
+    assumptions:
+      - "CCM operation"
+    limitations:
+      - "Ideal components"
+    examples:
+      - title: "12V to 5V, 1A, 30% ripple, 100kHz"
+        inputs:
+          Vin: "12"
+          Vout: "5"
+          Iout: "1"
+          ripple_percent: "30"
+          fs: "100k"
+        expectedOutputs:
+          Lmin: "58.3u"
+
+  - id: buck_output_capacitor_ripple
+    title: Buck Output Capacitor Ripple
+    category: dcdc/buck
+    description: Estimated output voltage ripple for a buck converter.
+    variables:
+      dIL:
+        unit: A
+        description: Inductor ripple current
+      Cout:
+        unit: F
+        description: Output capacitance
+      fs:
+        unit: Hz
+        description: Switching frequency
+    equations:
+      - id: vripple
+        latex: "\\Delta V_{out} \\approx \\frac{\\Delta I_L}{8 f_s C_{out}}"
+        expression: "dV = dIL / (8 * fs * Cout)"
+        solve_for:
+          - dV
+    outputs:
+      dV:
+        unit: V
+        description: Output voltage ripple
+    assumptions:
+      - "Negligible ESR"
+    limitations:
+      - "Ideal capacitor"
+    examples:
+      - title: "0.372A ripple, 100uF, 100kHz"
+        inputs:
+          dIL: "0.372"
+          Cout: "100u"
+          fs: "100k"
+        expectedOutputs:
+          dV: "4.65m"
+
+  - id: buck_switch_peak_current
+    title: Buck Switch Peak Current
+    category: dcdc/buck
+    description: Peak switch current for a buck converter.
+    variables:
+      Iout:
+        unit: A
+        description: Output current
+      dIL:
+        unit: A
+        description: Inductor ripple current
+    equations:
+      - id: isw_peak
+        latex: "I_{sw,peak} \\approx I_{out} + \\frac{\\Delta I_L}{2}"
+        expression: "Isw = Iout + dIL / 2"
+        solve_for:
+          - Isw
+    outputs:
+      Isw:
+        unit: A
+        description: Peak switch current
+    assumptions:
+      - "CCM operation"
+    limitations:
+      - "Ideal components"
+    examples:
+      - title: "1A output, 0.372A ripple"
+        inputs:
+          Iout: "1"
+          dIL: "0.372"
+        expectedOutputs:
+          Isw: "1.186"
+
+  - id: boost_duty_cycle
+    title: Boost Duty Cycle
+    category: dcdc/boost
+    description: Ideal duty cycle of a boost converter.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+      Vout:
+        unit: V
+        description: Output voltage
+    equations:
+      - id: duty
+        latex: "D = 1 - \\frac{V_{in}}{V_{out}}"
+        expression: "D = 1 - Vin / Vout"
+        solve_for:
+          - D
+          - Vin
+          - Vout
+    outputs:
+      D:
+        unit: ""
+        description: Duty cycle
+    assumptions:
+      - "Ideal components"
+    limitations:
+      - "No losses or parasitics"
+    examples:
+      - title: "5V to 12V"
+        inputs:
+          Vin: "5"
+          Vout: "12"
+        expectedOutputs:
+          D: "0.5833"
+    linkedCircuitTemplateId: boost_converter_template
+
+  - id: boost_inductor_ripple
+    title: Boost Inductor Ripple Current
+    category: dcdc/boost
+    description: Peak-to-peak inductor ripple current for a boost converter.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+      Vout:
+        unit: V
+        description: Output voltage
+      L:
+        unit: H
+        description: Inductance
+      fs:
+        unit: Hz
+        description: Switching frequency
+    equations:
+      - id: ripple
+        latex: "\\Delta I_L = \\frac{V_{in} D}{L f_s}"
+        expression: "dIL = Vin * (1 - Vin / Vout) / (L * fs)"
+        solve_for:
+          - dIL
+    outputs:
+      dIL:
+        unit: A
+        description: Inductor ripple current
+    assumptions:
+      - "CCM operation"
+    limitations:
+      - "Ideal components"
+    examples:
+      - title: "5V to 12V, 47uH, 100kHz"
+        inputs:
+          Vin: "5"
+          Vout: "12"
+          L: "47u"
+          fs: "100k"
+        expectedOutputs:
+          dIL: "0.621"
+
+  - id: boost_switch_peak_current
+    title: Boost Switch Peak Current
+    category: dcdc/boost
+    description: Peak switch current for a boost converter.
+    variables:
+      Iin:
+        unit: A
+        description: Input current
+      dIL:
+        unit: A
+        description: Inductor ripple current
+    equations:
+      - id: isw_peak
+        latex: "I_{sw,peak} \\approx I_{in} + \\frac{\\Delta I_L}{2}"
+        expression: "Isw = Iin + dIL / 2"
+        solve_for:
+          - Isw
+    outputs:
+      Isw:
+        unit: A
+        description: Peak switch current
+    assumptions:
+      - "CCM operation"
+    limitations:
+      - "Ideal components"
+    examples:
+      - title: "2.4A input, 0.621A ripple"
+        inputs:
+          Iin: "2.4"
+          dIL: "0.621"
+        expectedOutputs:
+          Isw: "2.71"
+
+  - id: inverting_buck_boost_duty_cycle
+    title: Inverting Buck-Boost Duty Cycle
+    category: dcdc/inverting
+    description: Ideal duty cycle of an inverting buck-boost converter.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+      Vout:
+        unit: V
+        description: Output voltage magnitude
+    equations:
+      - id: duty
+        latex: "D = \\frac{|V_{out}|}{|V_{out}| + V_{in}}"
+        expression: "D = abs(Vout) / (abs(Vout) + Vin)"
+        solve_for:
+          - D
+    outputs:
+      D:
+        unit: ""
+        description: Duty cycle
+    assumptions:
+      - "Ideal components"
+    limitations:
+      - "First-order estimate only"
+    examples:
+      - title: "12V to -5V"
+        inputs:
+          Vin: "12"
+          Vout: "-5"
+        expectedOutputs:
+          D: "0.294"
+    linkedCircuitTemplateId: inverting_buck_boost_template
+
+  - id: inverting_buck_boost_inductor_ripple
+    title: Inverting Buck-Boost Inductor Ripple
+    category: dcdc/inverting
+    description: Peak-to-peak inductor ripple for an inverting buck-boost.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+      Vout:
+        unit: V
+        description: Output voltage magnitude
+      L:
+        unit: H
+        description: Inductance
+      fs:
+        unit: Hz
+        description: Switching frequency
+    equations:
+      - id: ripple
+        latex: "\\Delta I_L = \\frac{V_{in} D}{L f_s}"
+        expression: "dIL = Vin * (abs(Vout) / (abs(Vout) + Vin)) / (L * fs)"
+        solve_for:
+          - dIL
+    outputs:
+      dIL:
+        unit: A
+        description: Inductor ripple current
+    assumptions:
+      - "Ideal components"
+    limitations:
+      - "First-order estimate only"
+    examples:
+      - title: "12V to -5V, 47uH, 100kHz"
+        inputs:
+          Vin: "12"
+          Vout: "-5"
+          L: "47u"
+          fs: "100k"
+        expectedOutputs:
+          dIL: "0.752"
+
+  - id: four_switch_buck_boost_mode_placeholder
+    title: 4-Switch Buck-Boost Mode Placeholder
+    category: dcdc/four_switch
+    description: Placeholder for 4-switch buck-boost operating region detection.
+    variables:
+      Vin:
+        unit: V
+        description: Input voltage
+      Vout:
+        unit: V
+        description: Output voltage
+    equations:
+      - id: mode
+        latex: "mode = placeholder"
+        expression: "mode = 0"
+        solve_for:
+          - mode
+    outputs:
+      mode:
+        unit: ""
+        description: Operating region hint
+    assumptions:
+      - "Placeholder only"
+    limitations:
+      - "No real control model in v2.2"
+    examples: []
+    linkedCircuitTemplateId: four_switch_buck_boost_placeholder_template

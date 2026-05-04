@@ -737,3 +737,79 @@ export type ProductWorkflowStatusDto = {
   blockers: string[];
   warnings: string[];
 };
+
+export type DcdcInputDto = {
+  topology: string;
+  vin: string;
+  vout: string;
+  iout: string;
+  switching_frequency: string;
+  inductor: string | null;
+  output_capacitor: string | null;
+  target_inductor_ripple_percent: number | null;
+  estimated_efficiency_percent: number | null;
+};
+
+export type DcdcComputedValueDto = {
+  id: string;
+  label: string;
+  value: ValueDto;
+  formula: string | null;
+  description: string | null;
+};
+
+export type DcdcWarningDto = {
+  code: string;
+  message: string;
+  severity: string;
+};
+
+export type DcdcSimulationPlanDto = {
+  id: string;
+  title: string;
+  profile_type: string;
+  recommended_stop_time: ValueDto;
+  recommended_time_step: ValueDto | null;
+  signals: string[];
+  notes: string[];
+};
+
+export type DcdcCalculationResultDto = {
+  topology: string;
+  operating_mode: string;
+  values: DcdcComputedValueDto[];
+  assumptions: string[];
+  limitations: string[];
+  warnings: DcdcWarningDto[];
+  simulation_plan: DcdcSimulationPlanDto | null;
+  template_id: string | null;
+};
+
+export type DcdcTemplateDto = {
+  id: string;
+  title: string;
+  topology: string;
+  description: string;
+  supported_outputs: string[];
+  limitations: string[];
+};
+
+export type DcdcNetlistPreviewRequestDto = {
+  topology: string;
+  vin: string;
+  vout: string;
+  iout: string;
+  switching_frequency: string;
+};
+
+export type DcdcMockTransientRequestDto = {
+  topology: string;
+  vin: string;
+  vout: string;
+  iout: string;
+  switching_frequency: string;
+  inductor: string | null;
+  output_capacitor: string | null;
+  target_inductor_ripple_percent: number | null;
+  estimated_efficiency_percent: number | null;
+};

@@ -48,10 +48,10 @@ fn loads_all_builtin_formula_pack_files_from_directory_in_deterministic_order() 
         [
             "ac_impedance",
             "basic_electronics",
+            "dcdc",
             "filters",
             "op_amp",
             "power_thermal",
-            "smps",
             "transient",
             "utilities"
         ]
@@ -91,14 +91,14 @@ fn loads_op_amp_yaml() {
 }
 
 #[test]
-fn loads_smps_yaml() {
+fn loads_dcdc_yaml() {
     let loader = FormulaPackFileLoader;
     let pack = loader
-        .load_pack_from_file(&formula_packs_dir().join("smps.yaml"))
+        .load_pack_from_file(&formula_packs_dir().join("dcdc.yaml"))
         .unwrap();
 
-    assert_eq!(pack.pack_id, "smps");
-    assert_eq!(pack.title, "Switch-Mode Power Supplies");
+    assert_eq!(pack.pack_id, "dcdc");
+    assert_eq!(pack.title, "DC-DC Converters");
     assert!(!pack.formulas.is_empty());
 }
 

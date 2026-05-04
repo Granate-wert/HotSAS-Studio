@@ -1,3 +1,4 @@
+use crate::services::DcdcCalculatorService;
 use crate::{
     ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
     EngineeringNotebookService, ExportCenterService, ExportService, FormulaService,
@@ -35,6 +36,7 @@ pub struct AppServices {
     component_library_service: ComponentLibraryService,
     selected_region_analysis_service: SelectedRegionAnalysisService,
     model_import_service: ModelImportService,
+    dcdc_calculator_service: DcdcCalculatorService,
 }
 
 impl AppServices {
@@ -77,6 +79,7 @@ impl AppServices {
             component_library_service: ComponentLibraryService::new(component_library_port),
             selected_region_analysis_service: SelectedRegionAnalysisService::new(),
             model_import_service: ModelImportService::new(spice_parser, touchstone_parser),
+            dcdc_calculator_service: crate::services::DcdcCalculatorService::new(),
         }
     }
 
@@ -138,6 +141,10 @@ impl AppServices {
 
     pub fn model_import_service(&self) -> &ModelImportService {
         &self.model_import_service
+    }
+
+    pub fn dcdc_calculator_service(&self) -> &DcdcCalculatorService {
+        &self.dcdc_calculator_service
     }
 
     pub fn create_rc_low_pass_demo_project(&self) -> CircuitProject {

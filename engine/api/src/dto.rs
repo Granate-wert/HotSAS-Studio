@@ -1845,3 +1845,162 @@ impl From<&hotsas_core::WorkflowModuleStatus> for WorkflowModuleStatusDto {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DcdcInputDto {
+    pub topology: String,
+    pub vin: String,
+    pub vout: String,
+    pub iout: String,
+    pub switching_frequency: String,
+    pub inductor: Option<String>,
+    pub output_capacitor: Option<String>,
+    pub target_inductor_ripple_percent: Option<f64>,
+    pub estimated_efficiency_percent: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DcdcComputedValueDto {
+    pub id: String,
+    pub label: String,
+    pub value: ValueDto,
+    pub formula: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DcdcWarningDto {
+    pub code: String,
+    pub message: String,
+    pub severity: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DcdcSimulationPlanDto {
+    pub id: String,
+    pub title: String,
+    pub profile_type: String,
+    pub recommended_stop_time: ValueDto,
+    pub recommended_time_step: Option<ValueDto>,
+    pub signals: Vec<String>,
+    pub notes: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DcdcCalculationResultDto {
+    pub topology: String,
+    pub operating_mode: String,
+    pub values: Vec<DcdcComputedValueDto>,
+    pub assumptions: Vec<String>,
+    pub limitations: Vec<String>,
+    pub warnings: Vec<DcdcWarningDto>,
+    pub simulation_plan: Option<DcdcSimulationPlanDto>,
+    pub template_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DcdcTemplateDto {
+    pub id: String,
+    pub title: String,
+    pub topology: String,
+    pub description: String,
+    pub supported_outputs: Vec<String>,
+    pub limitations: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateDcdcDemoProjectRequestDto {
+    pub topology: String,
+    pub vin: String,
+    pub vout: String,
+    pub iout: String,
+    pub switching_frequency: String,
+    pub inductor: Option<String>,
+    pub output_capacitor: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DcdcNetlistPreviewRequestDto {
+    pub topology: String,
+    pub vin: String,
+    pub vout: String,
+    pub iout: String,
+    pub switching_frequency: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DcdcMockTransientRequestDto {
+    pub topology: String,
+    pub vin: String,
+    pub vout: String,
+    pub iout: String,
+    pub switching_frequency: String,
+    pub inductor: Option<String>,
+    pub output_capacitor: Option<String>,
+    pub target_inductor_ripple_percent: Option<f64>,
+    pub estimated_efficiency_percent: Option<f64>,
+}
+
+impl From<&hotsas_core::DcdcComputedValue> for DcdcComputedValueDto {
+    fn from(v: &hotsas_core::DcdcComputedValue) -> Self {
+        Self {
+            id: v.id.clone(),
+            label: v.label.clone(),
+            value: ValueDto::from(&v.value),
+            formula: v.formula.clone(),
+            description: v.description.clone(),
+        }
+    }
+}
+
+impl From<&hotsas_core::DcdcWarning> for DcdcWarningDto {
+    fn from(w: &hotsas_core::DcdcWarning) -> Self {
+        Self {
+            code: w.code.clone(),
+            message: w.message.clone(),
+            severity: w.severity.to_string(),
+        }
+    }
+}
+
+impl From<&hotsas_core::DcdcSimulationPlan> for DcdcSimulationPlanDto {
+    fn from(p: &hotsas_core::DcdcSimulationPlan) -> Self {
+        Self {
+            id: p.id.clone(),
+            title: p.title.clone(),
+            profile_type: p.profile_type.clone(),
+            recommended_stop_time: ValueDto::from(&p.recommended_stop_time),
+            recommended_time_step: p.recommended_time_step.as_ref().map(ValueDto::from),
+            signals: p.signals.clone(),
+            notes: p.notes.clone(),
+        }
+    }
+}
+
+impl From<&hotsas_core::DcdcCalculationResult> for DcdcCalculationResultDto {
+    fn from(r: &hotsas_core::DcdcCalculationResult) -> Self {
+        Self {
+            topology: r.topology.id().to_string(),
+            operating_mode: r.operating_mode.to_string(),
+            values: r.values.iter().map(DcdcComputedValueDto::from).collect(),
+            assumptions: r.assumptions.clone(),
+            limitations: r.limitations.clone(),
+            warnings: r.warnings.iter().map(DcdcWarningDto::from).collect(),
+            simulation_plan: r.simulation_plan.as_ref().map(DcdcSimulationPlanDto::from),
+            template_id: r.template_id.clone(),
+        }
+    }
+}
+
+impl From<&hotsas_core::DcdcTemplateDefinition> for DcdcTemplateDto {
+    fn from(t: &hotsas_core::DcdcTemplateDefinition) -> Self {
+        Self {
+            id: t.id.clone(),
+            title: t.title.clone(),
+            topology: t.topology.id().to_string(),
+            description: t.description.clone(),
+            supported_outputs: t.supported_outputs.clone(),
+            limitations: t.limitations.clone(),
+        }
+    }
+}

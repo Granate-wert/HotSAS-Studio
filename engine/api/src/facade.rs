@@ -1023,6 +1023,120 @@ impl HotSasApi {
         Ok(ProjectDto::from(&project))
     }
 
+    pub fn calculate_dcdc(
+        &self,
+        request: crate::DcdcInputDto,
+    ) -> Result<crate::DcdcCalculationResultDto, ApiError> {
+        let topology = request
+            .topology
+            .parse::<hotsas_core::DcdcTopology>()
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+        let input = hotsas_core::DcdcInput {
+            topology,
+            vin: parse_value(&request.vin, EngineeringUnit::Volt)?,
+            vout: parse_value(&request.vout, EngineeringUnit::Volt)?,
+            iout: parse_value(&request.iout, EngineeringUnit::Ampere)?,
+            switching_frequency: parse_value(&request.switching_frequency, EngineeringUnit::Hertz)?,
+            inductor: request
+                .inductor
+                .as_ref()
+                .map(|s| ValueWithUnit::parse_with_default(s, EngineeringUnit::Henry))
+                .transpose()
+                .map_err(|e| ApiError::InvalidInput(e.to_string()))?,
+            output_capacitor: request
+                .output_capacitor
+                .as_ref()
+                .map(|s| ValueWithUnit::parse_with_default(s, EngineeringUnit::Farad))
+                .transpose()
+                .map_err(|e| ApiError::InvalidInput(e.to_string()))?,
+            target_inductor_ripple_percent: request.target_inductor_ripple_percent,
+            estimated_efficiency_percent: request.estimated_efficiency_percent,
+        };
+        let result = self
+            .services
+            .dcdc_calculator_service()
+            .calculate_dcdc(input)
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+        Ok(crate::DcdcCalculationResultDto::from(&result))
+    }
+
+    pub fn list_dcdc_templates(&self) -> Result<Vec<crate::DcdcTemplateDto>, ApiError> {
+        Ok(self
+            .services
+            .dcdc_calculator_service()
+            .list_dcdc_templates()
+            .iter()
+            .map(crate::DcdcTemplateDto::from)
+            .collect())
+    }
+
+    pub fn generate_dcdc_netlist_preview(
+        &self,
+        request: crate::DcdcNetlistPreviewRequestDto,
+    ) -> Result<String, ApiError> {
+        let topology = request
+            .topology
+            .parse::<hotsas_core::DcdcTopology>()
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+        let input = hotsas_core::DcdcInput {
+            topology,
+            vin: parse_value(&request.vin, EngineeringUnit::Volt)?,
+            vout: parse_value(&request.vout, EngineeringUnit::Volt)?,
+            iout: parse_value(&request.iout, EngineeringUnit::Ampere)?,
+            switching_frequency: parse_value(&request.switching_frequency, EngineeringUnit::Hertz)?,
+            inductor: None,
+            output_capacitor: None,
+            target_inductor_ripple_percent: None,
+            estimated_efficiency_percent: None,
+        };
+        self.services
+            .dcdc_calculator_service()
+            .generate_dcdc_netlist_preview(topology, &input)
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))
+    }
+
+    pub fn run_dcdc_mock_transient_preview(
+        &self,
+        request: crate::DcdcMockTransientRequestDto,
+    ) -> Result<SimulationResultDto, ApiError> {
+        let topology = request
+            .topology
+            .parse::<hotsas_core::DcdcTopology>()
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+        let input = hotsas_core::DcdcInput {
+            topology,
+            vin: parse_value(&request.vin, EngineeringUnit::Volt)?,
+            vout: parse_value(&request.vout, EngineeringUnit::Volt)?,
+            iout: parse_value(&request.iout, EngineeringUnit::Ampere)?,
+            switching_frequency: parse_value(&request.switching_frequency, EngineeringUnit::Hertz)?,
+            inductor: request
+                .inductor
+                .as_ref()
+                .map(|s| ValueWithUnit::parse_with_default(s, EngineeringUnit::Henry))
+                .transpose()
+                .map_err(|e| ApiError::InvalidInput(e.to_string()))?,
+            output_capacitor: request
+                .output_capacitor
+                .as_ref()
+                .map(|s| ValueWithUnit::parse_with_default(s, EngineeringUnit::Farad))
+                .transpose()
+                .map_err(|e| ApiError::InvalidInput(e.to_string()))?,
+            target_inductor_ripple_percent: request.target_inductor_ripple_percent,
+            estimated_efficiency_percent: request.estimated_efficiency_percent,
+        };
+        let calc_result = self
+            .services
+            .dcdc_calculator_service()
+            .calculate_dcdc(input)
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+        let sim_result = self
+            .services
+            .dcdc_calculator_service()
+            .create_dcdc_mock_transient_preview(&calc_result)
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+        Ok(SimulationResultDto::from(&sim_result))
+    }
+
     fn current_component_library(&self) -> Result<ComponentLibrary, ApiError> {
         self.component_library
             .lock()
@@ -1046,6 +1160,11 @@ fn parse_export_format(format: &str) -> Result<hotsas_core::ExportFormat, ApiErr
             "unknown export format: {other}"
         ))),
     }
+}
+
+fn parse_value(value: &str, unit: EngineeringUnit) -> Result<ValueWithUnit, ApiError> {
+    ValueWithUnit::parse_with_default(value, unit)
+        .map_err(|e| ApiError::InvalidInput(e.to_string()))
 }
 
 fn fallback_formula_registry() -> FormulaRegistryService {

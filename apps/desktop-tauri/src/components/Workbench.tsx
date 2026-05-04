@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { ImportModelsScreen } from "../screens/ImportModelsScreen";
 import { backend } from "../api";
+import { DcdcCalculatorScreen } from "../screens/DcdcCalculatorScreen";
 import { CalculatorScreen } from "../screens/CalculatorScreen";
 import { ComponentLibraryScreen } from "../screens/ComponentLibraryScreen";
 import { DiagnosticsScreen } from "../screens/DiagnosticsScreen";
@@ -526,6 +527,10 @@ function renderScreen(
         }}
       />
     );
+  }
+
+  if (activeScreen === "dcdc") {
+    return <DcdcCalculatorScreen />;
   }
 
   return (

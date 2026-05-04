@@ -17,6 +17,8 @@ use hotsas_api::{
     ProjectPackageValidationReportDto, SaveProjectDto, SelectedComponentDto,
     SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionIssueDto,
     SelectedRegionPreviewDto, SimulationResultDto, SimulationRunRequestDto, VerticalSliceDto,
+    DcdcCalculationResultDto, DcdcInputDto, DcdcNetlistPreviewRequestDto, DcdcMockTransientRequestDto,
+    DcdcTemplateDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -593,6 +595,47 @@ fn tauri_error(error: ApiError) -> String {
     serde_json::to_string(&error.to_dto()).unwrap_or_else(|_| error.to_string())
 }
 
+#[tauri::command]
+fn calculate_dcdc(
+    api: State<'_, HotSasApi>,
+    request: DcdcInputDto,
+) -> Result<DcdcCalculationResultDto, String> {
+    log::info!("COMMAND calculate_dcdc: topology={}", request.topology);
+    let result = api.calculate_dcdc(request).map_err(tauri_error);
+    log_command_result("calculate_dcdc", &result);
+    result
+}
+
+#[tauri::command]
+fn list_dcdc_templates(api: State<'_, HotSasApi>) -> Result<Vec<DcdcTemplateDto>, String> {
+    log::info!("COMMAND list_dcdc_templates");
+    let result = api.list_dcdc_templates().map_err(tauri_error);
+    log_command_result("list_dcdc_templates", &result);
+    result
+}
+
+#[tauri::command]
+fn generate_dcdc_netlist_preview(
+    api: State<'_, HotSasApi>,
+    request: DcdcNetlistPreviewRequestDto,
+) -> Result<String, String> {
+    log::info!("COMMAND generate_dcdc_netlist_preview");
+    let result = api.generate_dcdc_netlist_preview(request).map_err(tauri_error);
+    log_command_result("generate_dcdc_netlist_preview", &result);
+    result
+}
+
+#[tauri::command]
+fn run_dcdc_mock_transient_preview(
+    api: State<'_, HotSasApi>,
+    request: DcdcMockTransientRequestDto,
+) -> Result<SimulationResultDto, String> {
+    log::info!("COMMAND run_dcdc_mock_transient_preview");
+    let result = api.run_dcdc_mock_transient_preview(request).map_err(tauri_error);
+    log_command_result("run_dcdc_mock_transient_preview", &result);
+    result
+}
+
 fn build_api() -> HotSasApi {
     HotSasApi::new(AppServices::new(
         Arc::new(JsonProjectStorage),
@@ -672,6 +715,10 @@ pub fn run() {
             get_product_workflow_status,
             run_product_beta_self_check,
             create_integrated_demo_project,
+            calculate_dcdc,
+            list_dcdc_templates,
+            generate_dcdc_netlist_preview,
+            run_dcdc_mock_transient_preview,
             write_log
         ])
         .run(tauri::generate_context!())

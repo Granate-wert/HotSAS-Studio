@@ -73,6 +73,7 @@ pub enum EngineeringUnit {
     Celsius,
     Meter,
     KelvinPerWatt,
+    CelsiusPerWatt,
     Decibel,
 }
 
@@ -93,6 +94,7 @@ impl EngineeringUnit {
             "°C" | "C" | "celsius" | "Celsius" => Ok(Self::Celsius),
             "m" | "meter" | "metre" | "Meter" | "Metre" => Ok(Self::Meter),
             "K/W" | "K/Watt" | "Kelvin/Watt" => Ok(Self::KelvinPerWatt),
+            "C/W" | "C/Watt" | "Celsius/Watt" | "°C/W" => Ok(Self::CelsiusPerWatt),
             "dB" | "decibel" | "Decibel" => Ok(Self::Decibel),
             other => Err(CoreError::InvalidUnit(other.to_string())),
         }
@@ -114,6 +116,7 @@ impl EngineeringUnit {
             Self::Celsius => "°C",
             Self::Meter => "m",
             Self::KelvinPerWatt => "K/W",
+            Self::CelsiusPerWatt => "°C/W",
             Self::Decibel => "dB",
         }
     }

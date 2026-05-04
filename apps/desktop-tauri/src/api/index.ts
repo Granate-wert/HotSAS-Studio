@@ -47,6 +47,11 @@ import type {
   TouchstoneImportRequestDto,
   ProductWorkflowStatusDto,
   VerticalSliceDto,
+  DcdcCalculationResultDto,
+  DcdcInputDto,
+  DcdcNetlistPreviewRequestDto,
+  DcdcMockTransientRequestDto,
+  DcdcTemplateDto,
 } from "../types";
 
 async function invokeCommand<T>(command: string, args?: Record<string, unknown>) {
@@ -159,6 +164,13 @@ export const backend = {
   runProductBetaSelfCheck: () =>
     invokeCommand<ProductWorkflowStatusDto>("run_product_beta_self_check"),
   createIntegratedDemoProject: () => invokeCommand<ProjectDto>("create_integrated_demo_project"),
+  calculateDcdc: (request: DcdcInputDto) =>
+    invokeCommand<DcdcCalculationResultDto>("calculate_dcdc", { request }),
+  listDcdcTemplates: () => invokeCommand<DcdcTemplateDto[]>("list_dcdc_templates"),
+  generateDcdcNetlistPreview: (request: DcdcNetlistPreviewRequestDto) =>
+    invokeCommand<string>("generate_dcdc_netlist_preview", { request }),
+  runDcdcMockTransientPreview: (request: DcdcMockTransientRequestDto) =>
+    invokeCommand<SimulationResultDto>("run_dcdc_mock_transient_preview", { request }),
   writeLog: (level: string, message: string) =>
     invokeCommand<void>("write_log", { level, message }),
 };
