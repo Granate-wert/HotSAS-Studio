@@ -6,15 +6,16 @@ use hotsas_adapters::{
     SpiceNetlistExporter, SvgSchematicExporter,
 };
 use hotsas_api::{
-    ApiError, ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitValidationReportDto,
-    ComponentDetailsDto, ComponentLibraryDto, ComponentSearchRequestDto, ComponentSearchResultDto,
-    ComponentSummaryDto, ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto,
-    ExportResultDto, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
-    FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi, NgspiceAvailabilityDto, NotebookEvaluationRequestDto,
-    NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto, ProjectDto,
-    ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
-    SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
-    SelectedRegionIssueDto, SelectedRegionPreviewDto, SimulationResultDto, SimulationRunRequestDto, VerticalSliceDto,
+    ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto, AssignComponentRequestDto,
+    CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto, ComponentSearchRequestDto,
+    ComponentSearchResultDto, ComponentSummaryDto, ExportCapabilityDto, ExportHistoryEntryDto,
+    ExportRequestDto, ExportResultDto, FormulaCalculationRequestDto, FormulaDetailsDto,
+    FormulaEvaluationResultDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi,
+    NgspiceAvailabilityDto, NotebookEvaluationRequestDto, NotebookEvaluationResultDto,
+    NotebookStateDto, PreferredValueDto, ProjectDto, ProjectPackageManifestDto,
+    ProjectPackageValidationReportDto, SaveProjectDto, SelectedComponentDto,
+    SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionIssueDto,
+    SelectedRegionPreviewDto, SimulationResultDto, SimulationRunRequestDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -545,6 +546,20 @@ fn assign_component_to_selected_instance(
     result
 }
 
+#[tauri::command]
+async fn get_app_diagnostics(api: State<'_, HotSasApi>) -> Result<AppDiagnosticsReportDto, String> {
+    let result = api.get_app_diagnostics().map_err(tauri_error);
+    log_command_result("get_app_diagnostics", &result);
+    result
+}
+
+#[tauri::command]
+async fn run_readiness_self_check(api: State<'_, HotSasApi>) -> Result<AppDiagnosticsReportDto, String> {
+    let result = api.run_readiness_self_check().map_err(tauri_error);
+    log_command_result("run_readiness_self_check", &result);
+    result
+}
+
 fn log_command_result<T>(name: &str, result: &Result<T, String>) {
     match result {
         Ok(_) => log::info!("Command {name} succeeded"),
@@ -630,6 +645,8 @@ pub fn run() {
             list_export_capabilities,
             export_file,
             export_history,
+            get_app_diagnostics,
+            run_readiness_self_check,
             write_log
         ])
         .run(tauri::generate_context!())

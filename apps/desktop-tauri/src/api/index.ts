@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   ApiErrorDto,
+  AppDiagnosticsReportDto,
   ApplyNotebookValueRequestDto,
   AssignComponentRequestDto,
   AttachImportedModelRequestDto,
@@ -150,6 +151,8 @@ export const backend = {
     invokeCommand<SpicePinMappingValidationReportDto>("validate_spice_pin_mapping", { request }),
   attachImportedModelToComponent: (request: AttachImportedModelRequestDto) =>
     invokeCommand<ComponentDetailsDto>("attach_imported_model_to_component", { request }),
+  getAppDiagnostics: () => invokeCommand<AppDiagnosticsReportDto>("get_app_diagnostics"),
+  runReadinessSelfCheck: () => invokeCommand<AppDiagnosticsReportDto>("run_readiness_self_check"),
   writeLog: (level: string, message: string) =>
     invokeCommand<void>("write_log", { level, message }),
 };

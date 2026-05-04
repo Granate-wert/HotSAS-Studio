@@ -44,4 +44,6 @@ commands.allow = [
   "get_imported_model",
   "validate_spice_pin_mapping",
   "attach_imported_model_to_component",
+  "get_app_diagnostics",
+  "run_readiness_self_check",
 ]

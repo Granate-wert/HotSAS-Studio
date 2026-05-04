@@ -1,28 +1,17 @@
-# HotSAS Studio — Latest Verification Log
+# Latest Verification Log
 
-**Version:** v1.9 — SPICE/Touchstone Import Foundation
-**Date:** 2026-05-03
-**Commit:** 1805f28
+## Current Version
 
-See full log: [`docs/testing/verification_logs/v1.9_spice_touchstone_import_foundation.md`](./verification_logs/v1.9_spice_touchstone_import_foundation.md)
+[v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate](./verification_logs/v1.10_internal_alpha_build_and_v2_readiness_gate.md)
 
-## Quick Results
+## Previous Versions
 
-| Check                | Result             |
-| -------------------- | ------------------ |
-| cargo fmt --check    | PASS               |
-| cargo test           | PASS (155+ tests)  |
-| npm run format:check | PASS               |
-| npm run typecheck    | PASS               |
-| npm run test         | PASS (61 tests)    |
-| Tauri cargo check    | PASS (no errors)   |
-
-## Status
-
-- v1.9 SPICE/Touchstone Import Foundation is complete and verified.
-- Core domain models for imported models, SPICE parser port, Touchstone parser port, `SimpleSpiceModelParser`, `SimpleTouchstoneParser`, `ModelImportService`, API DTOs/facade, Tauri commands, frontend `ImportModelsScreen` with SPICE/Touchstone/Library tabs, Zustand store integration, and tests are all implemented.
-- 29 new Rust tests (12 spice parser + 10 touchstone parser + 7 model import service) + 6 frontend tests.
-- Dependency boundary test preserved: `api` crate does not depend on `adapters` directly.
-- `SimulationModel` backward compatibility preserved via serde defaults on new `Option` fields.
-- Prettier and rustfmt formatting applied and verified.
-- Ready for v1.10 or next iteration.
+- [v1.9 — SPICE/Touchstone Import Foundation](./verification_logs/v1.9_spice_touchstone_import_foundation.md)
+- [v1.8 — ngspice Adapter v1](./verification_logs/v1.8_ngspice_adapter_v1.md)
+- [v1.7 — Export Center v1](./verification_logs/v1.7_export_center_v1.md)
+- [v1.6 — Selected Region Analysis Foundation](./verification_logs/v1.6_selected_region_analysis_foundation.md)
+- [v1.5 — Component Library Foundation](./verification_logs/v1.5_component_library_foundation.md)
+- [v1.4 — Engineering Notebook Foundations](./verification_logs/v1.4_engineering_notebook.md)
+- [v1.3 — Schematic Editor Foundations](./verification_logs/v1.3_schematic_editor_foundations.md)
+- [v1.2 — Project Package Storage .circuit](./verification_logs/v1.2_project_package_storage.md)
+- [v1.1.5 — Exact E-Series Tables](./verification_logs/v1.1.5_exact_e_series.md)

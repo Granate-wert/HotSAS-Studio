@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type {
+  AppDiagnosticsReportDto,
   CircuitValidationReportDto,
   ComponentDetailsDto,
   ComponentLibraryDto,
@@ -60,6 +61,10 @@ type HotSasState = {
   touchstoneImportReport: TouchstoneImportReportDto | null;
   importedModels: ImportedModelSummaryDto[];
   selectedImportedModel: ImportedModelDetailsDto | null;
+  appDiagnostics: AppDiagnosticsReportDto | null;
+  readinessSelfCheckResult: AppDiagnosticsReportDto | null;
+  diagnosticsLoading: boolean;
+  diagnosticsError: string | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -97,6 +102,10 @@ type HotSasState = {
   setTouchstoneImportReport: (report: TouchstoneImportReportDto | null) => void;
   setImportedModels: (models: ImportedModelSummaryDto[]) => void;
   setSelectedImportedModel: (model: ImportedModelDetailsDto | null) => void;
+  setAppDiagnostics: (report: AppDiagnosticsReportDto | null) => void;
+  setReadinessSelfCheckResult: (report: AppDiagnosticsReportDto | null) => void;
+  setDiagnosticsLoading: (loading: boolean) => void;
+  setDiagnosticsError: (error: string | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -136,6 +145,10 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   touchstoneImportReport: null,
   importedModels: [],
   selectedImportedModel: null,
+  appDiagnostics: null,
+  readinessSelfCheckResult: null,
+  diagnosticsLoading: false,
+  diagnosticsError: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -176,4 +189,8 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setTouchstoneImportReport: (touchstoneImportReport) => set({ touchstoneImportReport }),
   setImportedModels: (importedModels) => set({ importedModels }),
   setSelectedImportedModel: (selectedImportedModel) => set({ selectedImportedModel }),
+  setAppDiagnostics: (appDiagnostics) => set({ appDiagnostics }),
+  setReadinessSelfCheckResult: (readinessSelfCheckResult) => set({ readinessSelfCheckResult }),
+  setDiagnosticsLoading: (diagnosticsLoading) => set({ diagnosticsLoading }),
+  setDiagnosticsError: (diagnosticsError) => set({ diagnosticsError }),
 }));

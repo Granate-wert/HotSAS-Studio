@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v1.10 next**
+**Current roadmap stage: v2.0 preparation**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
@@ -16,6 +16,7 @@ Completed:
 - v1.7 — Export Center v1
 - v1.8 — ngspice Adapter v1
 - v1.9 — SPICE/Touchstone Import Foundation
+- v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate
 
 ---
 
@@ -91,6 +92,20 @@ Completed:
   - `SelectedRegionPreviewCard` and `SelectedRegionResultCard`
 - Integrated **Region** tab into `SchematicScreen` side panel.
 - React remains view adapter only; all topology detection and template matching live in Rust.
+
+### v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate
+
+- Added core diagnostics models: `AppDiagnosticsReport`, `ModuleDiagnostics`, `ModuleStatus`, `ReadinessCheck`, `ReadinessStatus`.
+- Added `AppDiagnosticsService` with `get_app_diagnostics` and `run_readiness_self_check`.
+- Added API DTOs and facade methods for diagnostics.
+- Added Tauri commands: `get_app_diagnostics`, `run_readiness_self_check`.
+- Added frontend: types, API wrappers, Zustand store fields (`appDiagnostics`, `readinessSelfCheckResult`, `diagnosticsLoading`, `diagnosticsError`).
+- Added `DiagnosticsScreen` with module cards, readiness checks, refresh/self-check buttons.
+- Added navigation item **Diagnostics** in the left sidebar.
+- Added tests: 6 Rust application tests, 5 Rust API tests, 7 frontend tests.
+- Added documentation: `docs/builds/INTERNAL_ALPHA_BUILD.md`, `docs/user_manual/QUICK_START_ALPHA.md`.
+- Built and verified Windows `.exe` release artifact.
+- This is **not** a public release. No GitHub Release or public tag was created.
 
 ### v1.9 — SPICE/Touchstone Import Foundation
 

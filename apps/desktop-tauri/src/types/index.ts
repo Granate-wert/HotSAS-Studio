@@ -660,3 +660,28 @@ export type ImportedModelDetailsDto = {
   spice_subcircuit: SpiceSubcircuitDto | null;
   touchstone_summary: TouchstoneSummaryDto | null;
 };
+
+export type ReadinessCheckDto = {
+  id: string;
+  title: string;
+  status: string;
+  message: string;
+};
+
+export type ModuleDiagnosticsDto = {
+  id: string;
+  title: string;
+  status: string;
+  summary: string;
+  details: Record<string, string>;
+};
+
+export type AppDiagnosticsReportDto = {
+  app_name: string;
+  app_version: string;
+  roadmap_stage: string;
+  build_profile: string;
+  modules: ModuleDiagnosticsDto[];
+  checks: ReadinessCheckDto[];
+  warnings: string[];
+};

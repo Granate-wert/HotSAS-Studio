@@ -1,3 +1,4 @@
+pub mod app_diagnostics;
 pub mod circuit_query;
 pub mod circuit_validation;
 pub mod component_library;
@@ -16,6 +17,7 @@ pub mod symbol;
 pub mod templates;
 pub mod value;
 
+pub use app_diagnostics::*;
 pub use circuit_query::CircuitQueryService;
 pub use circuit_validation::{CircuitValidationIssue, CircuitValidationReport};
 pub use component_library::*;

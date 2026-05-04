@@ -1628,3 +1628,68 @@ impl From<&hotsas_core::ImportedModelDetails> for ImportedModelDetailsDto {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModuleDiagnosticsDto {
+    pub id: String,
+    pub title: String,
+    pub status: String,
+    pub summary: String,
+    pub details: std::collections::BTreeMap<String, String>,
+}
+
+impl From<&hotsas_core::ModuleDiagnostics> for ModuleDiagnosticsDto {
+    fn from(m: &hotsas_core::ModuleDiagnostics) -> Self {
+        Self {
+            id: m.id.clone(),
+            title: m.title.clone(),
+            status: m.status.as_str().to_string(),
+            summary: m.summary.clone(),
+            details: m.details.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReadinessCheckDto {
+    pub id: String,
+    pub title: String,
+    pub status: String,
+    pub message: String,
+}
+
+impl From<&hotsas_core::ReadinessCheck> for ReadinessCheckDto {
+    fn from(c: &hotsas_core::ReadinessCheck) -> Self {
+        Self {
+            id: c.id.clone(),
+            title: c.title.clone(),
+            status: c.status.as_str().to_string(),
+            message: c.message.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppDiagnosticsReportDto {
+    pub app_name: String,
+    pub app_version: String,
+    pub roadmap_stage: String,
+    pub build_profile: String,
+    pub modules: Vec<ModuleDiagnosticsDto>,
+    pub checks: Vec<ReadinessCheckDto>,
+    pub warnings: Vec<String>,
+}
+
+impl From<&hotsas_core::AppDiagnosticsReport> for AppDiagnosticsReportDto {
+    fn from(r: &hotsas_core::AppDiagnosticsReport) -> Self {
+        Self {
+            app_name: r.app_name.clone(),
+            app_version: r.app_version.clone(),
+            roadmap_stage: r.roadmap_stage.clone(),
+            build_profile: r.build_profile.clone(),
+            modules: r.modules.iter().map(ModuleDiagnosticsDto::from).collect(),
+            checks: r.checks.iter().map(ReadinessCheckDto::from).collect(),
+            warnings: r.warnings.clone(),
+        }
+    }
+}

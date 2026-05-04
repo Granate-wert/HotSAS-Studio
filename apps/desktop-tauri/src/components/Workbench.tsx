@@ -13,6 +13,7 @@ import { ImportModelsScreen } from "../screens/ImportModelsScreen";
 import { backend } from "../api";
 import { CalculatorScreen } from "../screens/CalculatorScreen";
 import { ComponentLibraryScreen } from "../screens/ComponentLibraryScreen";
+import { DiagnosticsScreen } from "../screens/DiagnosticsScreen";
 import { ExportScreen } from "../screens/ExportScreen";
 import { FormulaLibraryScreen } from "../screens/FormulaLibraryScreen";
 import { SchematicScreen } from "../screens/SchematicScreen";
@@ -71,6 +72,14 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     setTouchstoneImportReport,
     setImportedModels,
     setSelectedImportedModel,
+    appDiagnostics,
+    readinessSelfCheckResult,
+    diagnosticsLoading,
+    diagnosticsError,
+    setAppDiagnostics,
+    setReadinessSelfCheckResult,
+    setDiagnosticsLoading,
+    setDiagnosticsError,
   } = useHotSasStore();
 
   const run = async <T,>(operation: () => Promise<T>, onResult: (result: T) => void) => {
@@ -83,6 +92,19 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const runDiagnostics = async <T,>(operation: () => Promise<T>, onResult: (result: T) => void) => {
+    setDiagnosticsLoading(true);
+    setDiagnosticsError(null);
+    try {
+      const result = await operation();
+      onResult(result);
+    } catch (caught) {
+      setDiagnosticsError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setDiagnosticsLoading(false);
     }
   };
 
@@ -170,6 +192,19 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     listImportedModels: () => run(backend.listImportedModels, setImportedModels),
     getImportedModel: (modelId: string) =>
       run(() => backend.getImportedModel(modelId), setSelectedImportedModel),
+    loadAppDiagnostics: () =>
+      runDiagnostics(
+        () => backend.getAppDiagnostics(),
+        (report) => {
+          setAppDiagnostics(report);
+          setReadinessSelfCheckResult(null);
+        },
+      ),
+    runReadinessSelfCheck: () =>
+      runDiagnostics(
+        () => backend.runReadinessSelfCheck(),
+        (report) => setReadinessSelfCheckResult(report),
+      ),
     exportFile: (format: string, writeToFile: boolean, outputDir: string) =>
       run(
         () =>
@@ -302,6 +337,10 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         ngspiceAvailability,
         selectedSimulationEngine,
         isSimulationRunning: busy,
+        appDiagnostics,
+        readinessSelfCheckResult,
+        diagnosticsLoading,
+        diagnosticsError,
         actions,
       })}
     </div>
@@ -325,6 +364,12 @@ function renderScreen(
     exportCapabilities: ReturnType<typeof useHotSasStore.getState>["exportCapabilities"];
     lastExportResult: ReturnType<typeof useHotSasStore.getState>["lastExportResult"];
     ngspiceAvailability: ReturnType<typeof useHotSasStore.getState>["ngspiceAvailability"];
+    appDiagnostics: ReturnType<typeof useHotSasStore.getState>["appDiagnostics"];
+    readinessSelfCheckResult: ReturnType<
+      typeof useHotSasStore.getState
+    >["readinessSelfCheckResult"];
+    diagnosticsLoading: ReturnType<typeof useHotSasStore.getState>["diagnosticsLoading"];
+    diagnosticsError: ReturnType<typeof useHotSasStore.getState>["diagnosticsError"];
     selectedSimulationEngine: ReturnType<
       typeof useHotSasStore.getState
     >["selectedSimulationEngine"];
@@ -346,6 +391,8 @@ function renderScreen(
       selectComponent: (instanceId: string) => void;
       validateCircuit: () => void;
       loadExportCapabilities: () => void;
+      loadAppDiagnostics: () => void;
+      runReadinessSelfCheck: () => void;
       exportFile: (format: string, writeToFile: boolean, outputDir: string) => void;
       importSpiceModel: (content: string) => void;
       importTouchstoneModel: (content: string) => void;
@@ -422,6 +469,19 @@ function renderScreen(
 
   if (activeScreen === "import") {
     return <ImportModelsScreen />;
+  }
+
+  if (activeScreen === "diagnostics") {
+    return (
+      <DiagnosticsScreen
+        diagnostics={context.appDiagnostics}
+        readinessResult={context.readinessSelfCheckResult}
+        loading={context.diagnosticsLoading}
+        error={context.diagnosticsError}
+        onRefreshDiagnostics={context.actions.loadAppDiagnostics}
+        onRunSelfCheck={context.actions.runReadinessSelfCheck}
+      />
+    );
   }
 
   return (

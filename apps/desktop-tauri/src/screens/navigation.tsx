@@ -3,6 +3,7 @@ import {
   Calculator,
   CircuitBoard,
   FileText,
+  HeartPulse,
   Sigma,
   TableProperties,
   Upload,
@@ -17,7 +18,8 @@ export type ScreenId =
   | "components"
   | "simulation"
   | "export"
-  | "import";
+  | "import"
+  | "diagnostics";
 
 export const navigationItems: Array<{ id: ScreenId; label: string; icon: ReactNode }> = [
   { id: "start", label: "Start", icon: <CircuitBoard size={18} /> },
@@ -28,4 +30,5 @@ export const navigationItems: Array<{ id: ScreenId; label: string; icon: ReactNo
   { id: "simulation", label: "Simulation Results", icon: <Activity size={18} /> },
   { id: "export", label: "Export Center", icon: <FileText size={18} /> },
   { id: "import", label: "Import Models", icon: <Upload size={18} /> },
+  { id: "diagnostics", label: "Diagnostics", icon: <HeartPulse size={18} /> },
 ];

@@ -1,17 +1,18 @@
 use crate::{
-    ApiError, ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitValidationReportDto,
-    ComponentDetailsDto, ComponentLibraryDto, ComponentParameterDto, ComponentSearchRequestDto,
-    ComponentSearchResultDto, ComponentSummaryDto, ExportCapabilityDto, ExportHistoryEntryDto,
-    ExportRequestDto, ExportResultDto, FootprintDto, FormulaCalculationRequestDto,
-    FormulaDetailsDto, FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto,
-    FormulaResultDto, FormulaSummaryDto, KeyValueDto, NgspiceAvailabilityDto,
-    NotebookEvaluationRequestDto, NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto,
-    ProjectDto, ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
-    SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
-    SelectedRegionPreviewDto, SimulationModelDto, SimulationResultDto, SimulationRunRequestDto,
-    SymbolDto, ValueDto, VerticalSliceDto,
+    ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto, AssignComponentRequestDto,
+    CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto, ComponentParameterDto,
+    ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto, ExportCapabilityDto,
+    ExportHistoryEntryDto, ExportRequestDto, ExportResultDto, FootprintDto,
+    FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
+    FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, KeyValueDto,
+    NgspiceAvailabilityDto, NotebookEvaluationRequestDto, NotebookEvaluationResultDto,
+    NotebookStateDto, PreferredValueDto, ProjectDto, ProjectPackageManifestDto,
+    ProjectPackageValidationReportDto, SaveProjectDto, SelectedComponentDto,
+    SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionPreviewDto,
+    SimulationModelDto, SimulationResultDto, SimulationRunRequestDto, SymbolDto, ValueDto,
+    VerticalSliceDto,
 };
-use hotsas_application::{AppServices, FormulaRegistryService};
+use hotsas_application::{AppDiagnosticsService, AppServices, FormulaRegistryService};
 use hotsas_core::{
     rc_low_pass_formula, CircuitProject, ComponentAssignment, ComponentLibrary,
     ComponentLibraryQuery, EngineeringNotebook, EngineeringUnit, FormulaDefinition, FormulaPack,
@@ -27,6 +28,7 @@ pub struct HotSasApi {
     formula_registry: Mutex<FormulaRegistryService>,
     notebook: Mutex<EngineeringNotebook>,
     component_library: Mutex<ComponentLibrary>,
+    app_diagnostics: AppDiagnosticsService,
 }
 
 impl HotSasApi {
@@ -50,6 +52,7 @@ impl HotSasApi {
             formula_registry: Mutex::new(fallback_formula_registry()),
             notebook: Mutex::new(EngineeringNotebook::new("default", "Engineering Notebook")),
             component_library: Mutex::new(library),
+            app_diagnostics: AppDiagnosticsService::new(),
         }
     }
 
@@ -975,6 +978,18 @@ impl HotSasApi {
             .model_import_service()
             .attach_imported_model_to_component(core_request, component)?;
         Ok(crate::ComponentDetailsDto::from(&*component))
+    }
+
+    pub fn get_app_diagnostics(&self) -> Result<AppDiagnosticsReportDto, ApiError> {
+        let report = self.app_diagnostics.get_app_diagnostics(&self.services);
+        Ok(AppDiagnosticsReportDto::from(&report))
+    }
+
+    pub fn run_readiness_self_check(&self) -> Result<AppDiagnosticsReportDto, ApiError> {
+        let report = self
+            .app_diagnostics
+            .run_readiness_self_check(&self.services);
+        Ok(AppDiagnosticsReportDto::from(&report))
     }
 
     fn current_component_library(&self) -> Result<ComponentLibrary, ApiError> {

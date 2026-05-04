@@ -452,6 +452,32 @@ This stage verifies:
   - Toggles write-to-file switch and shows output directory input
   - Displays last export result when provided
 
+### v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate
+
+- **App Diagnostics Service** (`application/tests/app_diagnostics_tests.rs`)
+  - Diagnostics report contains expected module IDs (formula_registry, component_library, export_center, simulation, import_models, project_package, schematic_editor, engineering_notebook, selected_region)
+  - Component library module reports ready/limited, not panic
+  - Export center module reports 9 capabilities
+  - Simulation module handles ngspice unavailable as warning/limited, not error
+  - Import models module reports SPICE and Touchstone support
+  - Readiness self-check returns checks with pass/warn/fail/not_run statuses
+
+- **App Diagnostics API** (`api/tests/app_diagnostics_api_tests.rs`)
+  - `get_app_diagnostics` returns report with modules
+  - `run_readiness_self_check` returns checks
+  - API DTO conversion preserves module statuses
+  - Formula registry module reports ready
+  - Component library module reports ready/limited
+
+- **Frontend Diagnostics** (`src/screens/__tests__/DiagnosticsScreen.test.tsx`)
+  - Renders diagnostics title
+  - Loads module cards
+  - Shows Ready/Limited/Unavailable statuses
+  - Refresh diagnostics calls backend API
+  - Run readiness self-check calls backend API
+  - Shows backend error message if command fails
+  - Does not automatically run heavy self-check on first render
+
 ## Manual v1.7 Export Center Smoke Check
 
 1. Open the **Export Center** screen.
@@ -464,7 +490,7 @@ This stage verifies:
 
 ## Test Summary
 
-As of v1.7, the Rust workspace runs **123+ tests** across all crates with **zero failures**, and the frontend runs **48 UI tests** with **zero failures**.
+As of v1.10, the Rust workspace runs **166+ tests** across all crates with **zero failures**, and the frontend runs **68 UI tests** with **zero failures**.
 
 ---
 

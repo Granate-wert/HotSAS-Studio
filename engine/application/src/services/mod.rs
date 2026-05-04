@@ -1,3 +1,4 @@
+mod app_diagnostics;
 mod app_services;
 mod circuit_template;
 mod circuit_validation;
@@ -16,6 +17,7 @@ mod project_package;
 mod selected_region_analysis;
 mod simulation;
 
+pub use app_diagnostics::AppDiagnosticsService;
 pub use app_services::AppServices;
 pub use circuit_template::CircuitTemplateService;
 pub use circuit_validation::CircuitValidationService;
