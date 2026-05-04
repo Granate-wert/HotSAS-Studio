@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v2.1 next**
+**Current roadmap stage: v2.2 next**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
@@ -18,6 +18,7 @@ Completed:
 - v1.9 — SPICE/Touchstone Import Foundation
 - v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate
 - v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build
+- v2.1 — Formula Library Expansion & Formula UX Hardening
 
 ---
 
@@ -68,6 +69,18 @@ Completed:
 - API command `calculate_formula` + Tauri command.
 - Formula Library UI: variable inputs + **Calculate** button.
 - Old RC-specific commands preserved for compatibility.
+
+### v2.1 — Formula Library Expansion & Formula UX Hardening
+
+- Added generic **expression evaluator** (`expression_evaluator.rs`): shunting-yard tokenizer + RPN evaluator.
+- Supported operators: `+ - * / ^`, functions: `sqrt`, `exp`, `ln`, `log10`, `pow`, `abs`, constants: `pi`, variables, parentheses, unary minus.
+- Extended core models: `FormulaExample` with structured inputs/expected outputs/notes; new `EngineeringUnit` variants (`Watt`, `Percent`, `Henry`, `Second`, `CelsiusPerWatt`, `KelvinPerWatt`) and `Giga` prefix.
+- Expanded formula packs from 3 to **44 formulas** across 8 YAML files:
+  - `basic_electronics` (8), `ac_impedance` (6), `transient` (5), `filters` (7), `op_amp` (7), `power_thermal` (5), `utilities` (4), `smps` (2 placeholders).
+- Refactored `SimpleFormulaEngine`: generic evaluator path for all formulas; backward-compatible hardcoded branches for `rc_low_pass_cutoff`, `ohms_law`, `voltage_divider`.
+- Extended DTOs and frontend types with `assumptions`, `limitations`, `examples`.
+- Formula Library UI now displays assumptions, limitations, and clickable example presets.
+- 245 Rust tests, 76 frontend tests — all PASS.
 
 ### v1.4 — Engineering Notebook / Calculator Foundations
 
