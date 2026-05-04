@@ -8,8 +8,8 @@
 
 ```text
 Version: v2.1 — Formula Library Expansion & Formula UX Hardening
-Implementation commit: f13ec26
-Verification log update commit: f13ec26
+Implementation commit: 266ffbf
+Verification log update commit: 266ffbf
 Verification log: docs/testing/verification_logs/v2.1_formula_library_expansion.md
 
 Checks:
