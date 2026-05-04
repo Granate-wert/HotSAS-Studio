@@ -2,34 +2,35 @@
 
 ## Current Version
 
-[v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate](./verification_logs/v1.10_internal_alpha_build_and_v2_readiness_gate.md)
+[v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build](./verification_logs/v2.0_product_beta_integration.md)
 
-## v1.10 Summary
+## v2.0 Summary
 
 ```text
-Version: v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate
-Implementation commit: e44830b
-Verification log: docs/testing/verification_logs/v1.10_internal_alpha_build_and_v2_readiness_gate.md
+Version: v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build
+Implementation commit: ca5d11e
+Verification log: docs/testing/verification_logs/v2.0_product_beta_integration.md
 
 Checks:
 - cargo fmt --check — PASS
-- cargo test — PASS (166+ Rust tests)
+- cargo test — PASS (245 Rust tests)
 - npm run format:check — PASS
 - npm run typecheck — PASS
-- npm run test — PASS (68 frontend tests)
+- npm run test — PASS (76 frontend tests)
 - npm run build — PASS
 - npm run tauri:build — PASS
 
 Internal build:
 - EXE path: apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
-- EXE SHA256: 866E006D2DB2881ABBB3DCF0AFD655BE1643F6DD9D1E0E82CADF6D42764D0145
-- ZIP path: apps/desktop-tauri/src-tauri/target/release/HotSAS-Studio-v1.10-internal-alpha-windows-x64.zip
-- ZIP SHA256: 5B3777A47C4F0575D4077F850EF114C07714609363FA7AB4E4883F95208506DA
+- EXE SHA256: 15D1145D6031AD8A29B6404FFEEABD16A2CA87BFCC7A8FF46D15FECF8A8E064C
+- ZIP path: apps/desktop-tauri/src-tauri/target/release/HotSAS-Studio-v2.0-internal-rc-windows-x64.zip
+- ZIP SHA256: A998030BBCD54A6D5E3FF512A473857A435D2F735624EB260860920AC7750FEA
 - Public GitHub Release: NO
 ```
 
 ## Previous Versions
 
+- [v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate](./verification_logs/v1.10_internal_alpha_build_and_v2_readiness_gate.md)
 - [v1.9 — SPICE/Touchstone Import Foundation](./verification_logs/v1.9_spice_touchstone_import_foundation.md)
 - [v1.8 — ngspice Adapter v1](./verification_logs/v1.8_ngspice_adapter_v1.md)
 - [v1.7 — Export Center v1](./verification_logs/v1.7_export_center_v1.md)
