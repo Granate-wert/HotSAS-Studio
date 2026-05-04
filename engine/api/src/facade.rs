@@ -6,13 +6,15 @@ use crate::{
     FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
     FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, KeyValueDto,
     NgspiceAvailabilityDto, NotebookEvaluationRequestDto, NotebookEvaluationResultDto,
-    NotebookStateDto, PreferredValueDto, ProjectDto, ProjectPackageManifestDto,
-    ProjectPackageValidationReportDto, SaveProjectDto, SelectedComponentDto,
-    SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionPreviewDto,
-    SimulationModelDto, SimulationResultDto, SimulationRunRequestDto, SymbolDto, ValueDto,
-    VerticalSliceDto,
+    NotebookStateDto, PreferredValueDto, ProductWorkflowStatusDto, ProjectDto,
+    ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
+    SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
+    SelectedRegionPreviewDto, SimulationModelDto, SimulationResultDto, SimulationRunRequestDto,
+    SymbolDto, ValueDto, VerticalSliceDto,
 };
-use hotsas_application::{AppDiagnosticsService, AppServices, FormulaRegistryService};
+use hotsas_application::{
+    AppDiagnosticsService, AppServices, FormulaRegistryService, ProductWorkflowService,
+};
 use hotsas_core::{
     rc_low_pass_formula, CircuitProject, ComponentAssignment, ComponentLibrary,
     ComponentLibraryQuery, EngineeringNotebook, EngineeringUnit, FormulaDefinition, FormulaPack,
@@ -29,6 +31,7 @@ pub struct HotSasApi {
     notebook: Mutex<EngineeringNotebook>,
     component_library: Mutex<ComponentLibrary>,
     app_diagnostics: AppDiagnosticsService,
+    product_workflow: ProductWorkflowService,
 }
 
 impl HotSasApi {
@@ -53,6 +56,7 @@ impl HotSasApi {
             notebook: Mutex::new(EngineeringNotebook::new("default", "Engineering Notebook")),
             component_library: Mutex::new(library),
             app_diagnostics: AppDiagnosticsService::new(),
+            product_workflow: ProductWorkflowService::new(),
         }
     }
 
@@ -990,6 +994,33 @@ impl HotSasApi {
             .app_diagnostics
             .run_readiness_self_check(&self.services);
         Ok(AppDiagnosticsReportDto::from(&report))
+    }
+
+    pub fn get_product_workflow_status(&self) -> Result<ProductWorkflowStatusDto, ApiError> {
+        let project_opt = self
+            .current_project
+            .lock()
+            .map_err(|_| ApiError::State("current project lock poisoned".to_string()))?
+            .clone();
+        let status = self
+            .product_workflow
+            .get_product_workflow_status(&self.services, project_opt.as_ref());
+        Ok(ProductWorkflowStatusDto::from(&status))
+    }
+
+    pub fn run_product_beta_self_check(&self) -> Result<ProductWorkflowStatusDto, ApiError> {
+        let status = self
+            .product_workflow
+            .run_product_beta_self_check(&self.services);
+        Ok(ProductWorkflowStatusDto::from(&status))
+    }
+
+    pub fn create_integrated_demo_project(&self) -> Result<ProjectDto, ApiError> {
+        let project = self
+            .product_workflow
+            .create_integrated_demo_project(&self.services);
+        self.replace_current_project(project.clone())?;
+        Ok(ProjectDto::from(&project))
     }
 
     fn current_component_library(&self) -> Result<ComponentLibrary, ApiError> {

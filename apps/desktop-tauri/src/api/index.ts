@@ -45,6 +45,7 @@ import type {
   SpicePinMappingValidationReportDto,
   TouchstoneImportReportDto,
   TouchstoneImportRequestDto,
+  ProductWorkflowStatusDto,
   VerticalSliceDto,
 } from "../types";
 
@@ -153,6 +154,11 @@ export const backend = {
     invokeCommand<ComponentDetailsDto>("attach_imported_model_to_component", { request }),
   getAppDiagnostics: () => invokeCommand<AppDiagnosticsReportDto>("get_app_diagnostics"),
   runReadinessSelfCheck: () => invokeCommand<AppDiagnosticsReportDto>("run_readiness_self_check"),
+  getProductWorkflowStatus: () =>
+    invokeCommand<ProductWorkflowStatusDto>("get_product_workflow_status"),
+  runProductBetaSelfCheck: () =>
+    invokeCommand<ProductWorkflowStatusDto>("run_product_beta_self_check"),
+  createIntegratedDemoProject: () => invokeCommand<ProjectDto>("create_integrated_demo_project"),
   writeLog: (level: string, message: string) =>
     invokeCommand<void>("write_log", { level, message }),
 };

@@ -1693,3 +1693,112 @@ impl From<&hotsas_core::AppDiagnosticsReport> for AppDiagnosticsReportDto {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProductWorkflowStatusDto {
+    pub app_name: String,
+    pub app_version: String,
+    pub roadmap_stage: String,
+    pub build_profile: String,
+    pub current_project: Option<ProjectSummaryDto>,
+    pub workflow_steps: Vec<WorkflowStepStatusDto>,
+    pub module_statuses: Vec<WorkflowModuleStatusDto>,
+    pub blockers: Vec<String>,
+    pub warnings: Vec<String>,
+}
+
+impl From<&hotsas_core::ProductWorkflowStatus> for ProductWorkflowStatusDto {
+    fn from(s: &hotsas_core::ProductWorkflowStatus) -> Self {
+        Self {
+            app_name: s.app_name.clone(),
+            app_version: s.app_version.clone(),
+            roadmap_stage: s.roadmap_stage.clone(),
+            build_profile: s.build_profile.clone(),
+            current_project: s.current_project.as_ref().map(ProjectSummaryDto::from),
+            workflow_steps: s
+                .workflow_steps
+                .iter()
+                .map(WorkflowStepStatusDto::from)
+                .collect(),
+            module_statuses: s
+                .module_statuses
+                .iter()
+                .map(WorkflowModuleStatusDto::from)
+                .collect(),
+            blockers: s.blockers.clone(),
+            warnings: s.warnings.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectSummaryDto {
+    pub project_id: String,
+    pub project_name: String,
+    pub format_version: String,
+    pub component_count: usize,
+    pub net_count: usize,
+    pub simulation_profile_count: usize,
+}
+
+impl From<&hotsas_core::ProjectSummary> for ProjectSummaryDto {
+    fn from(p: &hotsas_core::ProjectSummary) -> Self {
+        Self {
+            project_id: p.project_id.clone(),
+            project_name: p.project_name.clone(),
+            format_version: p.format_version.clone(),
+            component_count: p.component_count,
+            net_count: p.net_count,
+            simulation_profile_count: p.simulation_profile_count,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowStepStatusDto {
+    pub id: String,
+    pub title: String,
+    pub status: String,
+    pub screen_id: String,
+    pub description: String,
+    pub warnings: Vec<String>,
+}
+
+impl From<&hotsas_core::WorkflowStepStatus> for WorkflowStepStatusDto {
+    fn from(s: &hotsas_core::WorkflowStepStatus) -> Self {
+        Self {
+            id: s.id.clone(),
+            title: s.title.clone(),
+            status: s.status.as_str().to_string(),
+            screen_id: s.screen_id.clone(),
+            description: s.description.clone(),
+            warnings: s.warnings.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowModuleStatusDto {
+    pub id: String,
+    pub title: String,
+    pub status: String,
+    pub details: Vec<KeyValueDto>,
+}
+
+impl From<&hotsas_core::WorkflowModuleStatus> for WorkflowModuleStatusDto {
+    fn from(m: &hotsas_core::WorkflowModuleStatus) -> Self {
+        Self {
+            id: m.id.clone(),
+            title: m.title.clone(),
+            status: m.status.as_str().to_string(),
+            details: m
+                .details
+                .iter()
+                .map(|(k, v)| KeyValueDto {
+                    key: k.clone(),
+                    value: v.clone(),
+                })
+                .collect(),
+        }
+    }
+}

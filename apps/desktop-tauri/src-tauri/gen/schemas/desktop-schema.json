@@ -177,10 +177,10 @@
       "description": "Permission identifier",
       "oneOf": [
         {
-          "description": "Allows the main HotSAS Studio window to invoke v1 vertical slice backend commands.",
+          "description": "Allows the main HotSAS Studio window to invoke all backend commands.",
           "type": "string",
           "const": "allow-hotsas-commands",
-          "markdownDescription": "Allows the main HotSAS Studio window to invoke v1 vertical slice backend commands."
+          "markdownDescription": "Allows the main HotSAS Studio window to invoke all backend commands."
         },
         {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",

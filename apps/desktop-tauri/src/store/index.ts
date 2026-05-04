@@ -15,6 +15,7 @@ import type {
   NotebookEvaluationResultDto,
   NotebookStateDto,
   PreferredValueDto,
+  ProductWorkflowStatusDto,
   ProjectDto,
   SelectedComponentDto,
   SelectedRegionAnalysisResultDto,
@@ -65,6 +66,9 @@ type HotSasState = {
   readinessSelfCheckResult: AppDiagnosticsReportDto | null;
   diagnosticsLoading: boolean;
   diagnosticsError: string | null;
+  productWorkflowStatus: ProductWorkflowStatusDto | null;
+  productWorkflowLoading: boolean;
+  productWorkflowError: string | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -106,6 +110,9 @@ type HotSasState = {
   setReadinessSelfCheckResult: (report: AppDiagnosticsReportDto | null) => void;
   setDiagnosticsLoading: (loading: boolean) => void;
   setDiagnosticsError: (error: string | null) => void;
+  setProductWorkflowStatus: (status: ProductWorkflowStatusDto | null) => void;
+  setProductWorkflowLoading: (loading: boolean) => void;
+  setProductWorkflowError: (error: string | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -149,6 +156,9 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   readinessSelfCheckResult: null,
   diagnosticsLoading: false,
   diagnosticsError: null,
+  productWorkflowStatus: null,
+  productWorkflowLoading: false,
+  productWorkflowError: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -193,4 +203,7 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setReadinessSelfCheckResult: (readinessSelfCheckResult) => set({ readinessSelfCheckResult }),
   setDiagnosticsLoading: (diagnosticsLoading) => set({ diagnosticsLoading }),
   setDiagnosticsError: (diagnosticsError) => set({ diagnosticsError }),
+  setProductWorkflowStatus: (productWorkflowStatus) => set({ productWorkflowStatus }),
+  setProductWorkflowLoading: (productWorkflowLoading) => set({ productWorkflowLoading }),
+  setProductWorkflowError: (productWorkflowError) => set({ productWorkflowError }),
 }));

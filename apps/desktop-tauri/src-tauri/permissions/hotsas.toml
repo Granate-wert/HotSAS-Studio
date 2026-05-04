@@ -46,4 +46,7 @@ commands.allow = [
   "attach_imported_model_to_component",
   "get_app_diagnostics",
   "run_readiness_self_check",
+  "get_product_workflow_status",
+  "run_product_beta_self_check",
+  "create_integrated_demo_project",
 ]

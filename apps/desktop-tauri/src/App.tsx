@@ -8,7 +8,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { DebugLogPanel } from "./components/DebugLogPanel";
 import { Workbench } from "./components/Workbench";
@@ -16,6 +16,17 @@ import { navigationItems, type ScreenId } from "./screens/navigation";
 
 export default function App() {
   const [activeScreen, setActiveScreen] = useState<ScreenId>("start");
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as ScreenId;
+      if (navigationItems.some((item) => item.id === detail)) {
+        setActiveScreen(detail);
+      }
+    };
+    window.addEventListener("navigate", handler);
+    return () => window.removeEventListener("navigate", handler);
+  }, []);
 
   return (
     <MantineProvider defaultColorScheme="dark">

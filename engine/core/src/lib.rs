@@ -11,6 +11,7 @@ pub mod ngspice;
 pub mod notebook;
 pub mod preferred_value_tables;
 pub mod preferred_values;
+pub mod product_workflow;
 pub mod project_package;
 pub mod selected_region;
 pub mod symbol;
@@ -29,6 +30,7 @@ pub use models::*;
 pub use ngspice::*;
 pub use notebook::*;
 pub use preferred_values::*;
+pub use product_workflow::*;
 pub use project_package::*;
 pub use selected_region::*;
 pub use symbol::{

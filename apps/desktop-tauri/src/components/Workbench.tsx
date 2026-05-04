@@ -15,6 +15,7 @@ import { CalculatorScreen } from "../screens/CalculatorScreen";
 import { ComponentLibraryScreen } from "../screens/ComponentLibraryScreen";
 import { DiagnosticsScreen } from "../screens/DiagnosticsScreen";
 import { ExportScreen } from "../screens/ExportScreen";
+import { ProductBetaScreen } from "../screens/ProductBetaScreen";
 import { FormulaLibraryScreen } from "../screens/FormulaLibraryScreen";
 import { SchematicScreen } from "../screens/SchematicScreen";
 import { SimulationScreen } from "../screens/SimulationScreen";
@@ -80,6 +81,12 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     setReadinessSelfCheckResult,
     setDiagnosticsLoading,
     setDiagnosticsError,
+    productWorkflowStatus,
+    productWorkflowLoading,
+    productWorkflowError,
+    setProductWorkflowStatus,
+    setProductWorkflowLoading,
+    setProductWorkflowError,
   } = useHotSasStore();
 
   const run = async <T,>(operation: () => Promise<T>, onResult: (result: T) => void) => {
@@ -205,6 +212,17 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         () => backend.runReadinessSelfCheck(),
         (report) => setReadinessSelfCheckResult(report),
       ),
+    loadProductWorkflowStatus: () =>
+      runDiagnostics(
+        () => backend.getProductWorkflowStatus(),
+        (status) => setProductWorkflowStatus(status),
+      ),
+    runProductBetaSelfCheck: () =>
+      runDiagnostics(
+        () => backend.runProductBetaSelfCheck(),
+        (status) => setProductWorkflowStatus(status),
+      ),
+    createIntegratedDemoProject: () => run(backend.createIntegratedDemoProject, setProject),
     exportFile: (format: string, writeToFile: boolean, outputDir: string) =>
       run(
         () =>
@@ -341,6 +359,9 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         readinessSelfCheckResult,
         diagnosticsLoading,
         diagnosticsError,
+        productWorkflowStatus,
+        productWorkflowLoading,
+        productWorkflowError,
         actions,
       })}
     </div>
@@ -370,6 +391,9 @@ function renderScreen(
     >["readinessSelfCheckResult"];
     diagnosticsLoading: ReturnType<typeof useHotSasStore.getState>["diagnosticsLoading"];
     diagnosticsError: ReturnType<typeof useHotSasStore.getState>["diagnosticsError"];
+    productWorkflowStatus: ReturnType<typeof useHotSasStore.getState>["productWorkflowStatus"];
+    productWorkflowLoading: ReturnType<typeof useHotSasStore.getState>["productWorkflowLoading"];
+    productWorkflowError: ReturnType<typeof useHotSasStore.getState>["productWorkflowError"];
     selectedSimulationEngine: ReturnType<
       typeof useHotSasStore.getState
     >["selectedSimulationEngine"];
@@ -393,6 +417,9 @@ function renderScreen(
       loadExportCapabilities: () => void;
       loadAppDiagnostics: () => void;
       runReadinessSelfCheck: () => void;
+      loadProductWorkflowStatus: () => void;
+      runProductBetaSelfCheck: () => void;
+      createIntegratedDemoProject: () => void;
       exportFile: (format: string, writeToFile: boolean, outputDir: string) => void;
       importSpiceModel: (content: string) => void;
       importTouchstoneModel: (content: string) => void;
@@ -480,6 +507,23 @@ function renderScreen(
         error={context.diagnosticsError}
         onRefreshDiagnostics={context.actions.loadAppDiagnostics}
         onRunSelfCheck={context.actions.runReadinessSelfCheck}
+      />
+    );
+  }
+
+  if (activeScreen === "product-beta") {
+    return (
+      <ProductBetaScreen
+        status={context.productWorkflowStatus}
+        loading={context.productWorkflowLoading}
+        error={context.productWorkflowError}
+        onRefresh={context.actions.loadProductWorkflowStatus}
+        onSelfCheck={context.actions.runProductBetaSelfCheck}
+        onCreateDemo={context.actions.createIntegratedDemoProject}
+        onNavigate={(screenId) => {
+          const event = new CustomEvent("navigate", { detail: screenId });
+          window.dispatchEvent(event);
+        }}
       />
     );
   }

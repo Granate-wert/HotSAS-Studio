@@ -12,7 +12,8 @@ use hotsas_api::{
     ExportRequestDto, ExportResultDto, FormulaCalculationRequestDto, FormulaDetailsDto,
     FormulaEvaluationResultDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi,
     NgspiceAvailabilityDto, NotebookEvaluationRequestDto, NotebookEvaluationResultDto,
-    NotebookStateDto, PreferredValueDto, ProjectDto, ProjectPackageManifestDto,
+    NotebookStateDto, PreferredValueDto, ProductWorkflowStatusDto, ProjectDto,
+    ProjectPackageManifestDto,
     ProjectPackageValidationReportDto, SaveProjectDto, SelectedComponentDto,
     SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionIssueDto,
     SelectedRegionPreviewDto, SimulationResultDto, SimulationRunRequestDto, VerticalSliceDto,
@@ -560,6 +561,27 @@ async fn run_readiness_self_check(api: State<'_, HotSasApi>) -> Result<AppDiagno
     result
 }
 
+#[tauri::command]
+async fn get_product_workflow_status(api: State<'_, HotSasApi>) -> Result<ProductWorkflowStatusDto, String> {
+    let result = api.get_product_workflow_status().map_err(tauri_error);
+    log_command_result("get_product_workflow_status", &result);
+    result
+}
+
+#[tauri::command]
+async fn run_product_beta_self_check(api: State<'_, HotSasApi>) -> Result<ProductWorkflowStatusDto, String> {
+    let result = api.run_product_beta_self_check().map_err(tauri_error);
+    log_command_result("run_product_beta_self_check", &result);
+    result
+}
+
+#[tauri::command]
+async fn create_integrated_demo_project(api: State<'_, HotSasApi>) -> Result<ProjectDto, String> {
+    let result = api.create_integrated_demo_project().map_err(tauri_error);
+    log_command_result("create_integrated_demo_project", &result);
+    result
+}
+
 fn log_command_result<T>(name: &str, result: &Result<T, String>) {
     match result {
         Ok(_) => log::info!("Command {name} succeeded"),
@@ -647,6 +669,9 @@ pub fn run() {
             export_history,
             get_app_diagnostics,
             run_readiness_self_check,
+            get_product_workflow_status,
+            run_product_beta_self_check,
+            create_integrated_demo_project,
             write_log
         ])
         .run(tauri::generate_context!())

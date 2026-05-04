@@ -7,6 +7,7 @@ pub use services::{
     AppDiagnosticsService, AppServices, CircuitTemplateService, CircuitValidationService,
     ComponentLibraryService, EngineeringNotebookService, ExportCenterService, ExportService,
     FormulaRegistryService, FormulaService, ModelImportService, NetlistGenerationService,
-    NgspiceSimulationService, PreferredValuesService, ProjectPackageService, ProjectService,
-    SelectedRegionAnalysisService, SimulationEngineChoice, SimulationService,
+    NgspiceSimulationService, PreferredValuesService, ProductWorkflowService,
+    ProjectPackageService, ProjectService, SelectedRegionAnalysisService, SimulationEngineChoice,
+    SimulationService,
 };

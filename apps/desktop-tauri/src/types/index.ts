@@ -685,3 +685,40 @@ export type AppDiagnosticsReportDto = {
   checks: ReadinessCheckDto[];
   warnings: string[];
 };
+
+export type ProjectSummaryDto = {
+  project_id: string;
+  project_name: string;
+  format_version: string;
+  component_count: number;
+  net_count: number;
+  simulation_profile_count: number;
+};
+
+export type WorkflowStepStatusDto = {
+  id: string;
+  title: string;
+  status: string;
+  screen_id: string;
+  description: string;
+  warnings: string[];
+};
+
+export type WorkflowModuleStatusDto = {
+  id: string;
+  title: string;
+  status: string;
+  details: KeyValueDto[];
+};
+
+export type ProductWorkflowStatusDto = {
+  app_name: string;
+  app_version: string;
+  roadmap_stage: string;
+  build_profile: string;
+  current_project: ProjectSummaryDto | null;
+  workflow_steps: WorkflowStepStatusDto[];
+  module_statuses: WorkflowModuleStatusDto[];
+  blockers: string[];
+  warnings: string[];
+};

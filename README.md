@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v2.0 preparation**
+**Current roadmap stage: v2.1 next**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
@@ -17,6 +17,7 @@ Completed:
 - v1.8 — ngspice Adapter v1
 - v1.9 — SPICE/Touchstone Import Foundation
 - v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate
+- v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build
 
 ---
 

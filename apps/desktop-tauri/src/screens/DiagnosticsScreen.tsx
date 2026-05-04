@@ -89,6 +89,16 @@ export function DiagnosticsScreen({
       <Stack gap="md" p="md">
         <Title order={3}>Internal Alpha / Diagnostics</Title>
 
+        <Alert color="blue" icon={<CheckCircle size={16} />}>
+          <Text size="sm" fw={600}>
+            v2.0 Product Beta Readiness
+          </Text>
+          <Text size="xs" c="dimmed">
+            Diagnostics shows module readiness for the integrated workflow. ngspice unavailable is a
+            controlled warning, not a failure. Public release has not been created.
+          </Text>
+        </Alert>
+
         {diagnostics && (
           <Group gap="xs">
             <Text size="sm" c="dimmed">

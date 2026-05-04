@@ -506,6 +506,56 @@ This stage verifies:
 
 ---
 
+## v2.0 — Product Beta Integration
+
+### Rust tests
+
+- product workflow service tests (`engine/application/tests/product_workflow_tests.rs`)
+- product workflow API tests (`engine/api/tests/product_workflow_api_tests.rs`)
+- diagnostics regression
+- integration smoke self-check
+
+### Frontend tests
+
+- Product Beta / Project Hub screen (`src/screens/__tests__/ProductBetaScreen.test.tsx`)
+- guided workflow cards
+- self-check actions
+- error states
+
+### Manual v2.0 Product Beta Smoke Check
+
+- [ ] Release EXE starts.
+- [ ] No console window appears.
+- [ ] Start / Project Hub opens.
+- [ ] Create integrated demo project works.
+- [ ] Schematic screen opens and shows RC demo.
+- [ ] Formula Library opens.
+- [ ] Formula calculation works.
+- [ ] Engineering Notebook opens.
+- [ ] Notebook assignment/formula command works or limited status shown.
+- [ ] Component Library opens.
+- [ ] Component details open.
+- [ ] Import Models screen opens.
+- [ ] SPICE text import smoke works.
+- [ ] Touchstone text import smoke works.
+- [ ] Simulation screen opens.
+- [ ] Mock simulation works.
+- [ ] ngspice unavailable is controlled warning if ngspice absent.
+- [ ] Selected Region screen/panel opens.
+- [ ] Region preview/analyze works for RC demo or limited status shown.
+- [ ] Export Center opens.
+- [ ] Markdown export works.
+- [ ] SPICE netlist export works.
+- [ ] BOM export works.
+- [ ] SVG schematic export works.
+- [ ] Diagnostics opens.
+- [ ] Run readiness self-check works.
+- [ ] Product Beta screen opens.
+- [ ] Refresh workflow status works.
+- [ ] Run product beta self-check works.
+
+---
+
 ## Test Summary
 
 As of v1.10, the Rust workspace runs **166+ tests** across all crates with **zero failures**, and the frontend runs **68 UI tests** with **zero failures**.

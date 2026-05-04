@@ -77,3 +77,28 @@ Get-FileHash $zip -Algorithm SHA256
 - Large frontend bundles (>500 KB after gzip) — code splitting will be improved in v2.0.
 - Export Center may require ACL permission fixes when new commands are added.
 - Component library is built-in only; external library loading is not yet supported.
+
+---
+
+## v2.0 Internal RC Build
+
+After v2.0 Product Beta integration, the internal RC build is produced with the same process.
+
+```powershell
+cd "D:\Документы\vscode\HotSAS Studio\apps\desktop-tauri"
+npm.cmd run tauri:build
+```
+
+EXE path:
+
+```text
+apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
+```
+
+ZIP path:
+
+```text
+apps/desktop-tauri/src-tauri/target/release/HotSAS-Studio-v2.0-internal-rc-windows-x64.zip
+```
+
+Verify SHA256 and Windows subsystem as documented above.
