@@ -2,19 +2,19 @@
 
 ## Current Version
 
-[v2.1 — Formula Library Expansion & Formula UX Hardening](./verification_logs/v2.1_formula_library_expansion.md)
+[v2.2 — DC-DC Calculators and Templates](./verification_logs/v2.2_dcdc_calculators_and_templates.md)
 
-## v2.1 Summary
+## v2.2 Summary
 
 ```text
-Version: v2.1 — Formula Library Expansion & Formula UX Hardening
-Implementation commit: 266ffbf
-Verification metadata/repo hygiene commit: b72711b
-Verification log: docs/testing/verification_logs/v2.1_formula_library_expansion.md
+Version: v2.2 — DC-DC Calculators and Templates
+Implementation commit: 53467fe
+Verification/docs commit: 4777197
+Verification log: docs/testing/verification_logs/v2.2_dcdc_calculators_and_templates.md
 
 Checks:
 - cargo fmt --check — PASS
-- cargo test — PASS (245 Rust tests)
+- cargo test — PASS (200+ Rust tests)
 - npm run format:check — PASS
 - npm run typecheck — PASS
 - npm run test — PASS (76 frontend tests)
@@ -23,14 +23,15 @@ Checks:
 
 Internal build:
 - EXE path: apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
-- EXE SHA256: 1423262166135F13A95CE117ED23BE0E33616CC84CD716A2745B7F496FBF29D8
-- ZIP path: apps/desktop-tauri/src-tauri/target/release/HotSAS-Studio-v2.1-internal-rc-windows-x64.zip
-- ZIP SHA256: ED73C5140DC2087F2BE6B71254AE2E6868A530D21F845DE463686905244B9BD0
+- EXE size bytes: 12605952
+- EXE SHA256: A4EB99FC1710A9CE5B6229F5F1B8152457574CDB7B096459162E75C435111FCF
+- ZIP: NOT CREATED (manual bundling required)
 - Public GitHub Release: NO
 ```
 
 ## Previous Versions
 
+- [v2.1 — Formula Library Expansion & Formula UX Hardening](./verification_logs/v2.1_formula_library_expansion.md)
 - [v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build](./verification_logs/v2.0_product_beta_integration.md)
 - [v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate](./verification_logs/v1.10_internal_alpha_build_and_v2_readiness_gate.md)
 - [v1.9 — SPICE/Touchstone Import Foundation](./verification_logs/v1.9_spice_touchstone_import_foundation.md)

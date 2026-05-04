@@ -556,9 +556,38 @@ This stage verifies:
 
 ---
 
+## v2.2 — DC-DC Calculators and Templates
+
+### Rust tests
+
+- Formula pack loader tests updated for `dcdc.yaml` (`adapters/tests/formula_pack_loader_tests.rs`)
+- All existing suites regression: 200+ tests PASS
+
+### Frontend tests
+
+- 76 UI tests PASS (existing suites + DC-DC screen integration)
+
+### Manual v2.2 DC-DC Calculator Smoke Check
+
+1. Open the **DC-DC Calculator** screen from the left sidebar.
+2. Select **Buck** topology.
+3. Enter `Vin=12V`, `Vout=5V`, `Iout=1A`, `fs=100kHz`.
+4. Click **Calculate**.
+5. Verify duty cycle ≈ `0.4167`.
+6. Verify minimum inductance is a positive finite value.
+7. Verify output capacitor ripple current is shown.
+8. Verify switch peak current is shown.
+9. Verify CCM boundary current is shown.
+10. Verify warnings/assumptions panel is visible.
+11. Select **Boost** topology — verify calculation updates.
+12. Select **Inverting Buck-Boost** — verify calculation updates.
+13. Select **4-Switch Buck-Boost** — verify controlled placeholder with limitation warnings.
+14. Click **Netlist Preview** — verify SPICE-like structural preview appears.
+15. Click **Mock Transient** — verify transient preview result appears.
+
 ## Test Summary
 
-As of v1.10, the Rust workspace runs **166+ tests** across all crates with **zero failures**, and the frontend runs **68 UI tests** with **zero failures**.
+As of v2.2, the Rust workspace runs **200+ tests** across all crates with **zero failures**, and the frontend runs **76 UI tests** with **zero failures**.
 
 ---
 
@@ -574,4 +603,5 @@ npm.cmd run format:check
 npm.cmd run typecheck
 npm.cmd run build
 npm.cmd run test
+npm.cmd run tauri:build
 ```

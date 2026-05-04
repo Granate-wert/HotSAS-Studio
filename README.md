@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v2.2 next**
+**Current roadmap stage: v2.3 next**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
@@ -19,6 +19,7 @@ Completed:
 - v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate
 - v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build
 - v2.1 — Formula Library Expansion & Formula UX Hardening
+- v2.2 — DC-DC Calculators and Templates
 
 ---
 
@@ -69,6 +70,19 @@ Completed:
 - API command `calculate_formula` + Tauri command.
 - Formula Library UI: variable inputs + **Calculate** button.
 - Old RC-specific commands preserved for compatibility.
+
+### v2.2 — DC-DC Calculators and Templates
+
+- Added DC-DC core models: `DcdcTopology`, `DcdcOperatingMode`, `DcdcInput`, `DcdcCalculationResult`, warnings, simulation plan.
+- Added `DcdcCalculatorService` with ideal first-order formulas for Buck, Boost, Inverting Buck-Boost, and a controlled 4-switch placeholder.
+- Added 4 DC-DC circuit templates (buck, boost, inverting buck-boost, 4-switch placeholder) with component helpers.
+- Replaced old `smps.yaml` placeholder with `dcdc.yaml` containing 13 formulas across all topologies.
+- Added `CelsiusPerWatt` to `EngineeringUnit`.
+- Added API DTOs, facade methods, and Tauri commands: `calculate_dcdc`, `list_dcdc_templates`, `generate_dcdc_netlist_preview`, `run_dcdc_mock_transient_preview`, `create_dcdc_demo_project`.
+- Added frontend `DcdcCalculatorScreen` with topology selector, input fields, calculate action, results/warnings panel.
+- Added navigation entry **DC-DC Calculator** in the left sidebar.
+- React remains view adapter only; all DC-DC math lives in Rust.
+- 200+ Rust tests, 76 frontend tests — all PASS.
 
 ### v2.1 — Formula Library Expansion & Formula UX Hardening
 
