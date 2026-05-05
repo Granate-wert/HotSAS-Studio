@@ -1,10 +1,11 @@
 use crate::services::{AdvancedReportService, DcdcCalculatorService};
 use crate::{
     ApplicationError, CircuitTemplateService, CircuitValidationService,
-    ComponentLibraryService, EngineeringNotebookService, ExportCenterService, ExportService,
-    FormulaService, ModelImportService, NetlistGenerationService, NgspiceSimulationService,
-    PreferredValuesService, ProjectPackageService, ProjectService, SelectedRegionAnalysisService,
-    SimulationEngineChoice, SimulationService,
+    ComponentLibraryService, ComponentParameterService, EngineeringNotebookService,
+    ExportCenterService, ExportService, FormulaService, ModelImportService,
+    NetlistGenerationService, NgspiceSimulationService, PreferredValuesService,
+    ProjectPackageService, ProjectService, SelectedRegionAnalysisService, SimulationEngineChoice,
+    SimulationService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
@@ -34,6 +35,7 @@ pub struct AppServices {
     export_service: ExportService,
     export_center_service: ExportCenterService,
     component_library_service: ComponentLibraryService,
+    component_parameter_service: ComponentParameterService,
     selected_region_analysis_service: SelectedRegionAnalysisService,
     model_import_service: ModelImportService,
     dcdc_calculator_service: DcdcCalculatorService,
@@ -78,6 +80,7 @@ impl AppServices {
                 schematic_exporter,
             ),
             component_library_service: ComponentLibraryService::new(component_library_port),
+            component_parameter_service: ComponentParameterService::new(),
             selected_region_analysis_service: SelectedRegionAnalysisService::new(),
             model_import_service: ModelImportService::new(spice_parser, touchstone_parser),
             dcdc_calculator_service: crate::services::DcdcCalculatorService::new(),
@@ -135,6 +138,10 @@ impl AppServices {
 
     pub fn component_library_service(&self) -> &ComponentLibraryService {
         &self.component_library_service
+    }
+
+    pub fn component_parameter_service(&self) -> &ComponentParameterService {
+        &self.component_parameter_service
     }
 
     pub fn selected_region_analysis_service(&self) -> &SelectedRegionAnalysisService {

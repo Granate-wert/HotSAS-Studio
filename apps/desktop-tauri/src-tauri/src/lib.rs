@@ -19,6 +19,7 @@ use hotsas_api::{
     SelectedRegionPreviewDto, SimulationResultDto, SimulationRunRequestDto, VerticalSliceDto,
     DcdcCalculationResultDto, DcdcInputDto, DcdcNetlistPreviewRequestDto, DcdcMockTransientRequestDto,
     DcdcTemplateDto,
+    ComponentParameterSchemaDto, ComponentParameterIssueDto, TypedComponentParametersDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -584,6 +585,39 @@ async fn create_integrated_demo_project(api: State<'_, HotSasApi>) -> Result<Pro
     result
 }
 
+#[tauri::command]
+fn get_component_parameter_schema(
+    api: State<'_, HotSasApi>,
+    category: String,
+) -> Result<Option<ComponentParameterSchemaDto>, String> {
+    log::info!("COMMAND get_component_parameter_schema category={category}");
+    let result = api.get_component_parameter_schema(category).map_err(tauri_error);
+    log_command_result("get_component_parameter_schema", &result);
+    result
+}
+
+#[tauri::command]
+fn validate_component_parameters(
+    api: State<'_, HotSasApi>,
+    component_id: String,
+) -> Result<Vec<ComponentParameterIssueDto>, String> {
+    log::info!("COMMAND validate_component_parameters component_id={component_id}");
+    let result = api.validate_component_parameters(component_id).map_err(tauri_error);
+    log_command_result("validate_component_parameters", &result);
+    result
+}
+
+#[tauri::command]
+fn get_typed_component_parameters(
+    api: State<'_, HotSasApi>,
+    component_id: String,
+) -> Result<TypedComponentParametersDto, String> {
+    log::info!("COMMAND get_typed_component_parameters component_id={component_id}");
+    let result = api.get_typed_component_parameters(component_id).map_err(tauri_error);
+    log_command_result("get_typed_component_parameters", &result);
+    result
+}
+
 fn log_command_result<T>(name: &str, result: &Result<T, String>) {
     match result {
         Ok(_) => log::info!("Command {name} succeeded"),
@@ -746,6 +780,9 @@ pub fn run() {
             search_components,
             get_component_details,
             assign_component_to_selected_instance,
+            get_component_parameter_schema,
+            validate_component_parameters,
+            get_typed_component_parameters,
             preview_selected_region,
             analyze_selected_region,
             validate_selected_region,

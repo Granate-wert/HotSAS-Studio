@@ -1415,6 +1415,120 @@ impl HotSasApi {
         }
     }
 
+    // ------------------------------------------------------------------
+    // v2.4 Typed Component Parameters
+    // ------------------------------------------------------------------
+
+    pub fn get_component_parameter_schema(
+        &self,
+        category: String,
+    ) -> Result<Option<crate::ComponentParameterSchemaDto>, ApiError> {
+        let svc = self.services.component_parameter_service();
+        Ok(svc.schema_for_category(&category).as_ref().map(crate::ComponentParameterSchemaDto::from))
+    }
+
+    pub fn validate_component_parameters(
+        &self,
+        component_id: String,
+    ) -> Result<Vec<crate::ComponentParameterIssueDto>, ApiError> {
+        let library = self.current_component_library()?;
+        let component = library
+            .components
+            .iter()
+            .find(|c| c.id == component_id)
+            .ok_or_else(|| ApiError::InvalidInput(format!("component '{}' not found", component_id)))?;
+        let svc = self.services.component_parameter_service();
+        let issues = svc.validate_component(component);
+        Ok(issues.iter().map(crate::ComponentParameterIssueDto::from).collect())
+    }
+
+    pub fn get_typed_component_parameters(
+        &self,
+        component_id: String,
+    ) -> Result<crate::TypedComponentParametersDto, ApiError> {
+        let library = self.current_component_library()?;
+        let component = library
+            .components
+            .iter()
+            .find(|c| c.id == component_id)
+            .ok_or_else(|| ApiError::InvalidInput(format!("component '{}' not found", component_id)))?;
+        let svc = self.services.component_parameter_service();
+        let bundle = match component.category.as_str() {
+            "resistor" => {
+                if let Some(p) = svc.resistor_parameters(component) {
+                    crate::ParameterBundleDto::Resistor {
+                        resistance: ValueDto::from(&p.resistance),
+                        power_rating: p.power_rating.as_ref().map(ValueDto::from),
+                    }
+                } else {
+                    crate::ParameterBundleDto::Generic
+                }
+            }
+            "capacitor" => {
+                if let Some(p) = svc.capacitor_parameters(component) {
+                    crate::ParameterBundleDto::Capacitor {
+                        capacitance: ValueDto::from(&p.capacitance),
+                        voltage_rating: p.voltage_rating.as_ref().map(ValueDto::from),
+                    }
+                } else {
+                    crate::ParameterBundleDto::Generic
+                }
+            }
+            "inductor" => {
+                if let Some(p) = svc.inductor_parameters(component) {
+                    crate::ParameterBundleDto::Inductor {
+                        inductance: ValueDto::from(&p.inductance),
+                        current_rating: p.current_rating.as_ref().map(ValueDto::from),
+                    }
+                } else {
+                    crate::ParameterBundleDto::Generic
+                }
+            }
+            "diode" | "led" => {
+                let p = svc.diode_parameters(component);
+                crate::ParameterBundleDto::Diode {
+                    forward_voltage: p.forward_voltage.as_ref().map(ValueDto::from),
+                    reverse_voltage: p.reverse_voltage.as_ref().map(ValueDto::from),
+                }
+            }
+            "bjt" => {
+                let p = svc.bjt_parameters(component);
+                crate::ParameterBundleDto::Bjt {
+                    vce_max: p.vce_max.as_ref().map(ValueDto::from),
+                    ic_max: p.ic_max.as_ref().map(ValueDto::from),
+                }
+            }
+            "mosfet" => {
+                let p = svc.mosfet_parameters(component);
+                crate::ParameterBundleDto::Mosfet {
+                    vds_max: p.vds_max.as_ref().map(ValueDto::from),
+                    id_max: p.id_max.as_ref().map(ValueDto::from),
+                    rds_on: p.rds_on.as_ref().map(ValueDto::from),
+                }
+            }
+            "op_amp" => {
+                let p = svc.op_amp_parameters(component);
+                crate::ParameterBundleDto::OpAmp {
+                    gbw: p.gbw.as_ref().map(ValueDto::from),
+                    input_offset_voltage: p.input_offset_voltage.as_ref().map(ValueDto::from),
+                }
+            }
+            "voltage_regulator" => {
+                let p = svc.regulator_parameters(component);
+                crate::ParameterBundleDto::Regulator {
+                    output_voltage: p.output_voltage.as_ref().map(ValueDto::from),
+                    max_current: p.max_current.as_ref().map(ValueDto::from),
+                }
+            }
+            _ => crate::ParameterBundleDto::Generic,
+        };
+        Ok(crate::TypedComponentParametersDto {
+            component_id: component.id.clone(),
+            category: component.category.clone(),
+            bundle,
+        })
+    }
+
     fn current_component_library(&self) -> Result<ComponentLibrary, ApiError> {
         self.component_library
             .lock()

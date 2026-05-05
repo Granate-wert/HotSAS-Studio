@@ -1,6 +1,7 @@
 pub mod advanced_report;
 pub mod app_diagnostics;
 pub mod circuit_query;
+pub mod component_parameters;
 pub mod circuit_validation;
 pub mod component_library;
 pub mod component_seeds;
@@ -24,6 +25,7 @@ pub use app_diagnostics::*;
 pub use circuit_query::CircuitQueryService;
 pub use circuit_validation::{CircuitValidationIssue, CircuitValidationReport};
 pub use component_library::*;
+pub use component_parameters::*;
 pub use component_seeds::*;
 pub use dcdc::*;
 pub use error::CoreError;

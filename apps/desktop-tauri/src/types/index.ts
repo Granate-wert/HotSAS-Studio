@@ -912,3 +912,52 @@ export type AdvancedReportExportResultDto = {
   success: boolean;
   message: string;
 };
+
+
+// v2.4 Typed Component Parameter Types
+
+export type ComponentParameterSchemaDto = {
+  category: string;
+  groups: ComponentParameterGroupDto[];
+};
+
+export type ComponentParameterGroupDto = {
+  name: string;
+  key: string;
+  parameters: ComponentParameterDefinitionDto[];
+};
+
+export type ComponentParameterDefinitionDto = {
+  name: string;
+  key: string;
+  description: string | null;
+  unit: string;
+  kind: string;
+  required: boolean;
+  editable: boolean;
+  value_range: [number, number] | null;
+  default_value: ValueDto | null;
+};
+
+export type ComponentParameterIssueDto = {
+  key: string;
+  message: string;
+  severity: string;
+};
+
+export type TypedComponentParametersDto = {
+  component_id: string;
+  category: string;
+  bundle: ParameterBundleDto;
+};
+
+export type ParameterBundleDto =
+  | { kind: "resistor"; resistance: ValueDto; power_rating: ValueDto | null }
+  | { kind: "capacitor"; capacitance: ValueDto; voltage_rating: ValueDto | null }
+  | { kind: "inductor"; inductance: ValueDto; current_rating: ValueDto | null }
+  | { kind: "diode"; forward_voltage: ValueDto | null; reverse_voltage: ValueDto | null }
+  | { kind: "bjt"; vce_max: ValueDto | null; ic_max: ValueDto | null }
+  | { kind: "mosfet"; vds_max: ValueDto | null; id_max: ValueDto | null; rds_on: ValueDto | null }
+  | { kind: "op_amp"; gbw: ValueDto | null; input_offset_voltage: ValueDto | null }
+  | { kind: "regulator"; output_voltage: ValueDto | null; max_current: ValueDto | null }
+  | { kind: "generic" };

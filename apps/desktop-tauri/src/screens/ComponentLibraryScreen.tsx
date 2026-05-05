@@ -6,12 +6,13 @@ import { ComponentDetailsPanel } from "../components/component-library/Component
 import { ComponentSearchPanel } from "../components/component-library/ComponentSearchPanel";
 import { ComponentTable } from "../components/component-library/ComponentTable";
 import { useHotSasStore } from "../store";
-import type { ComponentLibraryDto, ComponentSearchRequestDto } from "../types";
+import type { ComponentLibraryDto, ComponentSearchRequestDto, TypedComponentParametersDto } from "../types";
 
 export function ComponentLibraryScreen() {
   const [library, setLibrary] = useState<ComponentLibraryDto | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [typedParams, setTypedParams] = useState<TypedComponentParametersDto | null>(null);
 
   const selectedLibraryComponentId = useHotSasStore((s) => s.selectedLibraryComponentId);
   const selectedLibraryComponent = useHotSasStore((s) => s.selectedLibraryComponent);
@@ -75,10 +76,15 @@ export function ComponentLibraryScreen() {
 
   async function handleSelectComponent(id: string) {
     setSelectedLibraryComponentId(id);
+    setTypedParams(null);
     setLoading(true);
     try {
-      const details = await backend.getComponentDetails(id);
+      const [details, typed] = await Promise.all([
+        backend.getComponentDetails(id),
+        backend.getTypedComponentParameters(id).catch(() => null),
+      ]);
       setSelectedLibraryComponent(details);
+      setTypedParams(typed);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -139,7 +145,7 @@ export function ComponentLibraryScreen() {
             <Grid.Col span={5}>
               <Stack gap="md">
                 {selectedLibraryComponent && (
-                  <ComponentDetailsPanel component={selectedLibraryComponent} />
+                  <ComponentDetailsPanel component={selectedLibraryComponent} typedParams={typedParams} />
                 )}
                 <AssignComponentPanel
                   selectedComponent={selectedSchematicComponent}

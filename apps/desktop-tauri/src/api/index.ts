@@ -57,6 +57,9 @@ import type {
   DcdcNetlistPreviewRequestDto,
   DcdcMockTransientRequestDto,
   DcdcTemplateDto,
+  ComponentParameterSchemaDto,
+  ComponentParameterIssueDto,
+  TypedComponentParametersDto,
 } from "../types";
 
 async function invokeCommand<T>(command: string, args?: Record<string, unknown>) {
@@ -186,4 +189,11 @@ export const backend = {
     invokeCommand<AdvancedReportDto | null>("get_last_advanced_report"),
   writeLog: (level: string, message: string) =>
     invokeCommand<void>("write_log", { level, message }),
+  // v2.4 typed component parameters
+  getComponentParameterSchema: (category: string) =>
+    invokeCommand<ComponentParameterSchemaDto | null>("get_component_parameter_schema", { category }),
+  validateComponentParameters: (componentId: string) =>
+    invokeCommand<ComponentParameterIssueDto[]>("validate_component_parameters", { componentId }),
+  getTypedComponentParameters: (componentId: string) =>
+    invokeCommand<TypedComponentParametersDto>("get_typed_component_parameters", { componentId }),
 };

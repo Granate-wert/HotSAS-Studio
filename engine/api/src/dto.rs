@@ -2113,3 +2113,107 @@ pub struct AdvancedReportExportResultDto {
     pub success: bool,
     pub message: String,
 }
+
+
+// ---------------------------------------------------------------------------
+// v2.4 Typed Component Parameter DTOs
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentParameterSchemaDto {
+    pub category: String,
+    pub groups: Vec<ComponentParameterGroupDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentParameterGroupDto {
+    pub name: String,
+    pub key: String,
+    pub parameters: Vec<ComponentParameterDefinitionDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentParameterDefinitionDto {
+    pub name: String,
+    pub key: String,
+    pub description: Option<String>,
+    pub unit: String,
+    pub kind: String,
+    pub required: bool,
+    pub editable: bool,
+    pub value_range: Option<(f64, f64)>,
+    pub default_value: Option<ValueDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentParameterIssueDto {
+    pub key: String,
+    pub message: String,
+    pub severity: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TypedComponentParametersDto {
+    pub component_id: String,
+    pub category: String,
+    pub bundle: ParameterBundleDto,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum ParameterBundleDto {
+    Resistor { resistance: ValueDto, power_rating: Option<ValueDto> },
+    Capacitor { capacitance: ValueDto, voltage_rating: Option<ValueDto> },
+    Inductor { inductance: ValueDto, current_rating: Option<ValueDto> },
+    Diode { forward_voltage: Option<ValueDto>, reverse_voltage: Option<ValueDto> },
+    Bjt { vce_max: Option<ValueDto>, ic_max: Option<ValueDto> },
+    Mosfet { vds_max: Option<ValueDto>, id_max: Option<ValueDto>, rds_on: Option<ValueDto> },
+    OpAmp { gbw: Option<ValueDto>, input_offset_voltage: Option<ValueDto> },
+    Regulator { output_voltage: Option<ValueDto>, max_current: Option<ValueDto> },
+    Generic,
+}
+
+impl From<&hotsas_core::ComponentParameterSchema> for ComponentParameterSchemaDto {
+    fn from(schema: &hotsas_core::ComponentParameterSchema) -> Self {
+        Self {
+            category: schema.category.clone(),
+            groups: schema.groups.iter().map(ComponentParameterGroupDto::from).collect(),
+        }
+    }
+}
+
+impl From<&hotsas_core::ComponentParameterGroup> for ComponentParameterGroupDto {
+    fn from(group: &hotsas_core::ComponentParameterGroup) -> Self {
+        Self {
+            name: group.name.clone(),
+            key: group.key.clone(),
+            parameters: group.parameters.iter().map(ComponentParameterDefinitionDto::from).collect(),
+        }
+    }
+}
+
+impl From<&hotsas_core::ComponentParameterDefinition> for ComponentParameterDefinitionDto {
+    fn from(def: &hotsas_core::ComponentParameterDefinition) -> Self {
+        Self {
+            name: def.name.clone(),
+            key: def.key.clone(),
+            description: def.description.clone(),
+            unit: def.unit.symbol().to_string(),
+            kind: format!("{:?}", def.kind),
+            required: def.required,
+            editable: def.editable,
+            value_range: def.value_range,
+            default_value: def.default_value.as_ref().map(ValueDto::from),
+        }
+    }
+}
+
+impl From<&hotsas_application::ParameterIssue> for ComponentParameterIssueDto {
+    fn from(issue: &hotsas_application::ParameterIssue) -> Self {
+        Self {
+            key: issue.key.clone(),
+            message: issue.message.clone(),
+            severity: format!("{:?}", issue.severity),
+        }
+    }
+}

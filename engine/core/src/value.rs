@@ -75,6 +75,8 @@ pub enum EngineeringUnit {
     KelvinPerWatt,
     CelsiusPerWatt,
     Decibel,
+    PpmPerCelsius,
+    VoltPerMicrosecond,
 }
 
 impl EngineeringUnit {
@@ -96,6 +98,8 @@ impl EngineeringUnit {
             "K/W" | "K/Watt" | "Kelvin/Watt" => Ok(Self::KelvinPerWatt),
             "C/W" | "C/Watt" | "Celsius/Watt" | "°C/W" => Ok(Self::CelsiusPerWatt),
             "dB" | "decibel" | "Decibel" => Ok(Self::Decibel),
+            "ppm/°C" | "ppm/C" | "ppm_per_celsius" | "PpmPerCelsius" => Ok(Self::PpmPerCelsius),
+            "V/us" | "V/µs" | "volt_per_microsecond" | "VoltPerMicrosecond" => Ok(Self::VoltPerMicrosecond),
             other => Err(CoreError::InvalidUnit(other.to_string())),
         }
     }
@@ -118,6 +122,8 @@ impl EngineeringUnit {
             Self::KelvinPerWatt => "K/W",
             Self::CelsiusPerWatt => "°C/W",
             Self::Decibel => "dB",
+            Self::PpmPerCelsius => "ppm/°C",
+            Self::VoltPerMicrosecond => "V/µs",
         }
     }
 }

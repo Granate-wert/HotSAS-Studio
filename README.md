@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v2.4 next**
+**Current roadmap stage: v2.5 — Schematic Editor Hardening next**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
@@ -81,6 +81,34 @@ Completed:
 - Frontend: `AdvancedReportsScreen` with report type selector, section checklist, preview, and export.
 - Navigation: new "Advanced Reports" screen accessible from sidebar.
 - 28 new tests: 11 core model tests, 9 service tests, 8 API tests, 13 frontend screen tests.
+
+### v2.4 — Real Component Parameters
+
+- **Typed parameter schema** (`component_parameters.rs`): `ComponentParameterDefinition`, `ComponentParameterGroup`, `ComponentParameterSchema`, `ComponentParameterValue`, `ComponentParameterSource`, `ComponentTolerance` (symmetric %, asymmetric, min/max).
+- **Parameter validation**: unit mismatch, out-of-range, tolerance exceeded, missing required — with structured `ParameterValidationError`.
+- **Typed bundles** for 8 component categories: `ResistorParameters`, `CapacitorParameters`, `InductorParameters`, `DiodeParameters`, `BjtParameters`, `MosfetParameters`, `OpAmpParameters`, `RegulatorParameters` — each with `from_map` / `to_map` roundtrips.
+- **Schema builders** for all 8 categories with grouped parameters (Electrical, Thermal, Supply, Output, etc.).
+- **ComponentParameterService** in application layer: schema lookup, component validation, instance override validation, typed bundle extraction, parameter resolution (default → override).
+- **Seed expansion**: built-in library grew from 12 generic to **27 real-like components**:
+  - Resistors: generic, 10k 1% 0603, 1k 5% axial, 100R 1% 0805
+  - Capacitors: generic, 100nF 50V X7R 0603, 10uF 25V X5R 0805, 100uF 25V electrolytic
+  - Inductors: generic, 47uH 0.5A
+  - Diodes: generic, 1N4148, SS14 Schottky
+  - BJTs: generic NPN/PNP, 2N2222, 2N2907
+  - MOSFETs: generic N/P, IRFZ44N power
+  - Op-amps: generic, LM358, rail-to-rail placeholder
+  - Regulators: AMS1117-3.3 LDO
+  - Sources/ground preserved
+- **New footprints**: SMD 0603, SMD 0805 placeholders.
+- **API DTOs**: `ComponentParameterSchemaDto`, `ComponentParameterDefinitionDto`, `ComponentParameterIssueDto`, `TypedComponentParametersDto`, `ParameterBundleDto` (tagged union).
+- **Facade methods**: `get_component_parameter_schema`, `validate_component_parameters`, `get_typed_component_parameters`.
+- **Tauri commands**: `get_component_parameter_schema`, `validate_component_parameters`, `get_typed_component_parameters`.
+- **Frontend enhancements**:
+  - `ComponentLibraryScreen` fetches typed parameters on selection.
+  - `ComponentDetailsPanel` displays a "Typed Parameters" card with category-specific values (resistance, capacitance, VDS, GBW, etc.).
+  - TypeScript types for all new DTOs.
+- **Tests**: 16 core unit tests (tolerance, validation, schema, roundtrips), 5 service unit tests, 13 expanded component library integration tests (SMD footprints, real-like parts, schema validation), 89 frontend tests — all PASS.
+- `tauri:build --no-bundle` successful.
 
 ### v2.2 — DC-DC Calculators and Templates
 
