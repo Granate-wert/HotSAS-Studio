@@ -1237,6 +1237,7 @@ version = "0.1.4"
 dependencies = [
  "hotsas_core",
  "hotsas_ports",
+ "serde_json",
 ]
 
 [[package]]

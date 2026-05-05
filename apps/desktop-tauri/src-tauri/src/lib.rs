@@ -636,6 +636,48 @@ fn run_dcdc_mock_transient_preview(
     result
 }
 
+#[tauri::command]
+fn list_report_section_capabilities(
+    api: State<'_, HotSasApi>,
+) -> Result<Vec<hotsas_api::ReportSectionCapabilityDto>, String> {
+    log::info!("COMMAND list_report_section_capabilities");
+    let result = api.list_report_section_capabilities().map_err(tauri_error);
+    log_command_result("list_report_section_capabilities", &result);
+    result
+}
+
+#[tauri::command]
+fn generate_advanced_report(
+    api: State<'_, HotSasApi>,
+    request: hotsas_api::AdvancedReportRequestDto,
+) -> Result<hotsas_api::AdvancedReportDto, String> {
+    log::info!("COMMAND generate_advanced_report");
+    let result = api.generate_advanced_report(request).map_err(tauri_error);
+    log_command_result("generate_advanced_report", &result);
+    result
+}
+
+#[tauri::command]
+fn export_advanced_report(
+    api: State<'_, HotSasApi>,
+    request: hotsas_api::AdvancedReportExportRequestDto,
+) -> Result<hotsas_api::AdvancedReportExportResultDto, String> {
+    log::info!("COMMAND export_advanced_report");
+    let result = api.export_advanced_report(request).map_err(tauri_error);
+    log_command_result("export_advanced_report", &result);
+    result
+}
+
+#[tauri::command]
+fn get_last_advanced_report(
+    api: State<'_, HotSasApi>,
+) -> Result<Option<hotsas_api::AdvancedReportDto>, String> {
+    log::info!("COMMAND get_last_advanced_report");
+    let result = api.get_last_advanced_report().map_err(tauri_error);
+    log_command_result("get_last_advanced_report", &result);
+    result
+}
+
 fn build_api() -> HotSasApi {
     HotSasApi::new(AppServices::new(
         Arc::new(JsonProjectStorage),
@@ -719,6 +761,10 @@ pub fn run() {
             list_dcdc_templates,
             generate_dcdc_netlist_preview,
             run_dcdc_mock_transient_preview,
+            list_report_section_capabilities,
+            generate_advanced_report,
+            export_advanced_report,
+            get_last_advanced_report,
             write_log
         ])
         .run(tauri::generate_context!())

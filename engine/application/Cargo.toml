@@ -8,3 +8,4 @@ authors.workspace = true
 [dependencies]
 hotsas_core = { path = "../core" }
 hotsas_ports = { path = "../ports" }
+serde_json = { workspace = true }

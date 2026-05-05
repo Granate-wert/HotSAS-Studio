@@ -1,5 +1,6 @@
 import {
   Activity,
+  BarChart3,
   Calculator,
   CircuitBoard,
   FileText,
@@ -23,7 +24,8 @@ export type ScreenId =
   | "import"
   | "diagnostics"
   | "product-beta"
-  | "dcdc";
+  | "dcdc"
+  | "reports";
 
 export const navigationItems: Array<{ id: ScreenId; label: string; icon: ReactNode }> = [
   { id: "start", label: "Start", icon: <CircuitBoard size={18} /> },
@@ -36,5 +38,6 @@ export const navigationItems: Array<{ id: ScreenId; label: string; icon: ReactNo
   { id: "export", label: "Export Center", icon: <FileText size={18} /> },
   { id: "import", label: "Import Models", icon: <Upload size={18} /> },
   { id: "diagnostics", label: "Diagnostics", icon: <HeartPulse size={18} /> },
+  { id: "reports", label: "Advanced Reports", icon: <BarChart3 size={18} /> },
   { id: "product-beta", label: "Product Beta", icon: <Rocket size={18} /> },
 ];

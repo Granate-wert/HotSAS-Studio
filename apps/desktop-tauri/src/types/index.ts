@@ -813,3 +813,102 @@ export type DcdcMockTransientRequestDto = {
   target_inductor_ripple_percent: number | null;
   estimated_efficiency_percent: number | null;
 };
+
+
+export type ReportExportOptionsDto = {
+  include_source_references: boolean;
+  include_graph_references: boolean;
+  include_assumptions: boolean;
+  max_table_rows: number | null;
+};
+
+export type AdvancedReportRequestDto = {
+  report_id: string;
+  title: string;
+  report_type: string;
+  included_sections: string[];
+  export_options: ReportExportOptionsDto;
+  metadata: Record<string, string>;
+};
+
+export type ReportKeyValueRowDto = {
+  key: string;
+  value: string;
+  unit: string | null;
+};
+
+export type ReportWarningDto = {
+  severity: string;
+  code: string;
+  message: string;
+  section_kind: string | null;
+};
+
+export type ReportSourceReferenceDto = {
+  source_id: string;
+  source_type: string;
+  description: string;
+};
+
+export type ReportContentBlockDto = {
+  block_type: string;
+  title: string | null;
+  text: string | null;
+  rows: ReportKeyValueRowDto[] | null;
+  columns: string[] | null;
+  data_rows: string[][] | null;
+  equation: string | null;
+  substituted_values: ReportKeyValueRowDto[] | null;
+  result: string | null;
+  language: string | null;
+  content: string | null;
+  series_names: string[] | null;
+  x_unit: string | null;
+  y_unit: string | null;
+  items: ReportWarningDto[] | null;
+};
+
+export type ReportSectionDto = {
+  kind: string;
+  title: string;
+  status: string;
+  blocks: ReportContentBlockDto[];
+  warnings: ReportWarningDto[];
+};
+
+export type AdvancedReportDto = {
+  id: string;
+  title: string;
+  report_type: string;
+  generated_at: string | null;
+  project_id: string | null;
+  project_name: string | null;
+  sections: ReportSectionDto[];
+  warnings: ReportWarningDto[];
+  assumptions: string[];
+  source_references: ReportSourceReferenceDto[];
+  metadata: Record<string, string>;
+};
+
+export type ReportSectionCapabilityDto = {
+  kind: string;
+  title: string;
+  description: string;
+  default_enabled: boolean;
+  supported_report_types: string[];
+};
+
+export type AdvancedReportExportRequestDto = {
+  report_id: string;
+  format: string;
+  output_path: string | null;
+};
+
+export type AdvancedReportExportResultDto = {
+  report_id: string;
+  format: string;
+  content: string;
+  output_path: string | null;
+  success: boolean;
+  message: string;
+};

@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v2.3 next**
+**Current roadmap stage: v2.4 next**
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
@@ -20,6 +20,7 @@ Completed:
 - v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build
 - v2.1 — Formula Library Expansion & Formula UX Hardening
 - v2.2 — DC-DC Calculators and Templates
+- v2.3 — Advanced Reports
 
 ---
 
@@ -70,6 +71,16 @@ Completed:
 - API command `calculate_formula` + Tauri command.
 - Formula Library UI: variable inputs + **Calculate** button.
 - Old RC-specific commands preserved for compatibility.
+
+### v2.3 — Advanced Reports
+
+- Core models: `AdvancedReportRequest`, `AdvancedReportType` (6 variants), `ReportSectionKind` (14 kinds), `AdvancedReportModel`, `ReportSection`, `ReportContentBlock` (7 block types), `ReportSectionCapability`.
+- `AdvancedReportService` with `generate_report`, `list_section_capabilities`, and 4 renderers: Markdown, HTML, JSON, CSV Summary.
+- 13 section builders covering all data domains: project info, schematic, components, formulas, notebook, DCDC, selected region, simulation, netlist, E-series, BOM, imports, export history, warnings.
+- API facade with `last_advanced_report` caching; 4 Tauri commands.
+- Frontend: `AdvancedReportsScreen` with report type selector, section checklist, preview, and export.
+- Navigation: new "Advanced Reports" screen accessible from sidebar.
+- 28 new tests: 11 core model tests, 9 service tests, 8 API tests, 13 frontend screen tests.
 
 ### v2.2 — DC-DC Calculators and Templates
 

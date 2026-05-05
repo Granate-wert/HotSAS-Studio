@@ -1,3 +1,4 @@
+pub mod advanced_report;
 pub mod app_diagnostics;
 pub mod circuit_query;
 pub mod circuit_validation;

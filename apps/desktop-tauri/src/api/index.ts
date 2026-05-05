@@ -1,5 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
+  AdvancedReportDto,
+  AdvancedReportExportRequestDto,
+  AdvancedReportExportResultDto,
+  AdvancedReportRequestDto,
   ApiErrorDto,
   AppDiagnosticsReportDto,
   ApplyNotebookValueRequestDto,
@@ -31,6 +35,7 @@ import type {
   ProjectDto,
   ProjectPackageManifestDto,
   ProjectPackageValidationReportDto,
+  ReportSectionCapabilityDto,
   SaveProjectDto,
   SelectedComponentDto,
   SelectedRegionAnalysisRequestDto,
@@ -171,6 +176,14 @@ export const backend = {
     invokeCommand<string>("generate_dcdc_netlist_preview", { request }),
   runDcdcMockTransientPreview: (request: DcdcMockTransientRequestDto) =>
     invokeCommand<SimulationResultDto>("run_dcdc_mock_transient_preview", { request }),
+  listReportSectionCapabilities: () =>
+    invokeCommand<ReportSectionCapabilityDto[]>("list_report_section_capabilities"),
+  generateAdvancedReport: (request: AdvancedReportRequestDto) =>
+    invokeCommand<AdvancedReportDto>("generate_advanced_report", { request }),
+  exportAdvancedReport: (request: AdvancedReportExportRequestDto) =>
+    invokeCommand<AdvancedReportExportResultDto>("export_advanced_report", { request }),
+  getLastAdvancedReport: () =>
+    invokeCommand<AdvancedReportDto | null>("get_last_advanced_report"),
   writeLog: (level: string, message: string) =>
     invokeCommand<void>("write_log", { level, message }),
 };

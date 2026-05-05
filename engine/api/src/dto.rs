@@ -2,8 +2,7 @@ use hotsas_core::{
     CircuitProject, EngineeringNotebook, FormulaDefinition, FormulaEquation, FormulaOutput,
     FormulaPackMetadata, FormulaVariable, GraphSeries, NotebookEvaluationResult,
     NotebookHistoryEntry, PreferredValueResult, ProjectPackageManifest,
-    ProjectPackageValidationReport, SimulationResult, SpiceModelKind, TouchstoneFrequencyUnit,
-    TouchstoneParameterFormat, ValueWithUnit,
+    ProjectPackageValidationReport, SimulationResult, ValueWithUnit,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -2003,4 +2002,114 @@ impl From<&hotsas_core::DcdcTemplateDefinition> for DcdcTemplateDto {
             limitations: t.limitations.clone(),
         }
     }
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdvancedReportRequestDto {
+    pub report_id: String,
+    pub title: String,
+    pub report_type: String,
+    pub included_sections: Vec<String>,
+    pub export_options: ReportExportOptionsDto,
+    pub metadata: BTreeMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportExportOptionsDto {
+    pub include_source_references: bool,
+    pub include_graph_references: bool,
+    pub include_assumptions: bool,
+    pub max_table_rows: Option<usize>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdvancedReportDto {
+    pub id: String,
+    pub title: String,
+    pub report_type: String,
+    pub generated_at: Option<String>,
+    pub project_id: Option<String>,
+    pub project_name: Option<String>,
+    pub sections: Vec<ReportSectionDto>,
+    pub warnings: Vec<ReportWarningDto>,
+    pub assumptions: Vec<String>,
+    pub source_references: Vec<ReportSourceReferenceDto>,
+    pub metadata: BTreeMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportSectionDto {
+    pub kind: String,
+    pub title: String,
+    pub status: String,
+    pub blocks: Vec<ReportContentBlockDto>,
+    pub warnings: Vec<ReportWarningDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportContentBlockDto {
+    pub block_type: String,
+    pub title: Option<String>,
+    pub text: Option<String>,
+    pub rows: Option<Vec<ReportKeyValueRowDto>>,
+    pub columns: Option<Vec<String>>,
+    pub data_rows: Option<Vec<Vec<String>>>,
+    pub equation: Option<String>,
+    pub substituted_values: Option<Vec<ReportKeyValueRowDto>>,
+    pub result: Option<String>,
+    pub language: Option<String>,
+    pub content: Option<String>,
+    pub series_names: Option<Vec<String>>,
+    pub x_unit: Option<String>,
+    pub y_unit: Option<String>,
+    pub items: Option<Vec<ReportWarningDto>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportKeyValueRowDto {
+    pub key: String,
+    pub value: String,
+    pub unit: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportWarningDto {
+    pub severity: String,
+    pub code: String,
+    pub message: String,
+    pub section_kind: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportSourceReferenceDto {
+    pub source_id: String,
+    pub source_type: String,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportSectionCapabilityDto {
+    pub kind: String,
+    pub title: String,
+    pub description: String,
+    pub default_enabled: bool,
+    pub supported_report_types: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdvancedReportExportRequestDto {
+    pub report_id: String,
+    pub format: String,
+    pub output_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdvancedReportExportResultDto {
+    pub report_id: String,
+    pub format: String,
+    pub content: String,
+    pub output_path: Option<String>,
+    pub success: bool,
+    pub message: String,
 }

@@ -1,10 +1,10 @@
-use crate::services::DcdcCalculatorService;
+use crate::services::{AdvancedReportService, DcdcCalculatorService};
 use crate::{
-    ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
-    EngineeringNotebookService, ExportCenterService, ExportService, FormulaService,
-    ModelImportService, NetlistGenerationService, NgspiceSimulationService, PreferredValuesService,
-    ProjectPackageService, ProjectService, SelectedRegionAnalysisService, SimulationEngineChoice,
-    SimulationService,
+    ApplicationError, CircuitTemplateService, CircuitValidationService,
+    ComponentLibraryService, EngineeringNotebookService, ExportCenterService, ExportService,
+    FormulaService, ModelImportService, NetlistGenerationService, NgspiceSimulationService,
+    PreferredValuesService, ProjectPackageService, ProjectService, SelectedRegionAnalysisService,
+    SimulationEngineChoice, SimulationService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
@@ -37,6 +37,7 @@ pub struct AppServices {
     selected_region_analysis_service: SelectedRegionAnalysisService,
     model_import_service: ModelImportService,
     dcdc_calculator_service: DcdcCalculatorService,
+    advanced_report_service: AdvancedReportService,
 }
 
 impl AppServices {
@@ -80,6 +81,7 @@ impl AppServices {
             selected_region_analysis_service: SelectedRegionAnalysisService::new(),
             model_import_service: ModelImportService::new(spice_parser, touchstone_parser),
             dcdc_calculator_service: crate::services::DcdcCalculatorService::new(),
+            advanced_report_service: AdvancedReportService::new(),
         }
     }
 
@@ -145,6 +147,10 @@ impl AppServices {
 
     pub fn dcdc_calculator_service(&self) -> &DcdcCalculatorService {
         &self.dcdc_calculator_service
+    }
+
+    pub fn advanced_report_service(&self) -> &AdvancedReportService {
+        &self.advanced_report_service
     }
 
     pub fn create_rc_low_pass_demo_project(&self) -> CircuitProject {

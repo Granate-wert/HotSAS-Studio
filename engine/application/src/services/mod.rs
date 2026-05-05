@@ -1,3 +1,4 @@
+mod advanced_report;
 mod app_diagnostics;
 mod app_services;
 mod circuit_template;
@@ -19,6 +20,7 @@ mod project_package;
 mod selected_region_analysis;
 mod simulation;
 
+pub use advanced_report::AdvancedReportService;
 pub use app_diagnostics::AppDiagnosticsService;
 pub use app_services::AppServices;
 pub use circuit_template::CircuitTemplateService;

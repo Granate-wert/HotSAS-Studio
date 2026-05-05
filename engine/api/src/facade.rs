@@ -1,16 +1,16 @@
 use crate::{
-    ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto, AssignComponentRequestDto,
-    CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto, ComponentParameterDto,
-    ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto, ExportCapabilityDto,
-    ExportHistoryEntryDto, ExportRequestDto, ExportResultDto, FootprintDto,
+    ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto,
+    AssignComponentRequestDto, CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto,
+    ComponentParameterDto, ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto,
+    ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto, ExportResultDto, FootprintDto,
     FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
     FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, KeyValueDto,
     NgspiceAvailabilityDto, NotebookEvaluationRequestDto, NotebookEvaluationResultDto,
     NotebookStateDto, PreferredValueDto, ProductWorkflowStatusDto, ProjectDto,
-    ProjectPackageManifestDto, ProjectPackageValidationReportDto, SaveProjectDto,
-    SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
-    SelectedRegionPreviewDto, SimulationModelDto, SimulationResultDto, SimulationRunRequestDto,
-    SymbolDto, ValueDto, VerticalSliceDto,
+    ProjectPackageManifestDto, ProjectPackageValidationReportDto,
+    SaveProjectDto, SelectedComponentDto, SelectedRegionAnalysisRequestDto,
+    SelectedRegionAnalysisResultDto, SelectedRegionPreviewDto, SimulationModelDto,
+    SimulationResultDto, SimulationRunRequestDto, SymbolDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{
     AppDiagnosticsService, AppServices, FormulaRegistryService, ProductWorkflowService,
@@ -32,6 +32,7 @@ pub struct HotSasApi {
     component_library: Mutex<ComponentLibrary>,
     app_diagnostics: AppDiagnosticsService,
     product_workflow: ProductWorkflowService,
+    last_advanced_report: Mutex<Option<hotsas_core::advanced_report::AdvancedReportModel>>,
 }
 
 impl HotSasApi {
@@ -57,6 +58,7 @@ impl HotSasApi {
             component_library: Mutex::new(library),
             app_diagnostics: AppDiagnosticsService::new(),
             product_workflow: ProductWorkflowService::new(),
+            last_advanced_report: Mutex::new(None),
         }
     }
 
@@ -1135,6 +1137,282 @@ impl HotSasApi {
             .create_dcdc_mock_transient_preview(&calc_result)
             .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
         Ok(SimulationResultDto::from(&sim_result))
+    }
+
+    pub fn list_report_section_capabilities(&self) -> Result<Vec<crate::ReportSectionCapabilityDto>, ApiError> {
+        let caps = self.services.advanced_report_service().list_section_capabilities();
+        Ok(caps.into_iter().map(|c| crate::ReportSectionCapabilityDto {
+            kind: c.kind.to_string(),
+            title: c.title,
+            description: c.description,
+            default_enabled: c.default_enabled,
+            supported_report_types: c.supported_report_types.iter().map(|t| t.to_string()).collect(),
+        }).collect())
+    }
+
+    pub fn generate_advanced_report(
+        &self,
+        request: crate::AdvancedReportRequestDto,
+    ) -> Result<crate::AdvancedReportDto, ApiError> {
+        let report_type = request.report_type.parse::<hotsas_core::advanced_report::AdvancedReportType>()
+            .map_err(|e| ApiError::InvalidInput(e))?;
+        let included_sections: Result<Vec<_>, _> = request.included_sections.iter()
+            .map(|s| s.parse::<hotsas_core::advanced_report::ReportSectionKind>())
+            .collect();
+        let included_sections = included_sections.map_err(|e| ApiError::InvalidInput(e))?;
+        let report_request = hotsas_core::advanced_report::AdvancedReportRequest {
+            report_id: request.report_id.clone(),
+            title: request.title,
+            report_type,
+            included_sections,
+            export_options: hotsas_core::advanced_report::ReportExportOptions {
+                include_source_references: request.export_options.include_source_references,
+                include_graph_references: request.export_options.include_graph_references,
+                include_assumptions: request.export_options.include_assumptions,
+                max_table_rows: request.export_options.max_table_rows,
+            },
+            metadata: request.metadata,
+        };
+        let project = self.current_project().ok();
+        let context = hotsas_core::advanced_report::AdvancedReportContext {
+            project,
+            notebook: Some(self.notebook.lock().map_err(|_| ApiError::State("notebook lock poisoned".to_string()))?.clone()),
+            simulation_result: None,
+            dcdc_result: None,
+            selected_region_result: None,
+            export_history: vec![],
+            netlist: None,
+            imported_models_summary: vec![],
+        };
+        let report = self.services.advanced_report_service()
+            .generate_report(report_request, &context)
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+        let dto = Self::advanced_report_to_dto(&report);
+        if let Ok(mut guard) = self.last_advanced_report.lock() {
+            *guard = Some(report);
+        }
+        Ok(dto)
+    }
+
+    pub fn export_advanced_report(
+        &self,
+        request: crate::AdvancedReportExportRequestDto,
+    ) -> Result<crate::AdvancedReportExportResultDto, ApiError> {
+        let report = self.last_advanced_report.lock()
+            .map_err(|_| ApiError::State("report lock poisoned".to_string()))?
+            .clone()
+            .ok_or_else(|| ApiError::State("no report generated yet".to_string()))?;
+        let (content, message) = match request.format.as_str() {
+            "markdown" => {
+                let md = self.services.advanced_report_service().render_report_markdown(&report)
+                    .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+                (md, "Markdown report exported.".to_string())
+            }
+            "html" => {
+                let html = self.services.advanced_report_service().render_report_html(&report)
+                    .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+                (html, "HTML report exported.".to_string())
+            }
+            "json" => {
+                let json = self.services.advanced_report_service().render_report_json(&report)
+                    .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+                (json, "JSON report exported.".to_string())
+            }
+            "csv_summary" => {
+                let csv = self.services.advanced_report_service().render_report_csv_summary(&report)
+                    .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+                (csv, "CSV summary exported.".to_string())
+            }
+            other => return Err(ApiError::InvalidInput(format!("unknown export format: {other}"))),
+        };
+        Ok(crate::AdvancedReportExportResultDto {
+            report_id: report.id,
+            format: request.format,
+            content,
+            output_path: request.output_path,
+            success: true,
+            message,
+        })
+    }
+
+    pub fn get_last_advanced_report(&self) -> Result<Option<crate::AdvancedReportDto>, ApiError> {
+        let report = self.last_advanced_report.lock()
+            .map_err(|_| ApiError::State("report lock poisoned".to_string()))?
+            .clone();
+        Ok(report.as_ref().map(Self::advanced_report_to_dto))
+    }
+
+    fn advanced_report_to_dto(report: &hotsas_core::advanced_report::AdvancedReportModel) -> crate::AdvancedReportDto {
+        crate::AdvancedReportDto {
+            id: report.id.clone(),
+            title: report.title.clone(),
+            report_type: report.report_type.to_string(),
+            generated_at: report.generated_at.clone(),
+            project_id: report.project_id.clone(),
+            project_name: report.project_name.clone(),
+            sections: report.sections.iter().map(|s| crate::ReportSectionDto {
+                kind: s.kind.to_string(),
+                title: s.title.clone(),
+                status: s.status.to_string(),
+                blocks: s.blocks.iter().map(|b| Self::report_block_to_dto(b)).collect(),
+                warnings: s.warnings.iter().map(|w| crate::ReportWarningDto {
+                    severity: format!("{:?}", w.severity),
+                    code: w.code.clone(),
+                    message: w.message.clone(),
+                    section_kind: w.section_kind.as_ref().map(|k| k.to_string()),
+                }).collect(),
+            }).collect(),
+            warnings: report.warnings.iter().map(|w| crate::ReportWarningDto {
+                severity: format!("{:?}", w.severity),
+                code: w.code.clone(),
+                message: w.message.clone(),
+                section_kind: w.section_kind.as_ref().map(|k| k.to_string()),
+            }).collect(),
+            assumptions: report.assumptions.clone(),
+            source_references: report.source_references.iter().map(|sr| crate::ReportSourceReferenceDto {
+                source_id: sr.source_id.clone(),
+                source_type: sr.source_type.clone(),
+                description: sr.description.clone(),
+            }).collect(),
+            metadata: report.metadata.clone(),
+        }
+    }
+
+    fn report_block_to_dto(block: &hotsas_core::advanced_report::ReportContentBlock) -> crate::ReportContentBlockDto {
+        match block {
+            hotsas_core::advanced_report::ReportContentBlock::Paragraph { text } => crate::ReportContentBlockDto {
+                block_type: "paragraph".to_string(),
+                title: None,
+                text: Some(text.clone()),
+                rows: None,
+                columns: None,
+                data_rows: None,
+                equation: None,
+                substituted_values: None,
+                result: None,
+                language: None,
+                content: None,
+                series_names: None,
+                x_unit: None,
+                y_unit: None,
+                items: None,
+            },
+            hotsas_core::advanced_report::ReportContentBlock::KeyValueTable { title, rows } => crate::ReportContentBlockDto {
+                block_type: "key_value_table".to_string(),
+                title: Some(title.clone()),
+                text: None,
+                rows: Some(rows.iter().map(|r| crate::ReportKeyValueRowDto {
+                    key: r.key.clone(),
+                    value: r.value.clone(),
+                    unit: r.unit.clone(),
+                }).collect()),
+                columns: None,
+                data_rows: None,
+                equation: None,
+                substituted_values: None,
+                result: None,
+                language: None,
+                content: None,
+                series_names: None,
+                x_unit: None,
+                y_unit: None,
+                items: None,
+            },
+            hotsas_core::advanced_report::ReportContentBlock::DataTable { title, columns, rows } => crate::ReportContentBlockDto {
+                block_type: "data_table".to_string(),
+                title: Some(title.clone()),
+                text: None,
+                rows: None,
+                columns: Some(columns.clone()),
+                data_rows: Some(rows.clone()),
+                equation: None,
+                substituted_values: None,
+                result: None,
+                language: None,
+                content: None,
+                series_names: None,
+                x_unit: None,
+                y_unit: None,
+                items: None,
+            },
+            hotsas_core::advanced_report::ReportContentBlock::FormulaBlock { title, equation, substituted_values, result } => crate::ReportContentBlockDto {
+                block_type: "formula_block".to_string(),
+                title: Some(title.clone()),
+                text: None,
+                rows: None,
+                columns: None,
+                data_rows: None,
+                equation: Some(equation.clone()),
+                substituted_values: Some(substituted_values.iter().map(|r| crate::ReportKeyValueRowDto {
+                    key: r.key.clone(),
+                    value: r.value.clone(),
+                    unit: r.unit.clone(),
+                }).collect()),
+                result: result.clone(),
+                language: None,
+                content: None,
+                series_names: None,
+                x_unit: None,
+                y_unit: None,
+                items: None,
+            },
+            hotsas_core::advanced_report::ReportContentBlock::CodeBlock { title, language, content } => crate::ReportContentBlockDto {
+                block_type: "code_block".to_string(),
+                title: Some(title.clone()),
+                text: None,
+                rows: None,
+                columns: None,
+                data_rows: None,
+                equation: None,
+                substituted_values: None,
+                result: None,
+                language: Some(language.clone()),
+                content: Some(content.clone()),
+                series_names: None,
+                x_unit: None,
+                y_unit: None,
+                items: None,
+            },
+            hotsas_core::advanced_report::ReportContentBlock::GraphReference { title, series_names, x_unit, y_unit } => crate::ReportContentBlockDto {
+                block_type: "graph_reference".to_string(),
+                title: Some(title.clone()),
+                text: None,
+                rows: None,
+                columns: None,
+                data_rows: None,
+                equation: None,
+                substituted_values: None,
+                result: None,
+                language: None,
+                content: None,
+                series_names: Some(series_names.clone()),
+                x_unit: x_unit.clone(),
+                y_unit: y_unit.clone(),
+                items: None,
+            },
+            hotsas_core::advanced_report::ReportContentBlock::WarningList { items } => crate::ReportContentBlockDto {
+                block_type: "warning_list".to_string(),
+                title: None,
+                text: None,
+                rows: None,
+                columns: None,
+                data_rows: None,
+                equation: None,
+                substituted_values: None,
+                result: None,
+                language: None,
+                content: None,
+                series_names: None,
+                x_unit: None,
+                y_unit: None,
+                items: Some(items.iter().map(|w| crate::ReportWarningDto {
+                    severity: format!("{:?}", w.severity),
+                    code: w.code.clone(),
+                    message: w.message.clone(),
+                    section_kind: w.section_kind.as_ref().map(|k| k.to_string()),
+                }).collect()),
+            },
+        }
     }
 
     fn current_component_library(&self) -> Result<ComponentLibrary, ApiError> {

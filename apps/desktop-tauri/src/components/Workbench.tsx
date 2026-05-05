@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { ImportModelsScreen } from "../screens/ImportModelsScreen";
 import { backend } from "../api";
+import { AdvancedReportsScreen } from "../screens/AdvancedReportsScreen";
 import { DcdcCalculatorScreen } from "../screens/DcdcCalculatorScreen";
 import { CalculatorScreen } from "../screens/CalculatorScreen";
 import { ComponentLibraryScreen } from "../screens/ComponentLibraryScreen";
@@ -88,6 +89,18 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     setProductWorkflowStatus,
     setProductWorkflowLoading,
     setProductWorkflowError,
+    reportSectionCapabilities,
+    lastAdvancedReport,
+    advancedReportPreview,
+    advancedReportExportResult,
+    advancedReportLoading,
+    advancedReportError,
+    setReportSectionCapabilities,
+    setLastAdvancedReport,
+    setAdvancedReportPreview,
+    setAdvancedReportExportResult,
+    setAdvancedReportLoading,
+    setAdvancedReportError,
   } = useHotSasStore();
 
   const run = async <T,>(operation: () => Promise<T>, onResult: (result: T) => void) => {
@@ -113,6 +126,19 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
       setDiagnosticsError(caught instanceof Error ? caught.message : String(caught));
     } finally {
       setDiagnosticsLoading(false);
+    }
+  };
+
+  const runAdvancedReport = async <T,>(operation: () => Promise<T>, onResult: (result: T) => void) => {
+    setAdvancedReportLoading(true);
+    setAdvancedReportError(null);
+    try {
+      const result = await operation();
+      onResult(result);
+    } catch (caught) {
+      setAdvancedReportError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setAdvancedReportLoading(false);
     }
   };
 
@@ -224,6 +250,43 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         (status) => setProductWorkflowStatus(status),
       ),
     createIntegratedDemoProject: () => run(backend.createIntegratedDemoProject, setProject),
+    loadReportSectionCapabilities: () =>
+      runAdvancedReport(
+        () => backend.listReportSectionCapabilities(),
+        setReportSectionCapabilities,
+      ),
+    generateAdvancedReport: (reportType: string, includedSections: string[], title: string) =>
+      runAdvancedReport(
+        () =>
+          backend.generateAdvancedReport({
+            report_id: `report-${Date.now()}`,
+            title,
+            report_type: reportType,
+            included_sections: includedSections,
+            export_options: { include_source_references: true, include_graph_references: true, include_assumptions: true, max_table_rows: null },
+            metadata: {},
+          }),
+        (report) => {
+          setLastAdvancedReport(report);
+          setAdvancedReportPreview(report);
+        },
+      ),
+    exportAdvancedReport: (reportId: string, format: string, outputPath: string | null) =>
+      runAdvancedReport(
+        () =>
+          backend.exportAdvancedReport({
+            report_id: reportId,
+            format,
+            output_path: outputPath,
+          }),
+        (result) => {
+          setAdvancedReportExportResult(
+            result.success
+              ? `Exported ${result.format}: ${result.message}`
+              : `Export failed: ${result.message}`,
+          );
+        },
+      ),
     exportFile: (format: string, writeToFile: boolean, outputDir: string) =>
       run(
         () =>
@@ -363,6 +426,12 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         productWorkflowStatus,
         productWorkflowLoading,
         productWorkflowError,
+        reportSectionCapabilities,
+        lastAdvancedReport,
+        advancedReportPreview,
+        advancedReportExportResult,
+        advancedReportLoading,
+        advancedReportError,
         actions,
       })}
     </div>
@@ -395,6 +464,12 @@ function renderScreen(
     productWorkflowStatus: ReturnType<typeof useHotSasStore.getState>["productWorkflowStatus"];
     productWorkflowLoading: ReturnType<typeof useHotSasStore.getState>["productWorkflowLoading"];
     productWorkflowError: ReturnType<typeof useHotSasStore.getState>["productWorkflowError"];
+    reportSectionCapabilities: ReturnType<typeof useHotSasStore.getState>["reportSectionCapabilities"];
+    lastAdvancedReport: ReturnType<typeof useHotSasStore.getState>["lastAdvancedReport"];
+    advancedReportPreview: ReturnType<typeof useHotSasStore.getState>["advancedReportPreview"];
+    advancedReportExportResult: ReturnType<typeof useHotSasStore.getState>["advancedReportExportResult"];
+    advancedReportLoading: ReturnType<typeof useHotSasStore.getState>["advancedReportLoading"];
+    advancedReportError: ReturnType<typeof useHotSasStore.getState>["advancedReportError"];
     selectedSimulationEngine: ReturnType<
       typeof useHotSasStore.getState
     >["selectedSimulationEngine"];
@@ -427,6 +502,9 @@ function renderScreen(
       listImportedModels: () => void;
       getImportedModel: (modelId: string) => void;
       refreshSelectedComponent: () => void;
+      loadReportSectionCapabilities: () => void;
+      generateAdvancedReport: (reportType: string, includedSections: string[], title: string) => void;
+      exportAdvancedReport: (reportId: string, format: string, outputPath: string | null) => void;
     };
   },
 ) {
@@ -531,6 +609,23 @@ function renderScreen(
 
   if (activeScreen === "dcdc") {
     return <DcdcCalculatorScreen />;
+  }
+
+  if (activeScreen === "reports") {
+    return (
+      <AdvancedReportsScreen
+        hasProject={context.hasProject}
+        capabilities={context.reportSectionCapabilities}
+        lastReport={context.lastAdvancedReport}
+        previewReport={context.advancedReportPreview}
+        exportResult={context.advancedReportExportResult}
+        loading={context.advancedReportLoading}
+        error={context.advancedReportError}
+        onLoadCapabilities={context.actions.loadReportSectionCapabilities}
+        onGenerateReport={context.actions.generateAdvancedReport}
+        onExportReport={context.actions.exportAdvancedReport}
+      />
+    );
   }
 
   return (

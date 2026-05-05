@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type {
+  AdvancedReportDto,
   AppDiagnosticsReportDto,
   CircuitValidationReportDto,
   ComponentDetailsDto,
@@ -17,6 +18,7 @@ import type {
   PreferredValueDto,
   ProductWorkflowStatusDto,
   ProjectDto,
+  ReportSectionCapabilityDto,
   SelectedComponentDto,
   SelectedRegionAnalysisResultDto,
   SelectedRegionPreviewDto,
@@ -69,6 +71,12 @@ type HotSasState = {
   productWorkflowStatus: ProductWorkflowStatusDto | null;
   productWorkflowLoading: boolean;
   productWorkflowError: string | null;
+  reportSectionCapabilities: ReportSectionCapabilityDto[];
+  lastAdvancedReport: AdvancedReportDto | null;
+  advancedReportPreview: AdvancedReportDto | null;
+  advancedReportExportResult: string | null;
+  advancedReportLoading: boolean;
+  advancedReportError: string | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -113,6 +121,12 @@ type HotSasState = {
   setProductWorkflowStatus: (status: ProductWorkflowStatusDto | null) => void;
   setProductWorkflowLoading: (loading: boolean) => void;
   setProductWorkflowError: (error: string | null) => void;
+  setReportSectionCapabilities: (capabilities: ReportSectionCapabilityDto[]) => void;
+  setLastAdvancedReport: (report: AdvancedReportDto | null) => void;
+  setAdvancedReportPreview: (preview: AdvancedReportDto | null) => void;
+  setAdvancedReportExportResult: (result: string | null) => void;
+  setAdvancedReportLoading: (loading: boolean) => void;
+  setAdvancedReportError: (error: string | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -159,6 +173,12 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   productWorkflowStatus: null,
   productWorkflowLoading: false,
   productWorkflowError: null,
+  reportSectionCapabilities: [],
+  lastAdvancedReport: null,
+  advancedReportPreview: null,
+  advancedReportExportResult: null,
+  advancedReportLoading: false,
+  advancedReportError: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -206,4 +226,10 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setProductWorkflowStatus: (productWorkflowStatus) => set({ productWorkflowStatus }),
   setProductWorkflowLoading: (productWorkflowLoading) => set({ productWorkflowLoading }),
   setProductWorkflowError: (productWorkflowError) => set({ productWorkflowError }),
+  setReportSectionCapabilities: (reportSectionCapabilities) => set({ reportSectionCapabilities }),
+  setLastAdvancedReport: (lastAdvancedReport) => set({ lastAdvancedReport }),
+  setAdvancedReportPreview: (advancedReportPreview) => set({ advancedReportPreview }),
+  setAdvancedReportExportResult: (advancedReportExportResult) => set({ advancedReportExportResult }),
+  setAdvancedReportLoading: (advancedReportLoading) => set({ advancedReportLoading }),
+  setAdvancedReportError: (advancedReportError) => set({ advancedReportError }),
 }));
