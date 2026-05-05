@@ -101,6 +101,14 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     setAdvancedReportExportResult,
     setAdvancedReportLoading,
     setAdvancedReportError,
+    schematicEditorCapabilities,
+    schematicEditLoading,
+    schematicEditError,
+    pendingConnectionStart,
+    setSchematicEditorCapabilities,
+    setSchematicEditLoading,
+    setSchematicEditError,
+    setPendingConnectionStart,
   } = useHotSasStore();
 
   const run = async <T,>(operation: () => Promise<T>, onResult: (result: T) => void) => {
@@ -129,7 +137,10 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     }
   };
 
-  const runAdvancedReport = async <T,>(operation: () => Promise<T>, onResult: (result: T) => void) => {
+  const runAdvancedReport = async <T,>(
+    operation: () => Promise<T>,
+    onResult: (result: T) => void,
+  ) => {
     setAdvancedReportLoading(true);
     setAdvancedReportError(null);
     try {
@@ -263,7 +274,12 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
             title,
             report_type: reportType,
             included_sections: includedSections,
-            export_options: { include_source_references: true, include_graph_references: true, include_assumptions: true, max_table_rows: null },
+            export_options: {
+              include_source_references: true,
+              include_graph_references: true,
+              include_assumptions: true,
+              max_table_rows: null,
+            },
             metadata: {},
           }),
         (report) => {
@@ -304,6 +320,106 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
           (component) => setSelectedComponent(component),
         );
       }
+    },
+    setPendingConnectionStart: (start: { componentId: string; pinId: string } | null) =>
+      setPendingConnectionStart(start),
+    loadSchematicCapabilities: () =>
+      run(backend.listSchematicEditorCapabilities, setSchematicEditorCapabilities),
+    addSchematicComponent: (kind: string) => {
+      setSchematicEditLoading(true);
+      setSchematicEditError(null);
+      backend
+        .addSchematicComponent({
+          component_kind: kind,
+          component_definition_id: null,
+          instance_id: null,
+          x: 100 + Math.random() * 200,
+          y: 100 + Math.random() * 200,
+          rotation_deg: 0,
+        })
+        .then((result) => {
+          setProject(result.project);
+          setValidationReport({
+            valid: result.validation_warnings.length === 0,
+            warnings: result.validation_warnings,
+            errors: [],
+          });
+        })
+        .catch((err) => setSchematicEditError(err instanceof Error ? err.message : String(err)))
+        .finally(() => setSchematicEditLoading(false));
+    },
+    moveSchematicComponent: (instanceId: string, x: number, y: number) => {
+      setSchematicEditLoading(true);
+      setSchematicEditError(null);
+      backend
+        .moveSchematicComponent({ instance_id: instanceId, x, y })
+        .then((result) => {
+          setProject(result.project);
+          setValidationReport({
+            valid: result.validation_warnings.length === 0,
+            warnings: result.validation_warnings,
+            errors: [],
+          });
+        })
+        .catch((err) => setSchematicEditError(err instanceof Error ? err.message : String(err)))
+        .finally(() => setSchematicEditLoading(false));
+    },
+    deleteSchematicComponent: (instanceId: string) => {
+      setSchematicEditLoading(true);
+      setSchematicEditError(null);
+      backend
+        .deleteSchematicComponent({ instance_id: instanceId })
+        .then((result) => {
+          setProject(result.project);
+          setSelectedComponentId(null);
+          setSelectedComponent(null);
+          setValidationReport({
+            valid: result.validation_warnings.length === 0,
+            warnings: result.validation_warnings,
+            errors: [],
+          });
+        })
+        .catch((err) => setSchematicEditError(err instanceof Error ? err.message : String(err)))
+        .finally(() => setSchematicEditLoading(false));
+    },
+    connectSchematicPins: (request: {
+      from_component_id: string;
+      from_pin_id: string;
+      to_component_id: string;
+      to_pin_id: string;
+      net_name?: string | null;
+    }) => {
+      setSchematicEditLoading(true);
+      setSchematicEditError(null);
+      backend
+        .connectSchematicPins(request)
+        .then((result) => {
+          setProject(result.project);
+          setPendingConnectionStart(null);
+          setValidationReport({
+            valid: result.validation_warnings.length === 0,
+            warnings: result.validation_warnings,
+            errors: [],
+          });
+        })
+        .catch((err) => setSchematicEditError(err instanceof Error ? err.message : String(err)))
+        .finally(() => setSchematicEditLoading(false));
+    },
+    renameSchematicNet: (netId: string, newName: string) => {
+      setSchematicEditLoading(true);
+      setSchematicEditError(null);
+      backend
+        .renameSchematicNet({ net_id: netId, new_name: newName })
+        .then((result) => {
+          setProject(result.project);
+          setValidationReport({
+            valid: result.validation_warnings.length === 0,
+            warnings: result.validation_warnings,
+            errors: [],
+          });
+        })
+        .catch((err) => setSchematicEditError(err instanceof Error ? err.message : String(err)))
+        .finally(() => setSchematicEditLoading(false));
     },
   };
   const hasProject = Boolean(project);
@@ -432,6 +548,10 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         advancedReportExportResult,
         advancedReportLoading,
         advancedReportError,
+        schematicEditorCapabilities,
+        schematicEditLoading,
+        schematicEditError,
+        pendingConnectionStart,
         actions,
       })}
     </div>
@@ -455,6 +575,12 @@ function renderScreen(
     exportCapabilities: ReturnType<typeof useHotSasStore.getState>["exportCapabilities"];
     lastExportResult: ReturnType<typeof useHotSasStore.getState>["lastExportResult"];
     ngspiceAvailability: ReturnType<typeof useHotSasStore.getState>["ngspiceAvailability"];
+    schematicEditorCapabilities: ReturnType<
+      typeof useHotSasStore.getState
+    >["schematicEditorCapabilities"];
+    schematicEditLoading: ReturnType<typeof useHotSasStore.getState>["schematicEditLoading"];
+    schematicEditError: ReturnType<typeof useHotSasStore.getState>["schematicEditError"];
+    pendingConnectionStart: ReturnType<typeof useHotSasStore.getState>["pendingConnectionStart"];
     appDiagnostics: ReturnType<typeof useHotSasStore.getState>["appDiagnostics"];
     readinessSelfCheckResult: ReturnType<
       typeof useHotSasStore.getState
@@ -464,10 +590,14 @@ function renderScreen(
     productWorkflowStatus: ReturnType<typeof useHotSasStore.getState>["productWorkflowStatus"];
     productWorkflowLoading: ReturnType<typeof useHotSasStore.getState>["productWorkflowLoading"];
     productWorkflowError: ReturnType<typeof useHotSasStore.getState>["productWorkflowError"];
-    reportSectionCapabilities: ReturnType<typeof useHotSasStore.getState>["reportSectionCapabilities"];
+    reportSectionCapabilities: ReturnType<
+      typeof useHotSasStore.getState
+    >["reportSectionCapabilities"];
     lastAdvancedReport: ReturnType<typeof useHotSasStore.getState>["lastAdvancedReport"];
     advancedReportPreview: ReturnType<typeof useHotSasStore.getState>["advancedReportPreview"];
-    advancedReportExportResult: ReturnType<typeof useHotSasStore.getState>["advancedReportExportResult"];
+    advancedReportExportResult: ReturnType<
+      typeof useHotSasStore.getState
+    >["advancedReportExportResult"];
     advancedReportLoading: ReturnType<typeof useHotSasStore.getState>["advancedReportLoading"];
     advancedReportError: ReturnType<typeof useHotSasStore.getState>["advancedReportError"];
     selectedSimulationEngine: ReturnType<
@@ -503,8 +633,25 @@ function renderScreen(
       getImportedModel: (modelId: string) => void;
       refreshSelectedComponent: () => void;
       loadReportSectionCapabilities: () => void;
-      generateAdvancedReport: (reportType: string, includedSections: string[], title: string) => void;
+      generateAdvancedReport: (
+        reportType: string,
+        includedSections: string[],
+        title: string,
+      ) => void;
       exportAdvancedReport: (reportId: string, format: string, outputPath: string | null) => void;
+      setPendingConnectionStart: (start: { componentId: string; pinId: string } | null) => void;
+      loadSchematicCapabilities: () => void;
+      addSchematicComponent: (kind: string) => void;
+      moveSchematicComponent: (instanceId: string, x: number, y: number) => void;
+      deleteSchematicComponent: (instanceId: string) => void;
+      connectSchematicPins: (request: {
+        from_component_id: string;
+        from_pin_id: string;
+        to_component_id: string;
+        to_pin_id: string;
+        net_name?: string | null;
+      }) => void;
+      renameSchematicNet: (netId: string, newName: string) => void;
     };
   },
 ) {
@@ -542,6 +689,17 @@ function renderScreen(
         onSelectComponent={context.actions.selectComponent}
         onValidate={context.actions.validateCircuit}
         onPropertyUpdate={context.actions.refreshSelectedComponent}
+        schematicCapabilities={context.schematicEditorCapabilities}
+        schematicEditLoading={context.schematicEditLoading}
+        schematicEditError={context.schematicEditError}
+        pendingConnectionStart={context.pendingConnectionStart}
+        onLoadSchematicCapabilities={context.actions.loadSchematicCapabilities}
+        onAddComponent={context.actions.addSchematicComponent}
+        onMoveComponent={context.actions.moveSchematicComponent}
+        onDeleteComponent={context.actions.deleteSchematicComponent}
+        onConnectPins={context.actions.connectSchematicPins}
+        onRenameNet={context.actions.renameSchematicNet}
+        onSetPendingConnectionStart={context.actions.setPendingConnectionStart}
       />
     );
   }

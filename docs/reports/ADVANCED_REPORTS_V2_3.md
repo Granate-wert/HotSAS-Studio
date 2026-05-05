@@ -38,6 +38,7 @@ The Advanced Reports module provides structured, multi-section report generation
 #### Tauri Commands (`apps/desktop-tauri/src-tauri/src/lib.rs`)
 
 Four commands registered in `generate_handler![]`:
+
 - `list_report_section_capabilities`
 - `generate_advanced_report`
 - `export_advanced_report`
@@ -56,6 +57,7 @@ Four wrapper methods invoke the Tauri commands with proper typing.
 #### Zustand Store (`apps/desktop-tauri/src/store/index.ts`)
 
 Added state fields:
+
 - `reportSectionCapabilities`
 - `lastAdvancedReport`
 - `advancedReportPreview`
@@ -68,6 +70,7 @@ Plus corresponding setters.
 #### Screen (`apps/desktop-tauri/src/screens/AdvancedReportsScreen.tsx`)
 
 Features:
+
 - Report type selector (6 types)
 - Section capability checklist with Select All / Clear All
 - Generate Report button (disabled when no project or no sections selected)
@@ -100,31 +103,31 @@ New `ScreenId` variant `"reports"` with label "Advanced Reports" and `BarChart3`
 
 Each section builder receives `&AdvancedReportContext` and returns a `ReportSection`:
 
-| Builder | Kind | Behavior when data missing |
-|---|---|---|
-| `build_project_info_section` | `ProjectInfo` | `Empty` if no project |
-| `build_schematic_summary_section` | `SchematicSummary` | `Empty` if no project |
-| `build_component_summary_section` | `ComponentSummary` | `Empty` if no project |
-| `build_formula_calculations_section` | `FormulaCalculations` | `Unavailable` if no notebook |
-| `build_notebook_calculations_section` | `NotebookCalculations` | `Unavailable` if no notebook |
-| `build_dcdc_calculations_section` | `DcdcCalculations` | `Unavailable` if no DCDC result |
-| `build_selected_region_analysis_section` | `SelectedRegionAnalysis` | `Unavailable` if no region result |
-| `build_simulation_results_section` | `SimulationResults` | `Unavailable` if no simulation |
-| `build_spice_netlist_section` | `SpiceNetlist` | `Unavailable` if no netlist |
-| `build_e_series_selections_section` | `ESeriesSelections` | `Unavailable` if no notebook |
-| `build_bom_section` | `Bom` | `Empty` if no project |
-| `build_imported_models_section` | `ImportedModels` | `Empty` if no imported models |
-| `build_export_history_section` | `ExportHistory` | `Empty` if no history |
+| Builder                                  | Kind                     | Behavior when data missing             |
+| ---------------------------------------- | ------------------------ | -------------------------------------- |
+| `build_project_info_section`             | `ProjectInfo`            | `Empty` if no project                  |
+| `build_schematic_summary_section`        | `SchematicSummary`       | `Empty` if no project                  |
+| `build_component_summary_section`        | `ComponentSummary`       | `Empty` if no project                  |
+| `build_formula_calculations_section`     | `FormulaCalculations`    | `Unavailable` if no notebook           |
+| `build_notebook_calculations_section`    | `NotebookCalculations`   | `Unavailable` if no notebook           |
+| `build_dcdc_calculations_section`        | `DcdcCalculations`       | `Unavailable` if no DCDC result        |
+| `build_selected_region_analysis_section` | `SelectedRegionAnalysis` | `Unavailable` if no region result      |
+| `build_simulation_results_section`       | `SimulationResults`      | `Unavailable` if no simulation         |
+| `build_spice_netlist_section`            | `SpiceNetlist`           | `Unavailable` if no netlist            |
+| `build_e_series_selections_section`      | `ESeriesSelections`      | `Unavailable` if no notebook           |
+| `build_bom_section`                      | `Bom`                    | `Empty` if no project                  |
+| `build_imported_models_section`          | `ImportedModels`         | `Empty` if no imported models          |
+| `build_export_history_section`           | `ExportHistory`          | `Empty` if no history                  |
 | `build_warnings_and_assumptions_section` | `WarningsAndAssumptions` | Always `Included`, aggregates warnings |
 
 ## Output Formats
 
-| Format | Description | Use case |
-|---|---|---|
-| `markdown` | GitHub-flavored Markdown | Human-readable docs, GitHub upload |
-| `html` | Escaped HTML with sections | Web publishing, email |
-| `json` | Full `serde_json` serialization | Programmatic consumption |
-| `csv_summary` | Section statistics CSV | Spreadsheets, quick overviews |
+| Format        | Description                     | Use case                           |
+| ------------- | ------------------------------- | ---------------------------------- |
+| `markdown`    | GitHub-flavored Markdown        | Human-readable docs, GitHub upload |
+| `html`        | Escaped HTML with sections      | Web publishing, email              |
+| `json`        | Full `serde_json` serialization | Programmatic consumption           |
+| `csv_summary` | Section statistics CSV          | Spreadsheets, quick overviews      |
 
 ## Testing
 
@@ -141,6 +144,7 @@ Each section builder receives `&AdvancedReportContext` and returns a `ReportSect
 ## Files Changed
 
 ### Backend
+
 - `engine/core/src/advanced_report.rs` — New domain models
 - `engine/application/src/services/advanced_report.rs` — New service
 - `engine/application/src/services/mod.rs` — Re-export `AdvancedReportService`
@@ -150,6 +154,7 @@ Each section builder receives `&AdvancedReportContext` and returns a `ReportSect
 - `engine/application/Cargo.toml` — Added `serde_json` dependency
 
 ### Frontend
+
 - `apps/desktop-tauri/src/types/index.ts` — Advanced Report DTO types
 - `apps/desktop-tauri/src/api/index.ts` — API wrappers
 - `apps/desktop-tauri/src/store/index.ts` — Store fields and setters
@@ -159,4 +164,5 @@ Each section builder receives `&AdvancedReportContext` and returns a `ReportSect
 - `apps/desktop-tauri/src/components/Workbench.tsx` — Integration
 
 ### Documentation
+
 - `docs/reports/ADVANCED_REPORTS_V2_3.md` — This file

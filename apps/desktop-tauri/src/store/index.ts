@@ -19,6 +19,8 @@ import type {
   ProductWorkflowStatusDto,
   ProjectDto,
   ReportSectionCapabilityDto,
+  SchematicEditResultDto,
+  SchematicToolCapabilityDto,
   SelectedComponentDto,
   SelectedRegionAnalysisResultDto,
   SelectedRegionPreviewDto,
@@ -77,6 +79,11 @@ type HotSasState = {
   advancedReportExportResult: string | null;
   advancedReportLoading: boolean;
   advancedReportError: string | null;
+  // v2.5 schematic editor
+  schematicEditorCapabilities: SchematicToolCapabilityDto[];
+  schematicEditLoading: boolean;
+  schematicEditError: string | null;
+  pendingConnectionStart: { componentId: string; pinId: string } | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -127,6 +134,10 @@ type HotSasState = {
   setAdvancedReportExportResult: (result: string | null) => void;
   setAdvancedReportLoading: (loading: boolean) => void;
   setAdvancedReportError: (error: string | null) => void;
+  setSchematicEditorCapabilities: (capabilities: SchematicToolCapabilityDto[]) => void;
+  setSchematicEditLoading: (loading: boolean) => void;
+  setSchematicEditError: (error: string | null) => void;
+  setPendingConnectionStart: (start: { componentId: string; pinId: string } | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -179,6 +190,10 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   advancedReportExportResult: null,
   advancedReportLoading: false,
   advancedReportError: null,
+  schematicEditorCapabilities: [],
+  schematicEditLoading: false,
+  schematicEditError: null,
+  pendingConnectionStart: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -229,7 +244,13 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setReportSectionCapabilities: (reportSectionCapabilities) => set({ reportSectionCapabilities }),
   setLastAdvancedReport: (lastAdvancedReport) => set({ lastAdvancedReport }),
   setAdvancedReportPreview: (advancedReportPreview) => set({ advancedReportPreview }),
-  setAdvancedReportExportResult: (advancedReportExportResult) => set({ advancedReportExportResult }),
+  setAdvancedReportExportResult: (advancedReportExportResult) =>
+    set({ advancedReportExportResult }),
   setAdvancedReportLoading: (advancedReportLoading) => set({ advancedReportLoading }),
   setAdvancedReportError: (advancedReportError) => set({ advancedReportError }),
+  setSchematicEditorCapabilities: (schematicEditorCapabilities) =>
+    set({ schematicEditorCapabilities }),
+  setSchematicEditLoading: (schematicEditLoading) => set({ schematicEditLoading }),
+  setSchematicEditError: (schematicEditError) => set({ schematicEditError }),
+  setPendingConnectionStart: (pendingConnectionStart) => set({ pendingConnectionStart }),
 }));

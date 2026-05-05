@@ -52,6 +52,7 @@ fn loads_all_builtin_formula_pack_files_from_directory_in_deterministic_order() 
             "filters",
             "op_amp",
             "power_thermal",
+            "smps",
             "transient",
             "utilities"
         ]

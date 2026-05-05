@@ -638,9 +638,48 @@ This stage verifies:
 7. Verify that the **Typed Parameters** card shows VDS, RDS(on), ID fields.
 8. Verify that no console errors appear during navigation.
 
+## v2.5 — Schematic Editor Hardening
+
+### Rust tests
+
+- Schematic editing service (`application/tests/schematic_editing_tests.rs`)
+  - Add resistor component succeeds
+  - Duplicate instance id returns error
+  - Move component updates backend position
+  - Move unknown component returns error
+  - Delete component removes instance
+  - Delete unknown component returns error
+  - Connect pins creates net and wire
+  - Connect unknown component returns error
+  - Rename net succeeds
+  - Rename net empty name returns error
+
+- API facade (`api/src/facade.rs`) — compile-time verified
+- Tauri commands (`apps/desktop-tauri/src-tauri/src/lib.rs`) — compile-time verified
+
+### Frontend tests
+
+- 95 UI tests PASS (existing suites + SchematicScreen v2.5 integration)
+
+### Manual v2.5 Schematic Editor Smoke Check
+
+1. Open the **Schematic Editor** screen.
+2. Verify that the **Schematic Toolbar** is visible with Delete, Connect, Rename Net buttons.
+3. Verify that the **Component Palette** shows Resistor, Capacitor, Inductor, etc.
+4. Click **Add Resistor** — verify new resistor appears on canvas.
+5. Drag the resistor — verify it moves and position updates via backend.
+6. Select the resistor — verify **Delete** button becomes enabled.
+7. Click **Delete** — verify component is removed.
+8. Add two components and click **Connect** — verify Connection Panel appears.
+9. Select from/to components and pins, click **Connect** — verify wire appears.
+10. Click **Rename Net** — verify Net Label Editor appears.
+11. Select a net, enter new name, click **Rename** — verify net name updates.
+12. Verify validation warnings appear in the Validation tab after edits.
+13. Verify old screens still work: Component Library, Formula Library, Export Center, DC-DC.
+
 ## Test Summary
 
-As of v2.4, the Rust workspace runs **200+ tests** across all crates with **zero failures**, and the frontend runs **89 UI tests** with **zero failures**.
+As of v2.5, the Rust workspace runs **200+ tests** across all crates with **zero failures**, and the frontend runs **95 UI tests** with **zero failures**.
 
 ---
 

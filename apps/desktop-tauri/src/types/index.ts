@@ -814,7 +814,6 @@ export type DcdcMockTransientRequestDto = {
   estimated_efficiency_percent: number | null;
 };
 
-
 export type ReportExportOptionsDto = {
   include_source_references: boolean;
   include_graph_references: boolean;
@@ -913,7 +912,6 @@ export type AdvancedReportExportResultDto = {
   message: string;
 };
 
-
 // v2.4 Typed Component Parameter Types
 
 export type ComponentParameterSchemaDto = {
@@ -949,6 +947,53 @@ export type TypedComponentParametersDto = {
   component_id: string;
   category: string;
   bundle: ParameterBundleDto;
+};
+
+// v2.5 Schematic Editor Hardening Types
+
+export type AddComponentRequestDto = {
+  component_kind: string;
+  component_definition_id?: string | null;
+  instance_id?: string | null;
+  x: number;
+  y: number;
+  rotation_deg: number;
+};
+
+export type MoveComponentRequestDto = {
+  instance_id: string;
+  x: number;
+  y: number;
+};
+
+export type DeleteComponentRequestDto = {
+  instance_id: string;
+};
+
+export type ConnectPinsRequestDto = {
+  from_component_id: string;
+  from_pin_id: string;
+  to_component_id: string;
+  to_pin_id: string;
+  net_name?: string | null;
+};
+
+export type RenameNetRequestDto = {
+  net_id: string;
+  new_name: string;
+};
+
+export type SchematicEditResultDto = {
+  project: ProjectDto;
+  validation_warnings: CircuitValidationIssueDto[];
+  message: string;
+};
+
+export type SchematicToolCapabilityDto = {
+  tool_id: string;
+  label: string;
+  available: boolean;
+  limitation: string | null;
 };
 
 export type ParameterBundleDto =

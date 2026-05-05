@@ -6,7 +6,11 @@ import { ComponentDetailsPanel } from "../components/component-library/Component
 import { ComponentSearchPanel } from "../components/component-library/ComponentSearchPanel";
 import { ComponentTable } from "../components/component-library/ComponentTable";
 import { useHotSasStore } from "../store";
-import type { ComponentLibraryDto, ComponentSearchRequestDto, TypedComponentParametersDto } from "../types";
+import type {
+  ComponentLibraryDto,
+  ComponentSearchRequestDto,
+  TypedComponentParametersDto,
+} from "../types";
 
 export function ComponentLibraryScreen() {
   const [library, setLibrary] = useState<ComponentLibraryDto | null>(null);
@@ -145,7 +149,10 @@ export function ComponentLibraryScreen() {
             <Grid.Col span={5}>
               <Stack gap="md">
                 {selectedLibraryComponent && (
-                  <ComponentDetailsPanel component={selectedLibraryComponent} typedParams={typedParams} />
+                  <ComponentDetailsPanel
+                    component={selectedLibraryComponent}
+                    typedParams={typedParams}
+                  />
                 )}
                 <AssignComponentPanel
                   selectedComponent={selectedSchematicComponent}

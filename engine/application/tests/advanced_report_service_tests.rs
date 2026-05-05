@@ -8,7 +8,10 @@ fn make_service() -> AdvancedReportService {
     AdvancedReportService::new()
 }
 
-fn make_request(report_type: AdvancedReportType, sections: Vec<ReportSectionKind>) -> AdvancedReportRequest {
+fn make_request(
+    report_type: AdvancedReportType,
+    sections: Vec<ReportSectionKind>,
+) -> AdvancedReportRequest {
     AdvancedReportRequest {
         report_id: "test-report-1".to_string(),
         title: "Test Report".to_string(),
@@ -50,10 +53,13 @@ fn list_capabilities_returns_all_section_kinds() {
 #[test]
 fn generate_project_summary_without_project_returns_empty_sections() {
     let service = make_service();
-    let request = make_request(AdvancedReportType::ProjectSummary, vec![
-        ReportSectionKind::ProjectInfo,
-        ReportSectionKind::SchematicSummary,
-    ]);
+    let request = make_request(
+        AdvancedReportType::ProjectSummary,
+        vec![
+            ReportSectionKind::ProjectInfo,
+            ReportSectionKind::SchematicSummary,
+        ],
+    );
     let context = empty_context();
     let report = service.generate_report(request, &context).unwrap();
 
@@ -66,22 +72,25 @@ fn generate_project_summary_without_project_returns_empty_sections() {
 #[test]
 fn generate_full_project_report_with_no_context_does_not_panic() {
     let service = make_service();
-    let request = make_request(AdvancedReportType::FullProjectReport, vec![
-        ReportSectionKind::ProjectInfo,
-        ReportSectionKind::SchematicSummary,
-        ReportSectionKind::FormulaCalculations,
-        ReportSectionKind::SimulationResults,
-        ReportSectionKind::DcdcCalculations,
-        ReportSectionKind::SelectedRegionAnalysis,
-        ReportSectionKind::ExportHistory,
-        ReportSectionKind::ImportedModels,
-        ReportSectionKind::ComponentSummary,
-        ReportSectionKind::SpiceNetlist,
-        ReportSectionKind::Bom,
-        ReportSectionKind::NotebookCalculations,
-        ReportSectionKind::ESeriesSelections,
-        ReportSectionKind::WarningsAndAssumptions,
-    ]);
+    let request = make_request(
+        AdvancedReportType::FullProjectReport,
+        vec![
+            ReportSectionKind::ProjectInfo,
+            ReportSectionKind::SchematicSummary,
+            ReportSectionKind::FormulaCalculations,
+            ReportSectionKind::SimulationResults,
+            ReportSectionKind::DcdcCalculations,
+            ReportSectionKind::SelectedRegionAnalysis,
+            ReportSectionKind::ExportHistory,
+            ReportSectionKind::ImportedModels,
+            ReportSectionKind::ComponentSummary,
+            ReportSectionKind::SpiceNetlist,
+            ReportSectionKind::Bom,
+            ReportSectionKind::NotebookCalculations,
+            ReportSectionKind::ESeriesSelections,
+            ReportSectionKind::WarningsAndAssumptions,
+        ],
+    );
     let context = empty_context();
     let report = service.generate_report(request, &context).unwrap();
 
@@ -90,7 +99,9 @@ fn generate_full_project_report_with_no_context_does_not_panic() {
         assert!(
             matches!(
                 section.status,
-                ReportSectionStatus::Included | ReportSectionStatus::Empty | ReportSectionStatus::Unavailable
+                ReportSectionStatus::Included
+                    | ReportSectionStatus::Empty
+                    | ReportSectionStatus::Unavailable
             ),
             "Section {:?} had unexpected status {:?}",
             section.kind,
@@ -102,9 +113,10 @@ fn generate_full_project_report_with_no_context_does_not_panic() {
 #[test]
 fn render_markdown_produces_non_empty_output() {
     let service = make_service();
-    let request = make_request(AdvancedReportType::ProjectSummary, vec![
-        ReportSectionKind::ProjectInfo,
-    ]);
+    let request = make_request(
+        AdvancedReportType::ProjectSummary,
+        vec![ReportSectionKind::ProjectInfo],
+    );
     let context = empty_context();
     let report = service.generate_report(request, &context).unwrap();
     let markdown = service.render_report_markdown(&report).unwrap();
@@ -116,9 +128,10 @@ fn render_markdown_produces_non_empty_output() {
 #[test]
 fn render_html_produces_non_empty_output() {
     let service = make_service();
-    let request = make_request(AdvancedReportType::ProjectSummary, vec![
-        ReportSectionKind::ProjectInfo,
-    ]);
+    let request = make_request(
+        AdvancedReportType::ProjectSummary,
+        vec![ReportSectionKind::ProjectInfo],
+    );
     let context = empty_context();
     let report = service.generate_report(request, &context).unwrap();
     let html = service.render_report_html(&report).unwrap();
@@ -130,9 +143,10 @@ fn render_html_produces_non_empty_output() {
 #[test]
 fn render_json_produces_valid_json() {
     let service = make_service();
-    let request = make_request(AdvancedReportType::ProjectSummary, vec![
-        ReportSectionKind::ProjectInfo,
-    ]);
+    let request = make_request(
+        AdvancedReportType::ProjectSummary,
+        vec![ReportSectionKind::ProjectInfo],
+    );
     let context = empty_context();
     let report = service.generate_report(request, &context).unwrap();
     let json = service.render_report_json(&report).unwrap();
@@ -145,10 +159,13 @@ fn render_json_produces_valid_json() {
 #[test]
 fn render_csv_summary_produces_csv_lines() {
     let service = make_service();
-    let request = make_request(AdvancedReportType::ProjectSummary, vec![
-        ReportSectionKind::ProjectInfo,
-        ReportSectionKind::SchematicSummary,
-    ]);
+    let request = make_request(
+        AdvancedReportType::ProjectSummary,
+        vec![
+            ReportSectionKind::ProjectInfo,
+            ReportSectionKind::SchematicSummary,
+        ],
+    );
     let context = empty_context();
     let report = service.generate_report(request, &context).unwrap();
     let csv = service.render_report_csv_summary(&report).unwrap();
@@ -162,9 +179,10 @@ fn render_csv_summary_produces_csv_lines() {
 #[test]
 fn section_status_is_unavailable_for_missing_data() {
     let service = make_service();
-    let request = make_request(AdvancedReportType::SimulationReport, vec![
-        ReportSectionKind::SimulationResults,
-    ]);
+    let request = make_request(
+        AdvancedReportType::SimulationReport,
+        vec![ReportSectionKind::SimulationResults],
+    );
     let context = empty_context();
     let report = service.generate_report(request, &context).unwrap();
 
@@ -180,9 +198,10 @@ fn section_status_is_unavailable_for_missing_data() {
 #[test]
 fn included_sections_are_respected() {
     let service = make_service();
-    let request = make_request(AdvancedReportType::ProjectSummary, vec![
-        ReportSectionKind::ProjectInfo,
-    ]);
+    let request = make_request(
+        AdvancedReportType::ProjectSummary,
+        vec![ReportSectionKind::ProjectInfo],
+    );
     let context = empty_context();
     let report = service.generate_report(request, &context).unwrap();
 

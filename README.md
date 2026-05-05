@@ -5,7 +5,9 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v2.5 — Schematic Editor Hardening next**
+**Current roadmap stage: v2.6 next**
+
+> App version (v0.1.4) and roadmap stage are different concepts.
 
 Completed:
 - v1.2 — Project Package Storage `.circuit`
@@ -21,6 +23,8 @@ Completed:
 - v2.1 — Formula Library Expansion & Formula UX Hardening
 - v2.2 — DC-DC Calculators and Templates
 - v2.3 — Advanced Reports
+- v2.4 — Real Component Parameters
+- v2.5 — Schematic Editor Hardening
 
 ---
 
@@ -71,6 +75,28 @@ Completed:
 - API command `calculate_formula` + Tauri command.
 - Formula Library UI: variable inputs + **Calculate** button.
 - Old RC-specific commands preserved for compatibility.
+
+### v2.4 — Real Component Parameters
+
+- Typed parameter schema with groups (Electrical, Thermal, Mechanical).
+- Validation: unit mismatch, out of range, tolerance exceeded, missing required.
+- 8 typed bundles: Resistor, Capacitor, Inductor, Diode, BJT, MOSFET, OpAmp, Regulator.
+- 27 real-like built-in components with proper footprints.
+- `ComponentParameterService` with schema lookup, validation, bundle extraction.
+- API DTOs, facade methods, Tauri commands.
+- Frontend `ComponentDetailsPanel` Typed Parameters card.
+
+### v2.5 — Schematic Editor Hardening
+
+- Backend editing commands: add component, move component, delete component, connect pins, rename net.
+- `SchematicEditingService` with validation after every edit.
+- Component palette UI (Resistor, Capacitor, Inductor, Diode, OpAmp, MOSFET, Voltage Source, Ground).
+- Schematic toolbar with Delete, Connect, Rename Net actions.
+- Connection panel: select from/to component and pin, optional net name.
+- Net label editor: select net, enter new name.
+- Move component via React Flow `onNodeDragStop` → backend command.
+- React Flow remains view adapter; Rust `CircuitModel` / `ProjectDto` is source of truth.
+- 10 new Rust tests for schematic editing + 6 frontend tests.
 
 ### v2.3 — Advanced Reports
 

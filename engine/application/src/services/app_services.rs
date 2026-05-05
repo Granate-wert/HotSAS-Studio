@@ -1,11 +1,10 @@
 use crate::services::{AdvancedReportService, DcdcCalculatorService};
 use crate::{
-    ApplicationError, CircuitTemplateService, CircuitValidationService,
-    ComponentLibraryService, ComponentParameterService, EngineeringNotebookService,
-    ExportCenterService, ExportService, FormulaService, ModelImportService,
-    NetlistGenerationService, NgspiceSimulationService, PreferredValuesService,
-    ProjectPackageService, ProjectService, SelectedRegionAnalysisService, SimulationEngineChoice,
-    SimulationService,
+    ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
+    ComponentParameterService, EngineeringNotebookService, ExportCenterService, ExportService,
+    FormulaService, ModelImportService, NetlistGenerationService, NgspiceSimulationService,
+    PreferredValuesService, ProjectPackageService, ProjectService, SchematicEditingService,
+    SelectedRegionAnalysisService, SimulationEngineChoice, SimulationService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
@@ -36,6 +35,7 @@ pub struct AppServices {
     export_center_service: ExportCenterService,
     component_library_service: ComponentLibraryService,
     component_parameter_service: ComponentParameterService,
+    schematic_editing_service: SchematicEditingService,
     selected_region_analysis_service: SelectedRegionAnalysisService,
     model_import_service: ModelImportService,
     dcdc_calculator_service: DcdcCalculatorService,
@@ -81,6 +81,7 @@ impl AppServices {
             ),
             component_library_service: ComponentLibraryService::new(component_library_port),
             component_parameter_service: ComponentParameterService::new(),
+            schematic_editing_service: SchematicEditingService::new(),
             selected_region_analysis_service: SelectedRegionAnalysisService::new(),
             model_import_service: ModelImportService::new(spice_parser, touchstone_parser),
             dcdc_calculator_service: crate::services::DcdcCalculatorService::new(),
@@ -142,6 +143,10 @@ impl AppServices {
 
     pub fn component_parameter_service(&self) -> &ComponentParameterService {
         &self.component_parameter_service
+    }
+
+    pub fn schematic_editing_service(&self) -> &SchematicEditingService {
+        &self.schematic_editing_service
     }
 
     pub fn selected_region_analysis_service(&self) -> &SelectedRegionAnalysisService {

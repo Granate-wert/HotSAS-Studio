@@ -1,14 +1,16 @@
 use crate::{
-    ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto,
-    AssignComponentRequestDto, CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto,
-    ComponentParameterDto, ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto,
-    ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto, ExportResultDto, FootprintDto,
-    FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
-    FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, KeyValueDto,
-    NgspiceAvailabilityDto, NotebookEvaluationRequestDto, NotebookEvaluationResultDto,
-    NotebookStateDto, PreferredValueDto, ProductWorkflowStatusDto, ProjectDto,
-    ProjectPackageManifestDto, ProjectPackageValidationReportDto,
-    SaveProjectDto, SelectedComponentDto, SelectedRegionAnalysisRequestDto,
+    AddComponentRequestDto, ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto,
+    AssignComponentRequestDto, CircuitValidationIssueDto, CircuitValidationReportDto,
+    ComponentDetailsDto, ComponentLibraryDto, ComponentParameterDto, ComponentSearchRequestDto,
+    ComponentSearchResultDto, ComponentSummaryDto, ConnectPinsRequestDto,
+    DeleteComponentRequestDto, ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto,
+    ExportResultDto, FootprintDto, FormulaCalculationRequestDto, FormulaDetailsDto,
+    FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto, FormulaResultDto,
+    FormulaSummaryDto, KeyValueDto, MoveComponentRequestDto, NgspiceAvailabilityDto,
+    NotebookEvaluationRequestDto, NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto,
+    ProductWorkflowStatusDto, ProjectDto, ProjectPackageManifestDto,
+    ProjectPackageValidationReportDto, RenameNetRequestDto, SaveProjectDto, SchematicEditResultDto,
+    SchematicToolCapabilityDto, SelectedComponentDto, SelectedRegionAnalysisRequestDto,
     SelectedRegionAnalysisResultDto, SelectedRegionPreviewDto, SimulationModelDto,
     SimulationResultDto, SimulationRunRequestDto, SymbolDto, ValueDto, VerticalSliceDto,
 };
@@ -33,6 +35,7 @@ pub struct HotSasApi {
     app_diagnostics: AppDiagnosticsService,
     product_workflow: ProductWorkflowService,
     last_advanced_report: Mutex<Option<hotsas_core::advanced_report::AdvancedReportModel>>,
+    last_advanced_report_project_id: Mutex<Option<String>>,
 }
 
 impl HotSasApi {
@@ -59,6 +62,7 @@ impl HotSasApi {
             app_diagnostics: AppDiagnosticsService::new(),
             product_workflow: ProductWorkflowService::new(),
             last_advanced_report: Mutex::new(None),
+            last_advanced_report_project_id: Mutex::new(None),
         }
     }
 
@@ -789,6 +793,21 @@ impl HotSasApi {
     }
 
     fn replace_current_project(&self, project: CircuitProject) -> Result<(), ApiError> {
+        let old_id = self
+            .current_project
+            .lock()
+            .map_err(|_| ApiError::State("current project lock poisoned".to_string()))?
+            .as_ref()
+            .map(|p| p.id.clone());
+        let new_id = project.id.clone();
+        if old_id != Some(new_id) {
+            if let Ok(mut guard) = self.last_advanced_report.lock() {
+                *guard = None;
+            }
+            if let Ok(mut guard) = self.last_advanced_report_project_id.lock() {
+                *guard = None;
+            }
+        }
         let mut guard = self
             .current_project
             .lock()
@@ -1139,24 +1158,40 @@ impl HotSasApi {
         Ok(SimulationResultDto::from(&sim_result))
     }
 
-    pub fn list_report_section_capabilities(&self) -> Result<Vec<crate::ReportSectionCapabilityDto>, ApiError> {
-        let caps = self.services.advanced_report_service().list_section_capabilities();
-        Ok(caps.into_iter().map(|c| crate::ReportSectionCapabilityDto {
-            kind: c.kind.to_string(),
-            title: c.title,
-            description: c.description,
-            default_enabled: c.default_enabled,
-            supported_report_types: c.supported_report_types.iter().map(|t| t.to_string()).collect(),
-        }).collect())
+    pub fn list_report_section_capabilities(
+        &self,
+    ) -> Result<Vec<crate::ReportSectionCapabilityDto>, ApiError> {
+        let caps = self
+            .services
+            .advanced_report_service()
+            .list_section_capabilities();
+        Ok(caps
+            .into_iter()
+            .map(|c| crate::ReportSectionCapabilityDto {
+                kind: c.kind.to_string(),
+                title: c.title,
+                description: c.description,
+                default_enabled: c.default_enabled,
+                supported_report_types: c
+                    .supported_report_types
+                    .iter()
+                    .map(|t| t.to_string())
+                    .collect(),
+            })
+            .collect())
     }
 
     pub fn generate_advanced_report(
         &self,
         request: crate::AdvancedReportRequestDto,
     ) -> Result<crate::AdvancedReportDto, ApiError> {
-        let report_type = request.report_type.parse::<hotsas_core::advanced_report::AdvancedReportType>()
+        let report_type = request
+            .report_type
+            .parse::<hotsas_core::advanced_report::AdvancedReportType>()
             .map_err(|e| ApiError::InvalidInput(e))?;
-        let included_sections: Result<Vec<_>, _> = request.included_sections.iter()
+        let included_sections: Result<Vec<_>, _> = request
+            .included_sections
+            .iter()
             .map(|s| s.parse::<hotsas_core::advanced_report::ReportSectionKind>())
             .collect();
         let included_sections = included_sections.map_err(|e| ApiError::InvalidInput(e))?;
@@ -1174,9 +1209,15 @@ impl HotSasApi {
             metadata: request.metadata,
         };
         let project = self.current_project().ok();
+        let project_id = project.as_ref().map(|p| p.id.clone());
         let context = hotsas_core::advanced_report::AdvancedReportContext {
             project,
-            notebook: Some(self.notebook.lock().map_err(|_| ApiError::State("notebook lock poisoned".to_string()))?.clone()),
+            notebook: Some(
+                self.notebook
+                    .lock()
+                    .map_err(|_| ApiError::State("notebook lock poisoned".to_string()))?
+                    .clone(),
+            ),
             simulation_result: None,
             dcdc_result: None,
             selected_region_result: None,
@@ -1184,12 +1225,17 @@ impl HotSasApi {
             netlist: None,
             imported_models_summary: vec![],
         };
-        let report = self.services.advanced_report_service()
+        let report = self
+            .services
+            .advanced_report_service()
             .generate_report(report_request, &context)
             .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
         let dto = Self::advanced_report_to_dto(&report);
         if let Ok(mut guard) = self.last_advanced_report.lock() {
             *guard = Some(report);
+        }
+        if let Ok(mut guard) = self.last_advanced_report_project_id.lock() {
+            *guard = project_id;
         }
         Ok(dto)
     }
@@ -1198,32 +1244,61 @@ impl HotSasApi {
         &self,
         request: crate::AdvancedReportExportRequestDto,
     ) -> Result<crate::AdvancedReportExportResultDto, ApiError> {
-        let report = self.last_advanced_report.lock()
+        let current_project_id = self.current_project().ok().map(|p| p.id);
+        let cached_project_id = self
+            .last_advanced_report_project_id
+            .lock()
+            .map_err(|_| ApiError::State("report project id lock poisoned".to_string()))?
+            .clone();
+        if current_project_id != cached_project_id {
+            return Err(ApiError::State(
+                "report cache invalidated due to project change".to_string(),
+            ));
+        }
+        let report = self
+            .last_advanced_report
+            .lock()
             .map_err(|_| ApiError::State("report lock poisoned".to_string()))?
             .clone()
             .ok_or_else(|| ApiError::State("no report generated yet".to_string()))?;
         let (content, message) = match request.format.as_str() {
             "markdown" => {
-                let md = self.services.advanced_report_service().render_report_markdown(&report)
+                let md = self
+                    .services
+                    .advanced_report_service()
+                    .render_report_markdown(&report)
                     .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
                 (md, "Markdown report exported.".to_string())
             }
             "html" => {
-                let html = self.services.advanced_report_service().render_report_html(&report)
+                let html = self
+                    .services
+                    .advanced_report_service()
+                    .render_report_html(&report)
                     .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
                 (html, "HTML report exported.".to_string())
             }
             "json" => {
-                let json = self.services.advanced_report_service().render_report_json(&report)
+                let json = self
+                    .services
+                    .advanced_report_service()
+                    .render_report_json(&report)
                     .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
                 (json, "JSON report exported.".to_string())
             }
             "csv_summary" => {
-                let csv = self.services.advanced_report_service().render_report_csv_summary(&report)
+                let csv = self
+                    .services
+                    .advanced_report_service()
+                    .render_report_csv_summary(&report)
                     .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
                 (csv, "CSV summary exported.".to_string())
             }
-            other => return Err(ApiError::InvalidInput(format!("unknown export format: {other}"))),
+            other => {
+                return Err(ApiError::InvalidInput(format!(
+                    "unknown export format: {other}"
+                )))
+            }
         };
         Ok(crate::AdvancedReportExportResultDto {
             report_id: report.id,
@@ -1236,13 +1311,26 @@ impl HotSasApi {
     }
 
     pub fn get_last_advanced_report(&self) -> Result<Option<crate::AdvancedReportDto>, ApiError> {
-        let report = self.last_advanced_report.lock()
+        let current_project_id = self.current_project().ok().map(|p| p.id);
+        let cached_project_id = self
+            .last_advanced_report_project_id
+            .lock()
+            .map_err(|_| ApiError::State("report project id lock poisoned".to_string()))?
+            .clone();
+        if current_project_id != cached_project_id {
+            return Ok(None);
+        }
+        let report = self
+            .last_advanced_report
+            .lock()
             .map_err(|_| ApiError::State("report lock poisoned".to_string()))?
             .clone();
         Ok(report.as_ref().map(Self::advanced_report_to_dto))
     }
 
-    fn advanced_report_to_dto(report: &hotsas_core::advanced_report::AdvancedReportModel) -> crate::AdvancedReportDto {
+    fn advanced_report_to_dto(
+        report: &hotsas_core::advanced_report::AdvancedReportModel,
+    ) -> crate::AdvancedReportDto {
         crate::AdvancedReportDto {
             id: report.id.clone(),
             title: report.title.clone(),
@@ -1250,75 +1338,109 @@ impl HotSasApi {
             generated_at: report.generated_at.clone(),
             project_id: report.project_id.clone(),
             project_name: report.project_name.clone(),
-            sections: report.sections.iter().map(|s| crate::ReportSectionDto {
-                kind: s.kind.to_string(),
-                title: s.title.clone(),
-                status: s.status.to_string(),
-                blocks: s.blocks.iter().map(|b| Self::report_block_to_dto(b)).collect(),
-                warnings: s.warnings.iter().map(|w| crate::ReportWarningDto {
+            sections: report
+                .sections
+                .iter()
+                .map(|s| crate::ReportSectionDto {
+                    kind: s.kind.to_string(),
+                    title: s.title.clone(),
+                    status: s.status.to_string(),
+                    blocks: s
+                        .blocks
+                        .iter()
+                        .map(|b| Self::report_block_to_dto(b))
+                        .collect(),
+                    warnings: s
+                        .warnings
+                        .iter()
+                        .map(|w| crate::ReportWarningDto {
+                            severity: format!("{:?}", w.severity),
+                            code: w.code.clone(),
+                            message: w.message.clone(),
+                            section_kind: w.section_kind.as_ref().map(|k| k.to_string()),
+                        })
+                        .collect(),
+                })
+                .collect(),
+            warnings: report
+                .warnings
+                .iter()
+                .map(|w| crate::ReportWarningDto {
                     severity: format!("{:?}", w.severity),
                     code: w.code.clone(),
                     message: w.message.clone(),
                     section_kind: w.section_kind.as_ref().map(|k| k.to_string()),
-                }).collect(),
-            }).collect(),
-            warnings: report.warnings.iter().map(|w| crate::ReportWarningDto {
-                severity: format!("{:?}", w.severity),
-                code: w.code.clone(),
-                message: w.message.clone(),
-                section_kind: w.section_kind.as_ref().map(|k| k.to_string()),
-            }).collect(),
+                })
+                .collect(),
             assumptions: report.assumptions.clone(),
-            source_references: report.source_references.iter().map(|sr| crate::ReportSourceReferenceDto {
-                source_id: sr.source_id.clone(),
-                source_type: sr.source_type.clone(),
-                description: sr.description.clone(),
-            }).collect(),
+            source_references: report
+                .source_references
+                .iter()
+                .map(|sr| crate::ReportSourceReferenceDto {
+                    source_id: sr.source_id.clone(),
+                    source_type: sr.source_type.clone(),
+                    description: sr.description.clone(),
+                })
+                .collect(),
             metadata: report.metadata.clone(),
         }
     }
 
-    fn report_block_to_dto(block: &hotsas_core::advanced_report::ReportContentBlock) -> crate::ReportContentBlockDto {
+    fn report_block_to_dto(
+        block: &hotsas_core::advanced_report::ReportContentBlock,
+    ) -> crate::ReportContentBlockDto {
         match block {
-            hotsas_core::advanced_report::ReportContentBlock::Paragraph { text } => crate::ReportContentBlockDto {
-                block_type: "paragraph".to_string(),
-                title: None,
-                text: Some(text.clone()),
-                rows: None,
-                columns: None,
-                data_rows: None,
-                equation: None,
-                substituted_values: None,
-                result: None,
-                language: None,
-                content: None,
-                series_names: None,
-                x_unit: None,
-                y_unit: None,
-                items: None,
-            },
-            hotsas_core::advanced_report::ReportContentBlock::KeyValueTable { title, rows } => crate::ReportContentBlockDto {
-                block_type: "key_value_table".to_string(),
-                title: Some(title.clone()),
-                text: None,
-                rows: Some(rows.iter().map(|r| crate::ReportKeyValueRowDto {
-                    key: r.key.clone(),
-                    value: r.value.clone(),
-                    unit: r.unit.clone(),
-                }).collect()),
-                columns: None,
-                data_rows: None,
-                equation: None,
-                substituted_values: None,
-                result: None,
-                language: None,
-                content: None,
-                series_names: None,
-                x_unit: None,
-                y_unit: None,
-                items: None,
-            },
-            hotsas_core::advanced_report::ReportContentBlock::DataTable { title, columns, rows } => crate::ReportContentBlockDto {
+            hotsas_core::advanced_report::ReportContentBlock::Paragraph { text } => {
+                crate::ReportContentBlockDto {
+                    block_type: "paragraph".to_string(),
+                    title: None,
+                    text: Some(text.clone()),
+                    rows: None,
+                    columns: None,
+                    data_rows: None,
+                    equation: None,
+                    substituted_values: None,
+                    result: None,
+                    language: None,
+                    content: None,
+                    series_names: None,
+                    x_unit: None,
+                    y_unit: None,
+                    items: None,
+                }
+            }
+            hotsas_core::advanced_report::ReportContentBlock::KeyValueTable { title, rows } => {
+                crate::ReportContentBlockDto {
+                    block_type: "key_value_table".to_string(),
+                    title: Some(title.clone()),
+                    text: None,
+                    rows: Some(
+                        rows.iter()
+                            .map(|r| crate::ReportKeyValueRowDto {
+                                key: r.key.clone(),
+                                value: r.value.clone(),
+                                unit: r.unit.clone(),
+                            })
+                            .collect(),
+                    ),
+                    columns: None,
+                    data_rows: None,
+                    equation: None,
+                    substituted_values: None,
+                    result: None,
+                    language: None,
+                    content: None,
+                    series_names: None,
+                    x_unit: None,
+                    y_unit: None,
+                    items: None,
+                }
+            }
+            hotsas_core::advanced_report::ReportContentBlock::DataTable {
+                title,
+                columns,
+                rows,
+            } => crate::ReportContentBlockDto {
                 block_type: "data_table".to_string(),
                 title: Some(title.clone()),
                 text: None,
@@ -1335,7 +1457,12 @@ impl HotSasApi {
                 y_unit: None,
                 items: None,
             },
-            hotsas_core::advanced_report::ReportContentBlock::FormulaBlock { title, equation, substituted_values, result } => crate::ReportContentBlockDto {
+            hotsas_core::advanced_report::ReportContentBlock::FormulaBlock {
+                title,
+                equation,
+                substituted_values,
+                result,
+            } => crate::ReportContentBlockDto {
                 block_type: "formula_block".to_string(),
                 title: Some(title.clone()),
                 text: None,
@@ -1343,11 +1470,16 @@ impl HotSasApi {
                 columns: None,
                 data_rows: None,
                 equation: Some(equation.clone()),
-                substituted_values: Some(substituted_values.iter().map(|r| crate::ReportKeyValueRowDto {
-                    key: r.key.clone(),
-                    value: r.value.clone(),
-                    unit: r.unit.clone(),
-                }).collect()),
+                substituted_values: Some(
+                    substituted_values
+                        .iter()
+                        .map(|r| crate::ReportKeyValueRowDto {
+                            key: r.key.clone(),
+                            value: r.value.clone(),
+                            unit: r.unit.clone(),
+                        })
+                        .collect(),
+                ),
                 result: result.clone(),
                 language: None,
                 content: None,
@@ -1356,7 +1488,11 @@ impl HotSasApi {
                 y_unit: None,
                 items: None,
             },
-            hotsas_core::advanced_report::ReportContentBlock::CodeBlock { title, language, content } => crate::ReportContentBlockDto {
+            hotsas_core::advanced_report::ReportContentBlock::CodeBlock {
+                title,
+                language,
+                content,
+            } => crate::ReportContentBlockDto {
                 block_type: "code_block".to_string(),
                 title: Some(title.clone()),
                 text: None,
@@ -1373,7 +1509,12 @@ impl HotSasApi {
                 y_unit: None,
                 items: None,
             },
-            hotsas_core::advanced_report::ReportContentBlock::GraphReference { title, series_names, x_unit, y_unit } => crate::ReportContentBlockDto {
+            hotsas_core::advanced_report::ReportContentBlock::GraphReference {
+                title,
+                series_names,
+                x_unit,
+                y_unit,
+            } => crate::ReportContentBlockDto {
                 block_type: "graph_reference".to_string(),
                 title: Some(title.clone()),
                 text: None,
@@ -1390,28 +1531,35 @@ impl HotSasApi {
                 y_unit: y_unit.clone(),
                 items: None,
             },
-            hotsas_core::advanced_report::ReportContentBlock::WarningList { items } => crate::ReportContentBlockDto {
-                block_type: "warning_list".to_string(),
-                title: None,
-                text: None,
-                rows: None,
-                columns: None,
-                data_rows: None,
-                equation: None,
-                substituted_values: None,
-                result: None,
-                language: None,
-                content: None,
-                series_names: None,
-                x_unit: None,
-                y_unit: None,
-                items: Some(items.iter().map(|w| crate::ReportWarningDto {
-                    severity: format!("{:?}", w.severity),
-                    code: w.code.clone(),
-                    message: w.message.clone(),
-                    section_kind: w.section_kind.as_ref().map(|k| k.to_string()),
-                }).collect()),
-            },
+            hotsas_core::advanced_report::ReportContentBlock::WarningList { items } => {
+                crate::ReportContentBlockDto {
+                    block_type: "warning_list".to_string(),
+                    title: None,
+                    text: None,
+                    rows: None,
+                    columns: None,
+                    data_rows: None,
+                    equation: None,
+                    substituted_values: None,
+                    result: None,
+                    language: None,
+                    content: None,
+                    series_names: None,
+                    x_unit: None,
+                    y_unit: None,
+                    items: Some(
+                        items
+                            .iter()
+                            .map(|w| crate::ReportWarningDto {
+                                severity: format!("{:?}", w.severity),
+                                code: w.code.clone(),
+                                message: w.message.clone(),
+                                section_kind: w.section_kind.as_ref().map(|k| k.to_string()),
+                            })
+                            .collect(),
+                    ),
+                }
+            }
         }
     }
 
@@ -1424,7 +1572,10 @@ impl HotSasApi {
         category: String,
     ) -> Result<Option<crate::ComponentParameterSchemaDto>, ApiError> {
         let svc = self.services.component_parameter_service();
-        Ok(svc.schema_for_category(&category).as_ref().map(crate::ComponentParameterSchemaDto::from))
+        Ok(svc
+            .schema_for_category(&category)
+            .as_ref()
+            .map(crate::ComponentParameterSchemaDto::from))
     }
 
     pub fn validate_component_parameters(
@@ -1436,10 +1587,15 @@ impl HotSasApi {
             .components
             .iter()
             .find(|c| c.id == component_id)
-            .ok_or_else(|| ApiError::InvalidInput(format!("component '{}' not found", component_id)))?;
+            .ok_or_else(|| {
+                ApiError::InvalidInput(format!("component '{}' not found", component_id))
+            })?;
         let svc = self.services.component_parameter_service();
         let issues = svc.validate_component(component);
-        Ok(issues.iter().map(crate::ComponentParameterIssueDto::from).collect())
+        Ok(issues
+            .iter()
+            .map(crate::ComponentParameterIssueDto::from)
+            .collect())
     }
 
     pub fn get_typed_component_parameters(
@@ -1451,7 +1607,9 @@ impl HotSasApi {
             .components
             .iter()
             .find(|c| c.id == component_id)
-            .ok_or_else(|| ApiError::InvalidInput(format!("component '{}' not found", component_id)))?;
+            .ok_or_else(|| {
+                ApiError::InvalidInput(format!("component '{}' not found", component_id))
+            })?;
         let svc = self.services.component_parameter_service();
         let bundle = match component.category.as_str() {
             "resistor" => {
@@ -1526,6 +1684,192 @@ impl HotSasApi {
             component_id: component.id.clone(),
             category: component.category.clone(),
             bundle,
+        })
+    }
+
+    // ------------------------------------------------------------------
+    // v2.5 Schematic Editor Hardening
+    // ------------------------------------------------------------------
+
+    pub fn list_schematic_editor_capabilities(
+        &self,
+    ) -> Result<Vec<SchematicToolCapabilityDto>, ApiError> {
+        Ok(vec![
+            SchematicToolCapabilityDto {
+                tool_id: "add_component".to_string(),
+                label: "Add Component".to_string(),
+                available: true,
+                limitation: None,
+            },
+            SchematicToolCapabilityDto {
+                tool_id: "move_component".to_string(),
+                label: "Move Component".to_string(),
+                available: true,
+                limitation: Some("Position updates via backend; drag is UI-only".to_string()),
+            },
+            SchematicToolCapabilityDto {
+                tool_id: "delete_component".to_string(),
+                label: "Delete Component".to_string(),
+                available: true,
+                limitation: None,
+            },
+            SchematicToolCapabilityDto {
+                tool_id: "connect_pins".to_string(),
+                label: "Connect Pins".to_string(),
+                available: true,
+                limitation: Some("Logical connection only; no interactive wire drag".to_string()),
+            },
+            SchematicToolCapabilityDto {
+                tool_id: "rename_net".to_string(),
+                label: "Rename Net".to_string(),
+                available: true,
+                limitation: None,
+            },
+        ])
+    }
+
+    pub fn add_schematic_component(
+        &self,
+        request: AddComponentRequestDto,
+    ) -> Result<SchematicEditResultDto, ApiError> {
+        let mut project = self.current_project()?;
+        let result = self
+            .services
+            .schematic_editing_service()
+            .add_component(
+                &mut project,
+                hotsas_core::AddComponentRequest {
+                    component_kind: request.component_kind,
+                    component_definition_id: request.component_definition_id,
+                    instance_id: request.instance_id,
+                    position: hotsas_core::Point::new(request.x, request.y),
+                    rotation_deg: request.rotation_deg,
+                },
+            )
+            .map_err(|e| ApiError::InvalidInput(e))?;
+        self.replace_current_project(project)?;
+        Ok(SchematicEditResultDto {
+            project: ProjectDto::from(&result.project),
+            validation_warnings: result
+                .validation_warnings
+                .iter()
+                .map(CircuitValidationIssueDto::from)
+                .collect(),
+            message: result.message,
+        })
+    }
+
+    pub fn move_schematic_component(
+        &self,
+        request: MoveComponentRequestDto,
+    ) -> Result<SchematicEditResultDto, ApiError> {
+        let mut project = self.current_project()?;
+        let result = self
+            .services
+            .schematic_editing_service()
+            .move_component(
+                &mut project,
+                hotsas_core::MoveComponentRequest {
+                    instance_id: request.instance_id,
+                    position: hotsas_core::Point::new(request.x, request.y),
+                },
+            )
+            .map_err(|e| ApiError::InvalidInput(e))?;
+        self.replace_current_project(project)?;
+        Ok(SchematicEditResultDto {
+            project: ProjectDto::from(&result.project),
+            validation_warnings: result
+                .validation_warnings
+                .iter()
+                .map(CircuitValidationIssueDto::from)
+                .collect(),
+            message: result.message,
+        })
+    }
+
+    pub fn delete_schematic_component(
+        &self,
+        request: DeleteComponentRequestDto,
+    ) -> Result<SchematicEditResultDto, ApiError> {
+        let mut project = self.current_project()?;
+        let result = self
+            .services
+            .schematic_editing_service()
+            .delete_component(
+                &mut project,
+                hotsas_core::DeleteComponentRequest {
+                    instance_id: request.instance_id,
+                },
+            )
+            .map_err(|e| ApiError::InvalidInput(e))?;
+        self.replace_current_project(project)?;
+        Ok(SchematicEditResultDto {
+            project: ProjectDto::from(&result.project),
+            validation_warnings: result
+                .validation_warnings
+                .iter()
+                .map(CircuitValidationIssueDto::from)
+                .collect(),
+            message: result.message,
+        })
+    }
+
+    pub fn connect_schematic_pins(
+        &self,
+        request: ConnectPinsRequestDto,
+    ) -> Result<SchematicEditResultDto, ApiError> {
+        let mut project = self.current_project()?;
+        let result = self
+            .services
+            .schematic_editing_service()
+            .connect_pins(
+                &mut project,
+                hotsas_core::ConnectPinsRequest {
+                    from_component_id: request.from_component_id,
+                    from_pin_id: request.from_pin_id,
+                    to_component_id: request.to_component_id,
+                    to_pin_id: request.to_pin_id,
+                    net_name: request.net_name,
+                },
+            )
+            .map_err(|e| ApiError::InvalidInput(e))?;
+        self.replace_current_project(project)?;
+        Ok(SchematicEditResultDto {
+            project: ProjectDto::from(&result.project),
+            validation_warnings: result
+                .validation_warnings
+                .iter()
+                .map(CircuitValidationIssueDto::from)
+                .collect(),
+            message: result.message,
+        })
+    }
+
+    pub fn rename_schematic_net(
+        &self,
+        request: RenameNetRequestDto,
+    ) -> Result<SchematicEditResultDto, ApiError> {
+        let mut project = self.current_project()?;
+        let result = self
+            .services
+            .schematic_editing_service()
+            .rename_net(
+                &mut project,
+                hotsas_core::RenameNetRequest {
+                    net_id: request.net_id,
+                    new_name: request.new_name,
+                },
+            )
+            .map_err(|e| ApiError::InvalidInput(e))?;
+        self.replace_current_project(project)?;
+        Ok(SchematicEditResultDto {
+            project: ProjectDto::from(&result.project),
+            validation_warnings: result
+                .validation_warnings
+                .iter()
+                .map(CircuitValidationIssueDto::from)
+                .collect(),
+            message: result.message,
         })
     }
 

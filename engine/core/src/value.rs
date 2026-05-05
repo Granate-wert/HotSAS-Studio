@@ -99,7 +99,9 @@ impl EngineeringUnit {
             "C/W" | "C/Watt" | "Celsius/Watt" | "°C/W" => Ok(Self::CelsiusPerWatt),
             "dB" | "decibel" | "Decibel" => Ok(Self::Decibel),
             "ppm/°C" | "ppm/C" | "ppm_per_celsius" | "PpmPerCelsius" => Ok(Self::PpmPerCelsius),
-            "V/us" | "V/µs" | "volt_per_microsecond" | "VoltPerMicrosecond" => Ok(Self::VoltPerMicrosecond),
+            "V/us" | "V/µs" | "volt_per_microsecond" | "VoltPerMicrosecond" => {
+                Ok(Self::VoltPerMicrosecond)
+            }
             other => Err(CoreError::InvalidUnit(other.to_string())),
         }
     }

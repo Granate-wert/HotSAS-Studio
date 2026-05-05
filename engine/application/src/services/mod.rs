@@ -18,6 +18,7 @@ mod preferred_values;
 mod product_workflow;
 mod project;
 mod project_package;
+mod schematic_editing;
 mod selected_region_analysis;
 mod simulation;
 
@@ -41,5 +42,6 @@ pub use preferred_values::{parse_requested_e24_value, PreferredValuesService};
 pub use product_workflow::ProductWorkflowService;
 pub use project::ProjectService;
 pub use project_package::ProjectPackageService;
+pub use schematic_editing::SchematicEditingService;
 pub use selected_region_analysis::SelectedRegionAnalysisService;
 pub use simulation::SimulationService;

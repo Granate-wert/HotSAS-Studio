@@ -2,35 +2,36 @@
 
 ## Current Version
 
-[v2.4 — Real Component Parameters](./verification_logs/v2.4_real_component_parameters.md)
+[v2.5 — Schematic Editor Hardening](./verification_logs/v2.5_schematic_editor_hardening.md)
 
-## v2.4 Summary
+## v2.5 Summary
 
 ```text
-Version: v2.4 — Real Component Parameters
-Implementation commit: 959e0d0
+Version: v2.5 — Schematic Editor Hardening
+Implementation commit: TBD
 Verification/docs commit: TBD
-Verification log: docs/testing/verification_logs/v2.4_real_component_parameters.md
+Verification log: docs/testing/verification_logs/v2.5_schematic_editor_hardening.md
 
 Checks:
 - cargo fmt --check — PASS
 - cargo test — PASS (200+ Rust tests)
 - npm run format:check — PASS
 - npm run typecheck — PASS
-- npm run test — PASS (89 frontend tests)
+- npm run test — PASS (95 frontend tests)
 - npm run build — PASS
 - npm run tauri:build — PASS
 
 Internal build:
 - EXE path: apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
-- EXE size bytes: 13055488
-- EXE SHA256: BE243C70FB7C2A45F50D4798102C7DB42E38CC759EC21552B797DE25F60BEB3A
+- EXE size bytes: 13253120
+- EXE SHA256: 827F0F58EBCB6CADA518E777AC3ACBAEEE5969E31DE30DFA7A332F0F95C2DE76
 - ZIP: NOT CREATED (manual bundling required)
 - Public GitHub Release: NO
 ```
 
 ## Previous Versions
 
+- [v2.4 — Real Component Parameters](./verification_logs/v2.4_real_component_parameters.md)
 - [v2.1 — Formula Library Expansion & Formula UX Hardening](./verification_logs/v2.1_formula_library_expansion.md)
 - [v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build](./verification_logs/v2.0_product_beta_integration.md)
 - [v1.10 — Internal Alpha EXE Build & v2.0 Readiness Gate](./verification_logs/v1.10_internal_alpha_build_and_v2_readiness_gate.md)

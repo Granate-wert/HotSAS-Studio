@@ -140,15 +140,19 @@ function TypedParameterView({ bundle }: { bundle: TypedComponentParametersDto["b
       break;
     case "capacitor":
       rows.push({ label: "Capacitance", value: bundle.capacitance });
-      if (bundle.voltage_rating) rows.push({ label: "Voltage Rating", value: bundle.voltage_rating });
+      if (bundle.voltage_rating)
+        rows.push({ label: "Voltage Rating", value: bundle.voltage_rating });
       break;
     case "inductor":
       rows.push({ label: "Inductance", value: bundle.inductance });
-      if (bundle.current_rating) rows.push({ label: "Current Rating", value: bundle.current_rating });
+      if (bundle.current_rating)
+        rows.push({ label: "Current Rating", value: bundle.current_rating });
       break;
     case "diode":
-      if (bundle.forward_voltage) rows.push({ label: "Forward Voltage", value: bundle.forward_voltage });
-      if (bundle.reverse_voltage) rows.push({ label: "Reverse Voltage", value: bundle.reverse_voltage });
+      if (bundle.forward_voltage)
+        rows.push({ label: "Forward Voltage", value: bundle.forward_voltage });
+      if (bundle.reverse_voltage)
+        rows.push({ label: "Reverse Voltage", value: bundle.reverse_voltage });
       break;
     case "bjt":
       if (bundle.vce_max) rows.push({ label: "VCE Max", value: bundle.vce_max });
@@ -161,10 +165,12 @@ function TypedParameterView({ bundle }: { bundle: TypedComponentParametersDto["b
       break;
     case "op_amp":
       if (bundle.gbw) rows.push({ label: "Gain-Bandwidth", value: bundle.gbw });
-      if (bundle.input_offset_voltage) rows.push({ label: "Input Offset Voltage", value: bundle.input_offset_voltage });
+      if (bundle.input_offset_voltage)
+        rows.push({ label: "Input Offset Voltage", value: bundle.input_offset_voltage });
       break;
     case "regulator":
-      if (bundle.output_voltage) rows.push({ label: "Output Voltage", value: bundle.output_voltage });
+      if (bundle.output_voltage)
+        rows.push({ label: "Output Voltage", value: bundle.output_voltage });
       if (bundle.max_current) rows.push({ label: "Max Current", value: bundle.max_current });
       break;
     default:

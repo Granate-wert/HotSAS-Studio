@@ -166,6 +166,9 @@ pub fn rc_low_pass_template() -> CircuitTemplate {
     }
 }
 
+// TODO(v2.x): These hardcoded formula IDs (rc_low_pass_cutoff, ohms_law, voltage_divider)
+// are legacy compatibility paths. They should be migrated to FormulaPack-based definitions
+// once the formula pack loader supports template-to-formula binding.
 pub fn rc_low_pass_formula() -> FormulaDefinition {
     let mut variables = BTreeMap::new();
     variables.insert(

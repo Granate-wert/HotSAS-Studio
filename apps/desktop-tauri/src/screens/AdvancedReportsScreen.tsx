@@ -30,10 +30,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { PreBlock } from "../components/PreBlock";
-import type {
-  AdvancedReportDto,
-  ReportSectionCapabilityDto,
-} from "../types";
+import type { AdvancedReportDto, ReportSectionCapabilityDto } from "../types";
 
 const REPORT_TYPE_OPTIONS = [
   { value: "ProjectSummary", label: "Project Summary" },
@@ -59,11 +56,7 @@ function statusColor(status: string): string {
   }
 }
 
-function SectionCard({
-  section,
-}: {
-  section: AdvancedReportDto["sections"][number];
-}) {
+function SectionCard({ section }: { section: AdvancedReportDto["sections"][number] }) {
   return (
     <Card withBorder shadow="sm" padding="sm" radius="md">
       <Group justify="space-between" wrap="nowrap">
@@ -95,9 +88,7 @@ function SectionCard({
 
       {section.blocks.map((block, bi) => (
         <div key={bi} className="report-block" style={{ marginTop: 8 }}>
-          {block.block_type === "Paragraph" && block.text && (
-            <Text size="sm">{block.text}</Text>
-          )}
+          {block.block_type === "Paragraph" && block.text && <Text size="sm">{block.text}</Text>}
           {block.block_type === "KeyValueTable" && block.rows && block.rows.length > 0 && (
             <Table withTableBorder>
               <Table.Tbody>
@@ -162,9 +153,7 @@ function SectionCard({
               )}
             </Stack>
           )}
-          {block.block_type === "CodeBlock" && block.content && (
-            <PreBlock text={block.content} />
-          )}
+          {block.block_type === "CodeBlock" && block.content && <PreBlock text={block.content} />}
           {block.block_type === "GraphReference" && (
             <Group gap="xs">
               <BarChart3 size={16} color="#868e96" />
@@ -212,11 +201,7 @@ export function AdvancedReportsScreen({
   loading: boolean;
   error: string | null;
   onLoadCapabilities: () => void;
-  onGenerateReport: (
-    reportType: string,
-    includedSections: string[],
-    title: string,
-  ) => void;
+  onGenerateReport: (reportType: string, includedSections: string[], title: string) => void;
   onExportReport: (reportId: string, format: string, outputPath: string | null) => void;
 }) {
   const [reportType, setReportType] = useState("ProjectSummary");
@@ -237,9 +222,7 @@ export function AdvancedReportsScreen({
 
   useEffect(() => {
     if (capabilities.length > 0 && includedSections.length === 0) {
-      const defaults = capabilities
-        .filter((c) => c.default_enabled)
-        .map((c) => c.kind);
+      const defaults = capabilities.filter((c) => c.default_enabled).map((c) => c.kind);
       setIncludedSections(defaults);
     }
   }, [capabilities, includedSections.length]);
@@ -252,19 +235,13 @@ export function AdvancedReportsScreen({
 
   const handleGenerate = () => {
     const title =
-      reportTitle ||
-      REPORT_TYPE_OPTIONS.find((o) => o.value === reportType)?.label ||
-      "Report";
+      reportTitle || REPORT_TYPE_OPTIONS.find((o) => o.value === reportType)?.label || "Report";
     onGenerateReport(reportType, includedSections, title);
   };
 
   const handleExport = () => {
     if (!activeReport) return;
-    onExportReport(
-      activeReport.id,
-      exportFormat,
-      exportPath || null,
-    );
+    onExportReport(activeReport.id, exportFormat, exportPath || null);
   };
 
   return (
@@ -326,17 +303,11 @@ export function AdvancedReportsScreen({
                 <Button
                   variant="default"
                   size="xs"
-                  onClick={() =>
-                    setIncludedSections(capabilities.map((c) => c.kind))
-                  }
+                  onClick={() => setIncludedSections(capabilities.map((c) => c.kind))}
                 >
                   Select All
                 </Button>
-                <Button
-                  variant="default"
-                  size="xs"
-                  onClick={() => setIncludedSections([])}
-                >
+                <Button variant="default" size="xs" onClick={() => setIncludedSections([])}>
                   Clear All
                 </Button>
               </Group>

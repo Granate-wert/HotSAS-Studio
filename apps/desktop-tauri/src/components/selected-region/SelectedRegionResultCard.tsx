@@ -18,7 +18,7 @@ export function SelectedRegionResultCard({ result }: { result: SelectedRegionAna
         </Group>
         <Text size="xs">{result.summary}</Text>
 
-        {result.matched_template && (
+        {result.matched_template ? (
           <Paper withBorder p="xs">
             <Text size="xs" fw={700}>
               Template: {result.matched_template.title}
@@ -27,6 +27,13 @@ export function SelectedRegionResultCard({ result }: { result: SelectedRegionAna
               Confidence: {(result.matched_template.confidence * 100).toFixed(0)}%
             </Text>
             <Text size="xs">{result.matched_template.explanation}</Text>
+          </Paper>
+        ) : (
+          <Paper withBorder p="xs">
+            <Text size="xs" c="dimmed">
+              No known template matched. Selected Region Analysis is currently template-based.
+              Supported templates: RC low-pass, voltage divider.
+            </Text>
           </Paper>
         )}
 

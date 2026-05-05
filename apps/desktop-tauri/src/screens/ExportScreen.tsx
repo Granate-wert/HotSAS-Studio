@@ -120,6 +120,11 @@ export function ExportScreen({
                 <Badge size="xs" ml={4} variant="outline">
                   .{cap.file_extension}
                 </Badge>
+                {cap.format === "altium_workflow_package" && (
+                  <Badge size="xs" ml={4} color="orange">
+                    Placeholder
+                  </Badge>
+                )}
               </Button>
             ))}
             <Button

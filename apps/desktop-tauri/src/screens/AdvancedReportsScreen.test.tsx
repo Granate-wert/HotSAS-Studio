@@ -2,10 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { render } from "../test-utils";
 import { AdvancedReportsScreen } from "./AdvancedReportsScreen";
-import type {
-  AdvancedReportDto,
-  ReportSectionCapabilityDto,
-} from "../types";
+import type { AdvancedReportDto, ReportSectionCapabilityDto } from "../types";
 
 const mockCapabilities: ReportSectionCapabilityDto[] = [
   {

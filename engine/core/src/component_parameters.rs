@@ -187,7 +187,11 @@ impl std::fmt::Display for ParameterValidationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ParameterValidationError::UnitMismatch { expected, actual } => {
-                write!(f, "Unit mismatch: expected {:?}, got {:?}", expected, actual)
+                write!(
+                    f,
+                    "Unit mismatch: expected {:?}, got {:?}",
+                    expected, actual
+                )
             }
             ParameterValidationError::OutOfRange { min, max, actual } => {
                 write!(f, "Value {} out of range [{}, {}]", actual, min, max)
@@ -658,20 +662,18 @@ pub fn resistor_schema() -> ComponentParameterSchema {
             ComponentParameterGroup {
                 name: "Thermal".to_string(),
                 key: "thermal".to_string(),
-                parameters: vec![
-                    ComponentParameterDefinition {
-                        name: "Temperature Coefficient".to_string(),
-                        key: "tempco".to_string(),
-                        description: Some("Resistance change per degree Celsius".to_string()),
-                        unit: EngineeringUnit::PpmPerCelsius,
-                        kind: ComponentParameterKind::Thermal,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((-1e6, 1e6)),
-                        default_value: None,
-                        editable: false,
-                    },
-                ],
+                parameters: vec![ComponentParameterDefinition {
+                    name: "Temperature Coefficient".to_string(),
+                    key: "tempco".to_string(),
+                    description: Some("Resistance change per degree Celsius".to_string()),
+                    unit: EngineeringUnit::PpmPerCelsius,
+                    kind: ComponentParameterKind::Thermal,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((-1e6, 1e6)),
+                    default_value: None,
+                    editable: false,
+                }],
             },
         ],
     }
@@ -681,50 +683,48 @@ pub fn resistor_schema() -> ComponentParameterSchema {
 pub fn capacitor_schema() -> ComponentParameterSchema {
     ComponentParameterSchema {
         category: "Capacitor".to_string(),
-        groups: vec![
-            ComponentParameterGroup {
-                name: "Electrical".to_string(),
-                key: "electrical".to_string(),
-                parameters: vec![
-                    ComponentParameterDefinition {
-                        name: "Capacitance".to_string(),
-                        key: "capacitance".to_string(),
-                        description: Some("Nominal capacitance value".to_string()),
-                        unit: EngineeringUnit::Farad,
-                        kind: ComponentParameterKind::Primary,
-                        required: true,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e6)),
-                        default_value: None,
-                        editable: true,
-                    },
-                    ComponentParameterDefinition {
-                        name: "Voltage Rating".to_string(),
-                        key: "voltage".to_string(),
-                        description: Some("Maximum DC working voltage".to_string()),
-                        unit: EngineeringUnit::Volt,
-                        kind: ComponentParameterKind::Secondary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e4)),
-                        default_value: None,
-                        editable: true,
-                    },
-                    ComponentParameterDefinition {
-                        name: "ESR".to_string(),
-                        key: "esr".to_string(),
-                        description: Some("Equivalent series resistance".to_string()),
-                        unit: EngineeringUnit::Ohm,
-                        kind: ComponentParameterKind::Secondary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e6)),
-                        default_value: None,
-                        editable: false,
-                    },
-                ],
-            },
-        ],
+        groups: vec![ComponentParameterGroup {
+            name: "Electrical".to_string(),
+            key: "electrical".to_string(),
+            parameters: vec![
+                ComponentParameterDefinition {
+                    name: "Capacitance".to_string(),
+                    key: "capacitance".to_string(),
+                    description: Some("Nominal capacitance value".to_string()),
+                    unit: EngineeringUnit::Farad,
+                    kind: ComponentParameterKind::Primary,
+                    required: true,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e6)),
+                    default_value: None,
+                    editable: true,
+                },
+                ComponentParameterDefinition {
+                    name: "Voltage Rating".to_string(),
+                    key: "voltage".to_string(),
+                    description: Some("Maximum DC working voltage".to_string()),
+                    unit: EngineeringUnit::Volt,
+                    kind: ComponentParameterKind::Secondary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e4)),
+                    default_value: None,
+                    editable: true,
+                },
+                ComponentParameterDefinition {
+                    name: "ESR".to_string(),
+                    key: "esr".to_string(),
+                    description: Some("Equivalent series resistance".to_string()),
+                    unit: EngineeringUnit::Ohm,
+                    kind: ComponentParameterKind::Secondary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e6)),
+                    default_value: None,
+                    editable: false,
+                },
+            ],
+        }],
     }
 }
 
@@ -825,50 +825,48 @@ pub fn op_amp_schema() -> ComponentParameterSchema {
 pub fn mosfet_schema() -> ComponentParameterSchema {
     ComponentParameterSchema {
         category: "Mosfet".to_string(),
-        groups: vec![
-            ComponentParameterGroup {
-                name: "Electrical".to_string(),
-                key: "electrical".to_string(),
-                parameters: vec![
-                    ComponentParameterDefinition {
-                        name: "VDS Max".to_string(),
-                        key: "vds_max".to_string(),
-                        description: Some("Maximum drain-source voltage".to_string()),
-                        unit: EngineeringUnit::Volt,
-                        kind: ComponentParameterKind::Primary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e4)),
-                        default_value: None,
-                        editable: true,
-                    },
-                    ComponentParameterDefinition {
-                        name: "ID Max".to_string(),
-                        key: "id_max".to_string(),
-                        description: Some("Maximum continuous drain current".to_string()),
-                        unit: EngineeringUnit::Ampere,
-                        kind: ComponentParameterKind::Primary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e4)),
-                        default_value: None,
-                        editable: true,
-                    },
-                    ComponentParameterDefinition {
-                        name: "RDS(on)".to_string(),
-                        key: "rds_on".to_string(),
-                        description: Some("Drain-source on-resistance".to_string()),
-                        unit: EngineeringUnit::Ohm,
-                        kind: ComponentParameterKind::Secondary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e6)),
-                        default_value: None,
-                        editable: true,
-                    },
-                ],
-            },
-        ],
+        groups: vec![ComponentParameterGroup {
+            name: "Electrical".to_string(),
+            key: "electrical".to_string(),
+            parameters: vec![
+                ComponentParameterDefinition {
+                    name: "VDS Max".to_string(),
+                    key: "vds_max".to_string(),
+                    description: Some("Maximum drain-source voltage".to_string()),
+                    unit: EngineeringUnit::Volt,
+                    kind: ComponentParameterKind::Primary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e4)),
+                    default_value: None,
+                    editable: true,
+                },
+                ComponentParameterDefinition {
+                    name: "ID Max".to_string(),
+                    key: "id_max".to_string(),
+                    description: Some("Maximum continuous drain current".to_string()),
+                    unit: EngineeringUnit::Ampere,
+                    kind: ComponentParameterKind::Primary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e4)),
+                    default_value: None,
+                    editable: true,
+                },
+                ComponentParameterDefinition {
+                    name: "RDS(on)".to_string(),
+                    key: "rds_on".to_string(),
+                    description: Some("Drain-source on-resistance".to_string()),
+                    unit: EngineeringUnit::Ohm,
+                    kind: ComponentParameterKind::Secondary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e6)),
+                    default_value: None,
+                    editable: true,
+                },
+            ],
+        }],
     }
 }
 
@@ -876,38 +874,36 @@ pub fn mosfet_schema() -> ComponentParameterSchema {
 pub fn inductor_schema() -> ComponentParameterSchema {
     ComponentParameterSchema {
         category: "Inductor".to_string(),
-        groups: vec![
-            ComponentParameterGroup {
-                name: "Electrical".to_string(),
-                key: "electrical".to_string(),
-                parameters: vec![
-                    ComponentParameterDefinition {
-                        name: "Inductance".to_string(),
-                        key: "inductance".to_string(),
-                        description: Some("Nominal inductance value".to_string()),
-                        unit: EngineeringUnit::Henry,
-                        kind: ComponentParameterKind::Primary,
-                        required: true,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e6)),
-                        default_value: None,
-                        editable: true,
-                    },
-                    ComponentParameterDefinition {
-                        name: "Current Rating".to_string(),
-                        key: "current".to_string(),
-                        description: Some("Maximum DC current before saturation".to_string()),
-                        unit: EngineeringUnit::Ampere,
-                        kind: ComponentParameterKind::Secondary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e4)),
-                        default_value: None,
-                        editable: true,
-                    },
-                ],
-            },
-        ],
+        groups: vec![ComponentParameterGroup {
+            name: "Electrical".to_string(),
+            key: "electrical".to_string(),
+            parameters: vec![
+                ComponentParameterDefinition {
+                    name: "Inductance".to_string(),
+                    key: "inductance".to_string(),
+                    description: Some("Nominal inductance value".to_string()),
+                    unit: EngineeringUnit::Henry,
+                    kind: ComponentParameterKind::Primary,
+                    required: true,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e6)),
+                    default_value: None,
+                    editable: true,
+                },
+                ComponentParameterDefinition {
+                    name: "Current Rating".to_string(),
+                    key: "current".to_string(),
+                    description: Some("Maximum DC current before saturation".to_string()),
+                    unit: EngineeringUnit::Ampere,
+                    kind: ComponentParameterKind::Secondary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e4)),
+                    default_value: None,
+                    editable: true,
+                },
+            ],
+        }],
     }
 }
 
@@ -915,50 +911,48 @@ pub fn inductor_schema() -> ComponentParameterSchema {
 pub fn diode_schema() -> ComponentParameterSchema {
     ComponentParameterSchema {
         category: "Diode".to_string(),
-        groups: vec![
-            ComponentParameterGroup {
-                name: "Electrical".to_string(),
-                key: "electrical".to_string(),
-                parameters: vec![
-                    ComponentParameterDefinition {
-                        name: "Forward Voltage".to_string(),
-                        key: "forward_voltage".to_string(),
-                        description: Some("Typical forward voltage drop".to_string()),
-                        unit: EngineeringUnit::Volt,
-                        kind: ComponentParameterKind::Primary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e3)),
-                        default_value: None,
-                        editable: true,
-                    },
-                    ComponentParameterDefinition {
-                        name: "Reverse Voltage".to_string(),
-                        key: "reverse_voltage".to_string(),
-                        description: Some("Maximum repetitive reverse voltage".to_string()),
-                        unit: EngineeringUnit::Volt,
-                        kind: ComponentParameterKind::Secondary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e4)),
-                        default_value: None,
-                        editable: true,
-                    },
-                    ComponentParameterDefinition {
-                        name: "Forward Current".to_string(),
-                        key: "forward_current".to_string(),
-                        description: Some("Maximum average forward current".to_string()),
-                        unit: EngineeringUnit::Ampere,
-                        kind: ComponentParameterKind::Secondary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e4)),
-                        default_value: None,
-                        editable: true,
-                    },
-                ],
-            },
-        ],
+        groups: vec![ComponentParameterGroup {
+            name: "Electrical".to_string(),
+            key: "electrical".to_string(),
+            parameters: vec![
+                ComponentParameterDefinition {
+                    name: "Forward Voltage".to_string(),
+                    key: "forward_voltage".to_string(),
+                    description: Some("Typical forward voltage drop".to_string()),
+                    unit: EngineeringUnit::Volt,
+                    kind: ComponentParameterKind::Primary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e3)),
+                    default_value: None,
+                    editable: true,
+                },
+                ComponentParameterDefinition {
+                    name: "Reverse Voltage".to_string(),
+                    key: "reverse_voltage".to_string(),
+                    description: Some("Maximum repetitive reverse voltage".to_string()),
+                    unit: EngineeringUnit::Volt,
+                    kind: ComponentParameterKind::Secondary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e4)),
+                    default_value: None,
+                    editable: true,
+                },
+                ComponentParameterDefinition {
+                    name: "Forward Current".to_string(),
+                    key: "forward_current".to_string(),
+                    description: Some("Maximum average forward current".to_string()),
+                    unit: EngineeringUnit::Ampere,
+                    kind: ComponentParameterKind::Secondary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e4)),
+                    default_value: None,
+                    editable: true,
+                },
+            ],
+        }],
     }
 }
 
@@ -966,50 +960,48 @@ pub fn diode_schema() -> ComponentParameterSchema {
 pub fn bjt_schema() -> ComponentParameterSchema {
     ComponentParameterSchema {
         category: "Bjt".to_string(),
-        groups: vec![
-            ComponentParameterGroup {
-                name: "Electrical".to_string(),
-                key: "electrical".to_string(),
-                parameters: vec![
-                    ComponentParameterDefinition {
-                        name: "VCE Max".to_string(),
-                        key: "vce_max".to_string(),
-                        description: Some("Maximum collector-emitter voltage".to_string()),
-                        unit: EngineeringUnit::Volt,
-                        kind: ComponentParameterKind::Primary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e4)),
-                        default_value: None,
-                        editable: true,
-                    },
-                    ComponentParameterDefinition {
-                        name: "IC Max".to_string(),
-                        key: "ic_max".to_string(),
-                        description: Some("Maximum collector current".to_string()),
-                        unit: EngineeringUnit::Ampere,
-                        kind: ComponentParameterKind::Primary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e4)),
-                        default_value: None,
-                        editable: true,
-                    },
-                    ComponentParameterDefinition {
-                        name: "Power Dissipation".to_string(),
-                        key: "power".to_string(),
-                        description: Some("Maximum power dissipation".to_string()),
-                        unit: EngineeringUnit::Watt,
-                        kind: ComponentParameterKind::Secondary,
-                        required: false,
-                        tolerance: None,
-                        value_range: Some((0.0, 1e3)),
-                        default_value: None,
-                        editable: true,
-                    },
-                ],
-            },
-        ],
+        groups: vec![ComponentParameterGroup {
+            name: "Electrical".to_string(),
+            key: "electrical".to_string(),
+            parameters: vec![
+                ComponentParameterDefinition {
+                    name: "VCE Max".to_string(),
+                    key: "vce_max".to_string(),
+                    description: Some("Maximum collector-emitter voltage".to_string()),
+                    unit: EngineeringUnit::Volt,
+                    kind: ComponentParameterKind::Primary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e4)),
+                    default_value: None,
+                    editable: true,
+                },
+                ComponentParameterDefinition {
+                    name: "IC Max".to_string(),
+                    key: "ic_max".to_string(),
+                    description: Some("Maximum collector current".to_string()),
+                    unit: EngineeringUnit::Ampere,
+                    kind: ComponentParameterKind::Primary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e4)),
+                    default_value: None,
+                    editable: true,
+                },
+                ComponentParameterDefinition {
+                    name: "Power Dissipation".to_string(),
+                    key: "power".to_string(),
+                    description: Some("Maximum power dissipation".to_string()),
+                    unit: EngineeringUnit::Watt,
+                    kind: ComponentParameterKind::Secondary,
+                    required: false,
+                    tolerance: None,
+                    value_range: Some((0.0, 1e3)),
+                    default_value: None,
+                    editable: true,
+                },
+            ],
+        }],
     }
 }
 
@@ -1126,7 +1118,10 @@ mod tests {
 
     #[test]
     fn test_tolerance_min_max() {
-        let tol = ComponentTolerance::MinMax { min: -10.0, max: 10.0 };
+        let tol = ComponentTolerance::MinMax {
+            min: -10.0,
+            max: 10.0,
+        };
         assert!(tol.is_within(0.0, 5.0));
         assert!(!tol.is_within(0.0, 15.0));
     }

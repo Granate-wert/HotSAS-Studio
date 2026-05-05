@@ -2004,7 +2004,6 @@ impl From<&hotsas_core::DcdcTemplateDefinition> for DcdcTemplateDto {
     }
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvancedReportRequestDto {
     pub report_id: String,
@@ -2114,7 +2113,6 @@ pub struct AdvancedReportExportResultDto {
     pub message: String,
 }
 
-
 // ---------------------------------------------------------------------------
 // v2.4 Typed Component Parameter DTOs
 // ---------------------------------------------------------------------------
@@ -2162,14 +2160,39 @@ pub struct TypedComponentParametersDto {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ParameterBundleDto {
-    Resistor { resistance: ValueDto, power_rating: Option<ValueDto> },
-    Capacitor { capacitance: ValueDto, voltage_rating: Option<ValueDto> },
-    Inductor { inductance: ValueDto, current_rating: Option<ValueDto> },
-    Diode { forward_voltage: Option<ValueDto>, reverse_voltage: Option<ValueDto> },
-    Bjt { vce_max: Option<ValueDto>, ic_max: Option<ValueDto> },
-    Mosfet { vds_max: Option<ValueDto>, id_max: Option<ValueDto>, rds_on: Option<ValueDto> },
-    OpAmp { gbw: Option<ValueDto>, input_offset_voltage: Option<ValueDto> },
-    Regulator { output_voltage: Option<ValueDto>, max_current: Option<ValueDto> },
+    Resistor {
+        resistance: ValueDto,
+        power_rating: Option<ValueDto>,
+    },
+    Capacitor {
+        capacitance: ValueDto,
+        voltage_rating: Option<ValueDto>,
+    },
+    Inductor {
+        inductance: ValueDto,
+        current_rating: Option<ValueDto>,
+    },
+    Diode {
+        forward_voltage: Option<ValueDto>,
+        reverse_voltage: Option<ValueDto>,
+    },
+    Bjt {
+        vce_max: Option<ValueDto>,
+        ic_max: Option<ValueDto>,
+    },
+    Mosfet {
+        vds_max: Option<ValueDto>,
+        id_max: Option<ValueDto>,
+        rds_on: Option<ValueDto>,
+    },
+    OpAmp {
+        gbw: Option<ValueDto>,
+        input_offset_voltage: Option<ValueDto>,
+    },
+    Regulator {
+        output_voltage: Option<ValueDto>,
+        max_current: Option<ValueDto>,
+    },
     Generic,
 }
 
@@ -2177,7 +2200,11 @@ impl From<&hotsas_core::ComponentParameterSchema> for ComponentParameterSchemaDt
     fn from(schema: &hotsas_core::ComponentParameterSchema) -> Self {
         Self {
             category: schema.category.clone(),
-            groups: schema.groups.iter().map(ComponentParameterGroupDto::from).collect(),
+            groups: schema
+                .groups
+                .iter()
+                .map(ComponentParameterGroupDto::from)
+                .collect(),
         }
     }
 }
@@ -2187,7 +2214,11 @@ impl From<&hotsas_core::ComponentParameterGroup> for ComponentParameterGroupDto 
         Self {
             name: group.name.clone(),
             key: group.key.clone(),
-            parameters: group.parameters.iter().map(ComponentParameterDefinitionDto::from).collect(),
+            parameters: group
+                .parameters
+                .iter()
+                .map(ComponentParameterDefinitionDto::from)
+                .collect(),
         }
     }
 }
@@ -2216,4 +2247,58 @@ impl From<&hotsas_application::ParameterIssue> for ComponentParameterIssueDto {
             severity: format!("{:?}", issue.severity),
         }
     }
+}
+
+// v2.5 Schematic Editor Hardening DTOs
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddComponentRequestDto {
+    pub component_kind: String,
+    pub component_definition_id: Option<String>,
+    pub instance_id: Option<String>,
+    pub x: f64,
+    pub y: f64,
+    pub rotation_deg: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MoveComponentRequestDto {
+    pub instance_id: String,
+    pub x: f64,
+    pub y: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteComponentRequestDto {
+    pub instance_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectPinsRequestDto {
+    pub from_component_id: String,
+    pub from_pin_id: String,
+    pub to_component_id: String,
+    pub to_pin_id: String,
+    pub net_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RenameNetRequestDto {
+    pub net_id: String,
+    pub new_name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SchematicEditResultDto {
+    pub project: ProjectDto,
+    pub validation_warnings: Vec<CircuitValidationIssueDto>,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SchematicToolCapabilityDto {
+    pub tool_id: String,
+    pub label: String,
+    pub available: bool,
+    pub limitation: Option<String>,
 }

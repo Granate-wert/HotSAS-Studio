@@ -177,7 +177,9 @@ impl std::fmt::Display for ReportSectionStatus {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ReportContentBlock {
-    Paragraph { text: String },
+    Paragraph {
+        text: String,
+    },
     KeyValueTable {
         title: String,
         rows: Vec<ReportKeyValueRow>,
@@ -204,7 +206,9 @@ pub enum ReportContentBlock {
         x_unit: Option<String>,
         y_unit: Option<String>,
     },
-    WarningList { items: Vec<ReportWarning> },
+    WarningList {
+        items: Vec<ReportWarning>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

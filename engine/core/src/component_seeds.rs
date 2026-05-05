@@ -601,7 +601,12 @@ fn resistor_10k_0603() -> ComponentDefinition {
         footprint_ids: vec!["smd_0603_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["passive".to_string(), "resistor".to_string(), "smd".to_string(), "0603".to_string()],
+        tags: vec![
+            "passive".to_string(),
+            "resistor".to_string(),
+            "smd".to_string(),
+            "0603".to_string(),
+        ],
         metadata,
     }
 }
@@ -637,7 +642,11 @@ fn resistor_1k_axial() -> ComponentDefinition {
         footprint_ids: vec!["axial_resistor_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["passive".to_string(), "resistor".to_string(), "axial".to_string()],
+        tags: vec![
+            "passive".to_string(),
+            "resistor".to_string(),
+            "axial".to_string(),
+        ],
         metadata,
     }
 }
@@ -673,7 +682,12 @@ fn resistor_100r_0805() -> ComponentDefinition {
         footprint_ids: vec!["smd_0805_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["passive".to_string(), "resistor".to_string(), "smd".to_string(), "0805".to_string()],
+        tags: vec![
+            "passive".to_string(),
+            "resistor".to_string(),
+            "smd".to_string(),
+            "0805".to_string(),
+        ],
         metadata,
     }
 }
@@ -710,7 +724,12 @@ fn capacitor_100n_0603() -> ComponentDefinition {
         footprint_ids: vec!["smd_0603_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["passive".to_string(), "capacitor".to_string(), "ceramic".to_string(), "0603".to_string()],
+        tags: vec![
+            "passive".to_string(),
+            "capacitor".to_string(),
+            "ceramic".to_string(),
+            "0603".to_string(),
+        ],
         metadata,
     }
 }
@@ -747,7 +766,12 @@ fn capacitor_10u_0805() -> ComponentDefinition {
         footprint_ids: vec!["smd_0805_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["passive".to_string(), "capacitor".to_string(), "ceramic".to_string(), "0805".to_string()],
+        tags: vec![
+            "passive".to_string(),
+            "capacitor".to_string(),
+            "ceramic".to_string(),
+            "0805".to_string(),
+        ],
         metadata,
     }
 }
@@ -768,7 +792,10 @@ fn capacitor_100u_electrolytic() -> ComponentDefinition {
         ValueWithUnit::parse_with_default("20", EngineeringUnit::Percent).unwrap(),
     );
     let mut metadata = BTreeMap::new();
-    metadata.insert("dielectric".to_string(), "Aluminum Electrolytic".to_string());
+    metadata.insert(
+        "dielectric".to_string(),
+        "Aluminum Electrolytic".to_string(),
+    );
     metadata.insert("esr".to_string(), "0.5 Ω".to_string());
     metadata.insert("package".to_string(), "RADIAL-6.3x11".to_string());
     ComponentDefinition {
@@ -784,7 +811,11 @@ fn capacitor_100u_electrolytic() -> ComponentDefinition {
         footprint_ids: vec!["radial_capacitor_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["passive".to_string(), "capacitor".to_string(), "electrolytic".to_string()],
+        tags: vec![
+            "passive".to_string(),
+            "capacitor".to_string(),
+            "electrolytic".to_string(),
+        ],
         metadata,
     }
 }
@@ -820,7 +851,11 @@ fn inductor_47u() -> ComponentDefinition {
         footprint_ids: vec!["inductor_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["passive".to_string(), "inductor".to_string(), "smd".to_string()],
+        tags: vec![
+            "passive".to_string(),
+            "inductor".to_string(),
+            "smd".to_string(),
+        ],
         metadata,
     }
 }
@@ -846,7 +881,10 @@ fn diode_1n4148() -> ComponentDefinition {
     );
     let mut metadata = BTreeMap::new();
     metadata.insert("package".to_string(), "DO-35".to_string());
-    metadata.insert("type".to_string(), "Small signal switching diode".to_string());
+    metadata.insert(
+        "type".to_string(),
+        "Small signal switching diode".to_string(),
+    );
     ComponentDefinition {
         id: "diode_1n4148".to_string(),
         name: "1N4148 Small Signal Diode".to_string(),
@@ -860,7 +898,11 @@ fn diode_1n4148() -> ComponentDefinition {
         footprint_ids: vec!["do_41_diode_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["semiconductor".to_string(), "diode".to_string(), "signal".to_string()],
+        tags: vec![
+            "semiconductor".to_string(),
+            "diode".to_string(),
+            "signal".to_string(),
+        ],
         metadata,
     }
 }
@@ -896,7 +938,11 @@ fn diode_schottky() -> ComponentDefinition {
         footprint_ids: vec!["do_41_diode_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["semiconductor".to_string(), "diode".to_string(), "schottky".to_string()],
+        tags: vec![
+            "semiconductor".to_string(),
+            "diode".to_string(),
+            "schottky".to_string(),
+        ],
         metadata,
     }
 }
@@ -934,7 +980,12 @@ fn bjt_2n2222() -> ComponentDefinition {
         footprint_ids: vec!["to_92_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["semiconductor".to_string(), "transistor".to_string(), "bjt".to_string(), "npn".to_string()],
+        tags: vec![
+            "semiconductor".to_string(),
+            "transistor".to_string(),
+            "bjt".to_string(),
+            "npn".to_string(),
+        ],
         metadata,
     }
 }
@@ -972,7 +1023,12 @@ fn bjt_2n2907() -> ComponentDefinition {
         footprint_ids: vec!["to_92_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["semiconductor".to_string(), "transistor".to_string(), "bjt".to_string(), "pnp".to_string()],
+        tags: vec![
+            "semiconductor".to_string(),
+            "transistor".to_string(),
+            "bjt".to_string(),
+            "pnp".to_string(),
+        ],
         metadata,
     }
 }
@@ -1011,7 +1067,13 @@ fn mosfet_irfz44n() -> ComponentDefinition {
         footprint_ids: vec!["to_220_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["semiconductor".to_string(), "transistor".to_string(), "mosfet".to_string(), "n-channel".to_string(), "power".to_string()],
+        tags: vec![
+            "semiconductor".to_string(),
+            "transistor".to_string(),
+            "mosfet".to_string(),
+            "n-channel".to_string(),
+            "power".to_string(),
+        ],
         metadata,
     }
 }
@@ -1039,7 +1101,10 @@ fn op_amp_lm358() -> ComponentDefinition {
     metadata.insert("slew_rate".to_string(), "0.3 V/us".to_string());
     metadata.insert("input_bias_current".to_string(), "45 nA".to_string());
     metadata.insert("package".to_string(), "SOIC-8".to_string());
-    metadata.insert("type".to_string(), "Dual general-purpose op-amp".to_string());
+    metadata.insert(
+        "type".to_string(),
+        "Dual general-purpose op-amp".to_string(),
+    );
     metadata.insert("channels".to_string(), "2".to_string());
     ComponentDefinition {
         id: "op_amp_lm358".to_string(),
@@ -1061,7 +1126,11 @@ fn op_amp_lm358() -> ComponentDefinition {
             pin_mapping: BTreeMap::new(),
         }],
         datasheets: vec![],
-        tags: vec!["active".to_string(), "opamp".to_string(), "dual".to_string()],
+        tags: vec![
+            "active".to_string(),
+            "opamp".to_string(),
+            "dual".to_string(),
+        ],
         metadata,
     }
 }
@@ -1099,7 +1168,11 @@ fn op_amp_rail_rail_placeholder() -> ComponentDefinition {
         footprint_ids: vec!["sot23_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["active".to_string(), "opamp".to_string(), "placeholder".to_string()],
+        tags: vec![
+            "active".to_string(),
+            "opamp".to_string(),
+            "placeholder".to_string(),
+        ],
         metadata,
     }
 }
@@ -1125,7 +1198,10 @@ fn ldo_ams1117() -> ComponentDefinition {
     );
     let mut metadata = BTreeMap::new();
     metadata.insert("package".to_string(), "SOT-223".to_string());
-    metadata.insert("type".to_string(), "Fixed LDO voltage regulator".to_string());
+    metadata.insert(
+        "type".to_string(),
+        "Fixed LDO voltage regulator".to_string(),
+    );
     metadata.insert("psrr".to_string(), "70 dB".to_string());
     metadata.insert("line_reg".to_string(), "0.2%".to_string());
     ComponentDefinition {
@@ -1141,7 +1217,12 @@ fn ldo_ams1117() -> ComponentDefinition {
         footprint_ids: vec!["to_220_placeholder".to_string()],
         simulation_models: vec![],
         datasheets: vec![],
-        tags: vec!["active".to_string(), "regulator".to_string(), "ldo".to_string(), "power".to_string()],
+        tags: vec![
+            "active".to_string(),
+            "regulator".to_string(),
+            "ldo".to_string(),
+            "power".to_string(),
+        ],
         metadata,
     }
 }

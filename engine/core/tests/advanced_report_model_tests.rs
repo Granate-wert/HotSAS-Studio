@@ -1,8 +1,8 @@
 use hotsas_core::advanced_report::{
-    AdvancedReportModel, AdvancedReportRequest, AdvancedReportType, ReportContentBlock,
-    ReportExportOptions, ReportKeyValueRow, ReportSection, ReportSectionCapability,
-    ReportSectionKind, ReportSectionStatus, ReportSourceReference, ReportWarning,
-    ReportWarningSeverity, default_section_capabilities,
+    default_section_capabilities, AdvancedReportModel, AdvancedReportRequest, AdvancedReportType,
+    ReportContentBlock, ReportExportOptions, ReportKeyValueRow, ReportSection,
+    ReportSectionCapability, ReportSectionKind, ReportSectionStatus, ReportSourceReference,
+    ReportWarning, ReportWarningSeverity,
 };
 
 #[test]
@@ -30,7 +30,10 @@ fn default_section_capabilities_contains_all_kinds() {
 fn report_section_status_display() {
     assert_eq!(format!("{}", ReportSectionStatus::Included), "Included");
     assert_eq!(format!("{}", ReportSectionStatus::Empty), "Empty");
-    assert_eq!(format!("{}", ReportSectionStatus::Unavailable), "Unavailable");
+    assert_eq!(
+        format!("{}", ReportSectionStatus::Unavailable),
+        "Unavailable"
+    );
     assert_eq!(format!("{}", ReportSectionStatus::Error), "Error");
 }
 
@@ -46,8 +49,14 @@ fn report_section_kind_display() {
 
 #[test]
 fn advanced_report_type_display() {
-    assert_eq!(format!("{}", AdvancedReportType::ProjectSummary), "ProjectSummary");
-    assert_eq!(format!("{}", AdvancedReportType::FullProjectReport), "FullProjectReport");
+    assert_eq!(
+        format!("{}", AdvancedReportType::ProjectSummary),
+        "ProjectSummary"
+    );
+    assert_eq!(
+        format!("{}", AdvancedReportType::FullProjectReport),
+        "FullProjectReport"
+    );
 }
 
 #[test]

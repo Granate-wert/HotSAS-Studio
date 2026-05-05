@@ -192,7 +192,9 @@ fn ldo_ams1117_exists() {
 #[test]
 fn resistor_schema_has_primary_resistance() {
     let schema = schema_for_category("Resistor").expect("resistor schema must exist");
-    let def = schema.get_definition("resistance").expect("resistance def must exist");
+    let def = schema
+        .get_definition("resistance")
+        .expect("resistance def must exist");
     assert_eq!(def.kind, ComponentParameterKind::Primary);
     assert!(def.required);
 }

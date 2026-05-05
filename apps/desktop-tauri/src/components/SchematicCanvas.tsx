@@ -35,9 +35,16 @@ function mapComponentKindToNodeType(kind: string): string {
 type SchematicCanvasProps = {
   project: ProjectDto | null;
   onSelectComponent?: (instanceId: string) => void;
+  onMoveComponent?: (instanceId: string, x: number, y: number) => void;
+  disabled?: boolean;
 };
 
-export function SchematicCanvas({ project, onSelectComponent }: SchematicCanvasProps) {
+export function SchematicCanvas({
+  project,
+  onSelectComponent,
+  onMoveComponent,
+  disabled,
+}: SchematicCanvasProps) {
   const { nodes, edges } = useMemo(() => {
     if (!project) {
       return { nodes: [], edges: [] };
@@ -73,6 +80,15 @@ export function SchematicCanvas({ project, onSelectComponent }: SchematicCanvasP
     [onSelectComponent],
   );
 
+  const handleNodeDragStop = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      if (!disabled && onMoveComponent) {
+        onMoveComponent(node.id, node.position.x, node.position.y);
+      }
+    },
+    [disabled, onMoveComponent],
+  );
+
   return (
     <div className="canvas">
       <ReactFlow
@@ -80,6 +96,7 @@ export function SchematicCanvas({ project, onSelectComponent }: SchematicCanvasP
         edges={edges}
         nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
+        onNodeDragStop={handleNodeDragStop}
         fitView
       >
         <Background />

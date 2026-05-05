@@ -1,5 +1,6 @@
 import {
   Alert,
+  Badge,
   Button,
   Code,
   Group,
@@ -136,15 +137,23 @@ export function DcdcCalculatorScreen() {
         )}
 
         <Stack gap="sm">
-          <Select
-            label="Topology"
-            data={TOPOLOGY_OPTIONS}
-            value={topology}
-            onChange={(value) => {
-              setTopology(value || "buck");
-              setResult(null);
-            }}
-          />
+          <Group align="flex-end" gap="sm">
+            <Select
+              label="Topology"
+              data={TOPOLOGY_OPTIONS}
+              value={topology}
+              onChange={(value) => {
+                setTopology(value || "buck");
+                setResult(null);
+              }}
+              style={{ flex: 1 }}
+            />
+            {topology === "four_switch_buck_boost" && (
+              <Badge color="orange" size="sm">
+                Placeholder
+              </Badge>
+            )}
+          </Group>
 
           <Group gap="sm">
             <TextInput

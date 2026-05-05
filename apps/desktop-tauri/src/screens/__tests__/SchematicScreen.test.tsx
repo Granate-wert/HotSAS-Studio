@@ -1,0 +1,136 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MantineProvider } from "@mantine/core";
+import { describe, expect, it, vi } from "vitest";
+import { SchematicScreen } from "../SchematicScreen";
+import type { ProjectDto } from "../../types";
+
+function renderWithProvider(ui: React.ReactNode) {
+  return render(<MantineProvider>{ui}</MantineProvider>);
+}
+
+const mockProject: ProjectDto = {
+  id: "p1",
+  name: "Test",
+  format_version: "1",
+  engine_version: "0.1.4",
+  project_type: "schematic",
+  schematic: {
+    id: "s1",
+    title: "Test",
+    components: [
+      {
+        instance_id: "R1",
+        definition_id: "resistor",
+        component_kind: "resistor",
+        display_label: "R1",
+        x: 100,
+        y: 100,
+        rotation_degrees: 0,
+        parameters: [],
+        symbol: null,
+        pins: [
+          {
+            id: "p1",
+            name: "1",
+            number: "1",
+            electrical_type: "passive",
+            x: -20,
+            y: 0,
+            side: "left",
+          },
+          {
+            id: "p2",
+            name: "2",
+            number: "2",
+            electrical_type: "passive",
+            x: 20,
+            y: 0,
+            side: "right",
+          },
+        ],
+        connected_nets: [],
+      },
+    ],
+    wires: [],
+    nets: [],
+  },
+};
+
+const baseProps = {
+  project: mockProject,
+  formulaResult: null,
+  preferredValue: null,
+  simulation: null,
+  netlist: "",
+  markdownReport: "",
+  htmlReport: "",
+  onMarkdown: vi.fn(),
+  onHtml: vi.fn(),
+  hasProject: true,
+  selectedComponent: null,
+  validationReport: null,
+  onSelectComponent: vi.fn(),
+  onValidate: vi.fn(),
+  onPropertyUpdate: vi.fn(),
+  schematicCapabilities: [],
+  schematicEditLoading: false,
+  schematicEditError: null,
+  pendingConnectionStart: null,
+  onLoadSchematicCapabilities: vi.fn(),
+  onAddComponent: vi.fn(),
+  onMoveComponent: vi.fn(),
+  onDeleteComponent: vi.fn(),
+  onConnectPins: vi.fn(),
+  onRenameNet: vi.fn(),
+  onSetPendingConnectionStart: vi.fn(),
+};
+
+describe("SchematicScreen v2.5", () => {
+  it("renders toolbar with delete and connect buttons", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} />);
+    expect(screen.getByText("Schematic Editor")).toBeInTheDocument();
+    expect(screen.getByTestId("delete-selected-component")).toBeInTheDocument();
+    expect(screen.getByTestId("connect-pins-button")).toBeInTheDocument();
+    expect(screen.getByTestId("rename-net-button")).toBeInTheDocument();
+  });
+
+  it("renders component palette", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} />);
+    expect(screen.getByText("Component Palette")).toBeInTheDocument();
+    expect(screen.getByTestId("add-resistor")).toBeInTheDocument();
+    expect(screen.getByTestId("add-capacitor")).toBeInTheDocument();
+  });
+
+  it("calls onAddComponent when palette button clicked", async () => {
+    const user = userEvent.setup();
+    const onAdd = vi.fn();
+    renderWithProvider(<SchematicScreen {...baseProps} onAddComponent={onAdd} />);
+    await user.click(screen.getByTestId("add-resistor"));
+    expect(onAdd).toHaveBeenCalledWith("resistor");
+  });
+
+  it("delete button is disabled when no component selected", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} />);
+    expect(screen.getByTestId("delete-selected-component")).toBeDisabled();
+  });
+
+  it("shows schematic edit error when present", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} schematicEditError="Something failed" />);
+    expect(screen.getByText("Something failed")).toBeInTheDocument();
+  });
+
+  it("shows validation warnings in status panel", () => {
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        validationReport={{
+          valid: false,
+          warnings: [{ code: "W1", message: "Floating net", component_id: null, net_id: null }],
+          errors: [],
+        }}
+      />,
+    );
+    expect(screen.getByText("W1: Floating net")).toBeInTheDocument();
+  });
+});

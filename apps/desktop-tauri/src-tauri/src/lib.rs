@@ -6,20 +6,20 @@ use hotsas_adapters::{
     SpiceNetlistExporter, SvgSchematicExporter,
 };
 use hotsas_api::{
-    ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto, AssignComponentRequestDto,
-    CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto, ComponentSearchRequestDto,
-    ComponentSearchResultDto, ComponentSummaryDto, ExportCapabilityDto, ExportHistoryEntryDto,
-    ExportRequestDto, ExportResultDto, FormulaCalculationRequestDto, FormulaDetailsDto,
-    FormulaEvaluationResultDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi,
+    AddComponentRequestDto, ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto,
+    AssignComponentRequestDto, CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto,
+    ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto, ConnectPinsRequestDto,
+    DeleteComponentRequestDto, ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto,
+    ExportResultDto, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
+    FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi, MoveComponentRequestDto,
     NgspiceAvailabilityDto, NotebookEvaluationRequestDto, NotebookEvaluationResultDto,
     NotebookStateDto, PreferredValueDto, ProductWorkflowStatusDto, ProjectDto,
-    ProjectPackageManifestDto,
-    ProjectPackageValidationReportDto, SaveProjectDto, SelectedComponentDto,
+    ProjectPackageManifestDto, ProjectPackageValidationReportDto, RenameNetRequestDto,
+    SaveProjectDto, SchematicEditResultDto, SchematicToolCapabilityDto, SelectedComponentDto,
     SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionIssueDto,
     SelectedRegionPreviewDto, SimulationResultDto, SimulationRunRequestDto, VerticalSliceDto,
     DcdcCalculationResultDto, DcdcInputDto, DcdcNetlistPreviewRequestDto, DcdcMockTransientRequestDto,
-    DcdcTemplateDto,
-    ComponentParameterSchemaDto, ComponentParameterIssueDto, TypedComponentParametersDto,
+    DcdcTemplateDto, ComponentParameterSchemaDto, ComponentParameterIssueDto, TypedComponentParametersDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -618,6 +618,71 @@ fn get_typed_component_parameters(
     result
 }
 
+#[tauri::command]
+fn list_schematic_editor_capabilities(
+    api: State<'_, HotSasApi>,
+) -> Result<Vec<SchematicToolCapabilityDto>, String> {
+    log::info!("COMMAND list_schematic_editor_capabilities");
+    let result = api.list_schematic_editor_capabilities().map_err(tauri_error);
+    log_command_result("list_schematic_editor_capabilities", &result);
+    result
+}
+
+#[tauri::command]
+fn add_schematic_component(
+    api: State<'_, HotSasApi>,
+    request: AddComponentRequestDto,
+) -> Result<SchematicEditResultDto, String> {
+    log::info!("COMMAND add_schematic_component kind={}", request.component_kind);
+    let result = api.add_schematic_component(request).map_err(tauri_error);
+    log_command_result("add_schematic_component", &result);
+    result
+}
+
+#[tauri::command]
+fn move_schematic_component(
+    api: State<'_, HotSasApi>,
+    request: MoveComponentRequestDto,
+) -> Result<SchematicEditResultDto, String> {
+    log::info!("COMMAND move_schematic_component instance_id={}", request.instance_id);
+    let result = api.move_schematic_component(request).map_err(tauri_error);
+    log_command_result("move_schematic_component", &result);
+    result
+}
+
+#[tauri::command]
+fn delete_schematic_component(
+    api: State<'_, HotSasApi>,
+    request: DeleteComponentRequestDto,
+) -> Result<SchematicEditResultDto, String> {
+    log::info!("COMMAND delete_schematic_component instance_id={}", request.instance_id);
+    let result = api.delete_schematic_component(request).map_err(tauri_error);
+    log_command_result("delete_schematic_component", &result);
+    result
+}
+
+#[tauri::command]
+fn connect_schematic_pins(
+    api: State<'_, HotSasApi>,
+    request: ConnectPinsRequestDto,
+) -> Result<SchematicEditResultDto, String> {
+    log::info!("COMMAND connect_schematic_pins");
+    let result = api.connect_schematic_pins(request).map_err(tauri_error);
+    log_command_result("connect_schematic_pins", &result);
+    result
+}
+
+#[tauri::command]
+fn rename_schematic_net(
+    api: State<'_, HotSasApi>,
+    request: RenameNetRequestDto,
+) -> Result<SchematicEditResultDto, String> {
+    log::info!("COMMAND rename_schematic_net net_id={}", request.net_id);
+    let result = api.rename_schematic_net(request).map_err(tauri_error);
+    log_command_result("rename_schematic_net", &result);
+    result
+}
+
 fn log_command_result<T>(name: &str, result: &Result<T, String>) {
     match result {
         Ok(_) => log::info!("Command {name} succeeded"),
@@ -783,6 +848,12 @@ pub fn run() {
             get_component_parameter_schema,
             validate_component_parameters,
             get_typed_component_parameters,
+            list_schematic_editor_capabilities,
+            add_schematic_component,
+            move_schematic_component,
+            delete_schematic_component,
+            connect_schematic_pins,
+            rename_schematic_net,
             preview_selected_region,
             analyze_selected_region,
             validate_selected_region,

@@ -60,6 +60,13 @@ import type {
   ComponentParameterSchemaDto,
   ComponentParameterIssueDto,
   TypedComponentParametersDto,
+  AddComponentRequestDto,
+  MoveComponentRequestDto,
+  DeleteComponentRequestDto,
+  ConnectPinsRequestDto,
+  RenameNetRequestDto,
+  SchematicEditResultDto,
+  SchematicToolCapabilityDto,
 } from "../types";
 
 async function invokeCommand<T>(command: string, args?: Record<string, unknown>) {
@@ -185,15 +192,29 @@ export const backend = {
     invokeCommand<AdvancedReportDto>("generate_advanced_report", { request }),
   exportAdvancedReport: (request: AdvancedReportExportRequestDto) =>
     invokeCommand<AdvancedReportExportResultDto>("export_advanced_report", { request }),
-  getLastAdvancedReport: () =>
-    invokeCommand<AdvancedReportDto | null>("get_last_advanced_report"),
+  getLastAdvancedReport: () => invokeCommand<AdvancedReportDto | null>("get_last_advanced_report"),
   writeLog: (level: string, message: string) =>
     invokeCommand<void>("write_log", { level, message }),
   // v2.4 typed component parameters
   getComponentParameterSchema: (category: string) =>
-    invokeCommand<ComponentParameterSchemaDto | null>("get_component_parameter_schema", { category }),
+    invokeCommand<ComponentParameterSchemaDto | null>("get_component_parameter_schema", {
+      category,
+    }),
   validateComponentParameters: (componentId: string) =>
     invokeCommand<ComponentParameterIssueDto[]>("validate_component_parameters", { componentId }),
   getTypedComponentParameters: (componentId: string) =>
     invokeCommand<TypedComponentParametersDto>("get_typed_component_parameters", { componentId }),
+  // v2.5 schematic editor hardening
+  listSchematicEditorCapabilities: () =>
+    invokeCommand<SchematicToolCapabilityDto[]>("list_schematic_editor_capabilities"),
+  addSchematicComponent: (request: AddComponentRequestDto) =>
+    invokeCommand<SchematicEditResultDto>("add_schematic_component", { request }),
+  moveSchematicComponent: (request: MoveComponentRequestDto) =>
+    invokeCommand<SchematicEditResultDto>("move_schematic_component", { request }),
+  deleteSchematicComponent: (request: DeleteComponentRequestDto) =>
+    invokeCommand<SchematicEditResultDto>("delete_schematic_component", { request }),
+  connectSchematicPins: (request: ConnectPinsRequestDto) =>
+    invokeCommand<SchematicEditResultDto>("connect_schematic_pins", { request }),
+  renameSchematicNet: (request: RenameNetRequestDto) =>
+    invokeCommand<SchematicEditResultDto>("rename_schematic_net", { request }),
 };

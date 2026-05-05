@@ -1,8 +1,7 @@
 use hotsas_core::{
     schema_for_category, BjtParameters, CapacitorParameters, ComponentDefinition,
     ComponentInstance, ComponentParameterSchema, ComponentParameterValue, DiodeParameters,
-    InductorParameters, MosfetParameters, OpAmpParameters, RegulatorParameters,
-    ResistorParameters,
+    InductorParameters, MosfetParameters, OpAmpParameters, RegulatorParameters, ResistorParameters,
 };
 use std::collections::BTreeMap;
 
@@ -62,7 +61,10 @@ impl ComponentParameterService {
             } else {
                 issues.push(ParameterIssue {
                     key: key.clone(),
-                    message: format!("Unknown parameter '{}' for category '{}'", key, component.category),
+                    message: format!(
+                        "Unknown parameter '{}' for category '{}'",
+                        key, component.category
+                    ),
                     severity: IssueSeverity::Warning,
                 });
             }
@@ -74,15 +76,24 @@ impl ComponentParameterService {
     // Typed bundle extraction
     // ------------------------------------------------------------------
 
-    pub fn resistor_parameters(&self, component: &ComponentDefinition) -> Option<ResistorParameters> {
+    pub fn resistor_parameters(
+        &self,
+        component: &ComponentDefinition,
+    ) -> Option<ResistorParameters> {
         ResistorParameters::from_map(&component.parameters)
     }
 
-    pub fn capacitor_parameters(&self, component: &ComponentDefinition) -> Option<CapacitorParameters> {
+    pub fn capacitor_parameters(
+        &self,
+        component: &ComponentDefinition,
+    ) -> Option<CapacitorParameters> {
         CapacitorParameters::from_map(&component.parameters)
     }
 
-    pub fn inductor_parameters(&self, component: &ComponentDefinition) -> Option<InductorParameters> {
+    pub fn inductor_parameters(
+        &self,
+        component: &ComponentDefinition,
+    ) -> Option<InductorParameters> {
         InductorParameters::from_map(&component.parameters)
     }
 
@@ -125,11 +136,14 @@ impl ComponentParameterService {
                 note: None,
             });
         }
-        component.parameters.get(key).map(|value| ComponentParameterValue {
-            value: value.clone(),
-            source: hotsas_core::ComponentParameterSource::Default,
-            note: None,
-        })
+        component
+            .parameters
+            .get(key)
+            .map(|value| ComponentParameterValue {
+                value: value.clone(),
+                source: hotsas_core::ComponentParameterSource::Default,
+                note: None,
+            })
     }
 
     /// Build a full resolved parameter map for an instance.
@@ -210,7 +224,11 @@ mod tests {
     fn service_validates_good_resistor() {
         let lib = built_in_component_library();
         let svc = ComponentParameterService::new();
-        let r = lib.components.iter().find(|c| c.id == "generic_resistor").unwrap();
+        let r = lib
+            .components
+            .iter()
+            .find(|c| c.id == "generic_resistor")
+            .unwrap();
         let issues = svc.validate_component(r);
         assert!(issues.is_empty(), "expected no issues, got {:?}", issues);
     }
@@ -219,7 +237,11 @@ mod tests {
     fn service_extracts_resistor_parameters() {
         let lib = built_in_component_library();
         let svc = ComponentParameterService::new();
-        let r = lib.components.iter().find(|c| c.id == "generic_resistor").unwrap();
+        let r = lib
+            .components
+            .iter()
+            .find(|c| c.id == "generic_resistor")
+            .unwrap();
         let params = svc.resistor_parameters(r).unwrap();
         assert_eq!(params.resistance.si_value(), 10_000.0);
     }
@@ -228,7 +250,11 @@ mod tests {
     fn service_resolves_instance_override() {
         let lib = built_in_component_library();
         let svc = ComponentParameterService::new();
-        let r = lib.components.iter().find(|c| c.id == "generic_resistor").unwrap();
+        let r = lib
+            .components
+            .iter()
+            .find(|c| c.id == "generic_resistor")
+            .unwrap();
 
         let mut instance = ComponentInstance {
             instance_id: "R1".to_string(),
