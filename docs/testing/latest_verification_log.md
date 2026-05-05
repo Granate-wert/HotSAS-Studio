@@ -2,29 +2,29 @@
 
 ## Current Version
 
-[v2.2 — DC-DC Calculators and Templates](./verification_logs/v2.2_dcdc_calculators_and_templates.md)
+[v2.4 — Real Component Parameters](./verification_logs/v2.4_real_component_parameters.md)
 
-## v2.2 Summary
+## v2.4 Summary
 
 ```text
-Version: v2.2 — DC-DC Calculators and Templates
-Implementation commit: 53467fe
-Verification/docs commit: 4777197
-Verification log: docs/testing/verification_logs/v2.2_dcdc_calculators_and_templates.md
+Version: v2.4 — Real Component Parameters
+Implementation commit: 959e0d0
+Verification/docs commit: TBD
+Verification log: docs/testing/verification_logs/v2.4_real_component_parameters.md
 
 Checks:
 - cargo fmt --check — PASS
 - cargo test — PASS (200+ Rust tests)
 - npm run format:check — PASS
 - npm run typecheck — PASS
-- npm run test — PASS (76 frontend tests)
+- npm run test — PASS (89 frontend tests)
 - npm run build — PASS
 - npm run tauri:build — PASS
 
 Internal build:
 - EXE path: apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
-- EXE size bytes: 12605952
-- EXE SHA256: A4EB99FC1710A9CE5B6229F5F1B8152457574CDB7B096459162E75C435111FCF
+- EXE size bytes: 13055488
+- EXE SHA256: BE243C70FB7C2A45F50D4798102C7DB42E38CC759EC21552B797DE25F60BEB3A
 - ZIP: NOT CREATED (manual bundling required)
 - Public GitHub Release: NO
 ```

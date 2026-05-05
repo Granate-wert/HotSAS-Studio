@@ -585,9 +585,62 @@ This stage verifies:
 14. Click **Netlist Preview** — verify SPICE-like structural preview appears.
 15. Click **Mock Transient** — verify transient preview result appears.
 
+## v2.4 — Real Component Parameters
+
+### Rust tests
+
+- Core typed parameter schema (`core/src/component_parameters.rs`)
+  - `ComponentParameterSchema`, `ComponentParameterDefinition`, `ComponentParameterGroup`
+  - `ComponentTolerance` with symmetric/asymmetric/minmax variants
+  - `ParameterValidationError` unit/range/tolerance/missing variants
+  - Typed bundles for 8 categories: Resistor, Capacitor, Inductor, Diode, BJT, MOSFET, OpAmp, Regulator
+  - `schema_for_category()` builder returns correct grouped schemas
+  - `validate_map()` checks units, ranges, tolerances, missing required fields
+
+- Core component seeds (`core/src/component_seeds.rs`)
+  - 27 built-in components with real-like parameters
+  - Resistor seeds: 10k 0603, 1k axial, 100R 0805
+  - Capacitor seeds: 100n X7R 0603, 10u X5R 0805, 100u electrolytic
+  - Semiconductor seeds: 1N4148, SS14, 2N2222, 2N2907, IRFZ44N, LM358
+  - SMD and through-hole footprints
+
+- Component parameter service (`application/tests/component_parameter_service_tests.rs`)
+  - `schema_for_component()` returns schema for known components
+  - `validate_component()` returns empty issues for valid parameters
+  - `validate_component()` returns issues for out-of-range values
+  - `extract_typed_parameters()` builds typed bundles from flat params
+  - `resolve_instance_parameters()` merges instance overrides with base
+
+- API DTOs (`api/src/dto.rs`) — compile-time verified
+- API facade (`api/src/facade.rs`) — compile-time verified
+- Tauri commands (`apps/desktop-tauri/src-tauri/src/lib.rs`) — compile-time verified
+
+### Frontend tests
+
+- 89 UI tests PASS (existing suites + ComponentDetailsPanel typed params integration)
+
+### Manual v2.4 Component Parameters Smoke Check
+
+1. Open the **Component Library** screen.
+2. Click on a **Resistor** component (e.g., `R_10k_0603`).
+3. Verify that the **Typed Parameters** card shows:
+   - Resistance: `10 kΩ`
+   - Tolerance: `±1%`
+   - Power rating: `0.1 W`
+   - Temperature coefficient: `±100 ppm/°C`
+4. Click on a **Capacitor** component (e.g., `C_100n_0603_X7R`).
+5. Verify that the **Typed Parameters** card shows:
+   - Capacitance: `100 nF`
+   - Tolerance: `±10%`
+   - Voltage rating: `50 V`
+   - Dielectric: `X7R`
+6. Click on a **MOSFET** component (e.g., `M_IRFZ44N`).
+7. Verify that the **Typed Parameters** card shows VDS, RDS(on), ID fields.
+8. Verify that no console errors appear during navigation.
+
 ## Test Summary
 
-As of v2.2, the Rust workspace runs **200+ tests** across all crates with **zero failures**, and the frontend runs **76 UI tests** with **zero failures**.
+As of v2.4, the Rust workspace runs **200+ tests** across all crates with **zero failures**, and the frontend runs **89 UI tests** with **zero failures**.
 
 ---
 
