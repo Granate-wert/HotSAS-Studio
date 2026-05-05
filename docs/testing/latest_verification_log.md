@@ -9,8 +9,8 @@
 ```text
 Version: v2.5-fix — Schematic Editing Validation & Verification Correction
 Original v2.5 implementation commit: c31cadc
-Fix commit: TBD
-Verification/docs commit: TBD
+Fix commit: 8b432b3
+Verification/docs commit: 8b432b3
 Branch: main
 Verification log: docs/testing/verification_logs/v2.5_schematic_editor_hardening.md
 
