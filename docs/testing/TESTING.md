@@ -732,9 +732,68 @@ This stage verifies:
 
 ---
 
+## v2.7 — CLI / Headless Mode Foundation
+
+### New crate
+
+- `engine/cli/` — `hotsas_cli` with `hotsas-cli` binary.
+
+### CLI verification commands
+
+```bash
+cd "D:\Документы\vscode\HotSAS Studio\engine"
+cargo build -p hotsas_cli --release
+```
+
+```bash
+# Smoke tests
+./target/release/hotsas-cli --help
+./target/release/hotsas-cli --version
+./target/release/hotsas-cli library check
+./target/release/hotsas-cli library check --json
+./target/release/hotsas-cli formula rc_low_pass_cutoff R=10k C=100n --json
+```
+
+### CLI integration tests
+
+```bash
+cd "D:\Документы\vscode\HotSAS Studio\engine"
+cargo test -p hotsas_cli --test cli_integration
+```
+
+- `cli_version_returns_success`
+- `cli_help_returns_success_with_all_commands`
+- `cli_library_check_returns_success`
+- `cli_library_check_json_returns_valid_json`
+- `cli_formula_ohms_law_returns_success`
+- `cli_validate_nonexistent_project_returns_error`
+- `cli_validate_existing_demo_project_returns_success`
+- `cli_netlist_demo_project_returns_success`
+- `cli_export_markdown_demo_project_returns_success`
+- `cli_simulate_mock_demo_project_returns_success`
+
+### Manual v2.7 CLI Smoke Check
+
+1. Build CLI: `cargo build -p hotsas_cli --release`.
+2. Run `hotsas-cli --help` — verify all commands listed.
+3. Run `hotsas-cli --version` — verify version printed.
+4. Run `hotsas-cli library check` — verify component list printed.
+5. Run `hotsas-cli library check --json` — verify valid JSON.
+6. Run `hotsas-cli formula rc_low_pass_cutoff R=10k C=100n --json` — verify JSON result with `fc`.
+7. Create a demo project, save it as `demo.circuit`.
+8. Run `hotsas-cli validate demo.circuit` — verify success.
+9. Run `hotsas-cli netlist demo.circuit --json` — verify netlist JSON.
+10. Run `hotsas-cli export demo.circuit markdown --out report.md` — verify file written.
+11. Run `hotsas-cli export demo.circuit csv-summary` — verify CSV output.
+12. Run `hotsas-cli simulate demo.circuit ac_sweep --engine mock --json` — verify simulation JSON.
+13. Run `hotsas-cli validate nonexistent.circuit` — verify exit code 2.
+14. Run `hotsas-cli export demo.circuit unknown_format` — verify exit code 4.
+
+---
+
 ## Test Summary
 
-As of v2.6, the Rust workspace runs **200+ tests** across all crates with **zero failures**, and the frontend runs **103 UI tests** with **zero failures**.
+As of v2.7, the Rust workspace runs **361 tests** across all crates with **zero failures**, and the frontend runs **103 UI tests** with **zero failures**.
 
 ---
 
@@ -744,6 +803,7 @@ As of v2.6, the Rust workspace runs **200+ tests** across all crates with **zero
 cd "D:\Документы\vscode\HotSAS Studio\engine"
 cargo fmt --check
 cargo test
+cargo build -p hotsas_cli --release
 
 cd "D:\Документы\vscode\HotSAS Studio\apps\desktop-tauri"
 npm.cmd run format:check

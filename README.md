@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v2.7 next**
+**Current roadmap stage: v2.8 next**
 
 > App version (v0.1.4) and roadmap stage are different concepts.
 
@@ -26,6 +26,7 @@ Completed:
 - v2.4 — Real Component Parameters
 - v2.5 — Schematic Editor Hardening
 - v2.6 — Project Persistence / Save-Load UX Hardening
+- v2.7 — CLI / Headless Mode Foundation
 
 ---
 

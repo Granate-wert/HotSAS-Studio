@@ -1,6 +1,7 @@
 use hotsas_api::{
-    ApiError, FormulaCalculationRequestDto, FormulaVariableInputDto, HotSasApi,
-    ProjectOpenRequestDto, SimulationRunRequestDto,
+    AdvancedReportExportRequestDto, AdvancedReportRequestDto, ApiError,
+    FormulaCalculationRequestDto, FormulaVariableInputDto, HotSasApi, ProjectOpenRequestDto,
+    ReportExportOptionsDto, SimulationRunRequestDto,
 };
 
 use crate::output::{print_output, CliOutput, CliStatus};
@@ -242,37 +243,40 @@ pub fn handle_export(
             }
         }
         "csv-summary" => {
-            let project_result = api.open_project_package(ProjectOpenRequestDto {
-                path: path.clone(),
-                confirm_discard_unsaved: false,
-            });
-            match project_result {
-                Ok(result) => {
-                    let p = &result.project;
-                    let component_count = p.schematic.components.len();
-                    let wire_count = p.schematic.wires.len();
-                    let net_count = p.schematic.nets.len();
-                    let csv = format!(
-                        "Property,Value\n\
-                         Name,{}\n\
-                         ID,{}\n\
-                         Format Version,{}\n\
-                         Engine Version,{}\n\
-                         Project Type,{}\n\
-                         Components,{}\n\
-                         Wires,{}\n\
-                         Nets,{}\n",
-                        p.name,
-                        p.id,
-                        p.format_version,
-                        p.engine_version,
-                        p.project_type,
-                        component_count,
-                        wire_count,
-                        net_count,
-                    );
-                    (csv, "csv")
-                }
+            // Delegate to AdvancedReport service: generate report then export as CSV summary.
+            let gen_request = AdvancedReportRequestDto {
+                report_id: "cli_csv_summary".to_string(),
+                title: "Project Summary".to_string(),
+                report_type: "project_summary".to_string(),
+                included_sections: vec!["project_overview".to_string()],
+                export_options: ReportExportOptionsDto {
+                    include_source_references: false,
+                    include_graph_references: false,
+                    include_assumptions: false,
+                    max_table_rows: None,
+                },
+                metadata: std::collections::BTreeMap::new(),
+            };
+            if let Err(e) = api.generate_advanced_report(gen_request) {
+                let msg = format_error(&e);
+                let output = CliOutput::<()> {
+                    status: CliStatus::Error,
+                    command: "export".to_string(),
+                    warnings: vec![],
+                    errors: vec![msg.clone()],
+                    data: None,
+                };
+                print_output(&output, json);
+                eprintln!("{}", msg);
+                return exit_code(&e);
+            }
+            let export_request = AdvancedReportExportRequestDto {
+                report_id: "cli_csv_summary".to_string(),
+                format: "csv_summary".to_string(),
+                output_path: out.clone(),
+            };
+            match api.export_advanced_report(export_request) {
+                Ok(result) => (result.content, "csv"),
                 Err(e) => {
                     let msg = format_error(&e);
                     let output = CliOutput::<()> {
