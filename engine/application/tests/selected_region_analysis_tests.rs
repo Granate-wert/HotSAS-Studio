@@ -19,10 +19,12 @@ fn make_rc_circuit() -> CircuitModel {
                 rotation_degrees: 0.0,
                 connected_nets: vec![
                     ConnectedPin {
+                        component_id: "R1".to_string(),
                         pin_id: "p1".to_string(),
                         net_id: "net_in".to_string(),
                     },
                     ConnectedPin {
+                        component_id: "R1".to_string(),
                         pin_id: "p2".to_string(),
                         net_id: "net_out".to_string(),
                     },
@@ -40,10 +42,12 @@ fn make_rc_circuit() -> CircuitModel {
                 rotation_degrees: 0.0,
                 connected_nets: vec![
                     ConnectedPin {
+                        component_id: "C1".to_string(),
                         pin_id: "p1".to_string(),
                         net_id: "net_out".to_string(),
                     },
                     ConnectedPin {
+                        component_id: "C1".to_string(),
                         pin_id: "p2".to_string(),
                         net_id: "gnd".to_string(),
                     },
@@ -58,6 +62,7 @@ fn make_rc_circuit() -> CircuitModel {
                 id: "net_in".to_string(),
                 name: "net_in".to_string(),
                 connected_pins: vec![ConnectedPin {
+                    component_id: "R1".to_string(),
                     pin_id: "p1".to_string(),
                     net_id: "net_in".to_string(),
                 }],
@@ -67,10 +72,12 @@ fn make_rc_circuit() -> CircuitModel {
                 name: "net_out".to_string(),
                 connected_pins: vec![
                     ConnectedPin {
+                        component_id: "R1".to_string(),
                         pin_id: "p2".to_string(),
                         net_id: "net_out".to_string(),
                     },
                     ConnectedPin {
+                        component_id: "C1".to_string(),
                         pin_id: "p1".to_string(),
                         net_id: "net_out".to_string(),
                     },
@@ -80,6 +87,7 @@ fn make_rc_circuit() -> CircuitModel {
                 id: "gnd".to_string(),
                 name: "gnd".to_string(),
                 connected_pins: vec![ConnectedPin {
+                    component_id: "C1".to_string(),
                     pin_id: "p2".to_string(),
                     net_id: "gnd".to_string(),
                 }],

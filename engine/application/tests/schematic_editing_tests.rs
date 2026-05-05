@@ -194,17 +194,17 @@ fn connect_pins_creates_net_and_wire() {
         &mut project,
         ConnectPinsRequest {
             from_component_id: "R1".to_string(),
-            from_pin_id: "p1".to_string(),
+            from_pin_id: "1".to_string(),
             to_component_id: "C1".to_string(),
-            to_pin_id: "p1".to_string(),
-            net_name: Some("net_test".to_string()),
+            to_pin_id: "1".to_string(),
+            net_name: Some("net_rc".to_string()),
         },
     );
     assert!(result.is_ok());
     let edit = result.unwrap();
     assert_eq!(edit.project.schematic.nets.len(), 1);
     assert_eq!(edit.project.schematic.wires.len(), 1);
-    assert_eq!(edit.project.schematic.nets[0].name, "net_test");
+    assert_eq!(edit.project.schematic.nets[0].name, "net_rc");
 }
 
 #[test]
@@ -215,9 +215,9 @@ fn connect_unknown_component_returns_error() {
         &mut project,
         ConnectPinsRequest {
             from_component_id: "R1".to_string(),
-            from_pin_id: "p1".to_string(),
+            from_pin_id: "1".to_string(),
             to_component_id: "C1".to_string(),
-            to_pin_id: "p1".to_string(),
+            to_pin_id: "1".to_string(),
             net_name: None,
         },
     );
@@ -264,4 +264,294 @@ fn rename_net_empty_name_returns_error() {
     );
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("empty"));
+}
+
+#[test]
+fn connect_unknown_from_pin_returns_controlled_error() {
+    let svc = SchematicEditingService::new();
+    let mut project = empty_project();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "resistor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("R1".to_string()),
+            position: Point::new(100.0, 100.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "capacitor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("C1".to_string()),
+            position: Point::new(200.0, 200.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+
+    let result = svc.connect_pins(
+        &mut project,
+        ConnectPinsRequest {
+            from_component_id: "R1".to_string(),
+            from_pin_id: "unknown_pin".to_string(),
+            to_component_id: "C1".to_string(),
+            to_pin_id: "1".to_string(),
+            net_name: None,
+        },
+    );
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("pin 'unknown_pin' not found"));
+}
+
+#[test]
+fn connect_unknown_to_pin_returns_controlled_error() {
+    let svc = SchematicEditingService::new();
+    let mut project = empty_project();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "resistor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("R1".to_string()),
+            position: Point::new(100.0, 100.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "capacitor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("C1".to_string()),
+            position: Point::new(200.0, 200.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+
+    let result = svc.connect_pins(
+        &mut project,
+        ConnectPinsRequest {
+            from_component_id: "R1".to_string(),
+            from_pin_id: "1".to_string(),
+            to_component_id: "C1".to_string(),
+            to_pin_id: "unknown_pin".to_string(),
+            net_name: None,
+        },
+    );
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("pin 'unknown_pin' not found"));
+}
+
+#[test]
+fn connect_valid_pins_creates_connection() {
+    let svc = SchematicEditingService::new();
+    let mut project = empty_project();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "resistor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("R1".to_string()),
+            position: Point::new(100.0, 100.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "capacitor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("C1".to_string()),
+            position: Point::new(200.0, 200.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+
+    let result = svc.connect_pins(
+        &mut project,
+        ConnectPinsRequest {
+            from_component_id: "R1".to_string(),
+            from_pin_id: "1".to_string(),
+            to_component_id: "C1".to_string(),
+            to_pin_id: "2".to_string(),
+            net_name: Some("net_rc".to_string()),
+        },
+    );
+    assert!(result.is_ok());
+    let edit = result.unwrap();
+    assert_eq!(edit.project.schematic.nets.len(), 1);
+    assert_eq!(edit.project.schematic.wires.len(), 1);
+    let net = &edit.project.schematic.nets[0];
+    assert_eq!(net.connected_pins.len(), 2);
+    assert!(net
+        .connected_pins
+        .iter()
+        .any(|cp| cp.component_id == "R1" && cp.pin_id == "1"));
+    assert!(net
+        .connected_pins
+        .iter()
+        .any(|cp| cp.component_id == "C1" && cp.pin_id == "2"));
+}
+
+#[test]
+fn delete_connected_component_removes_related_wires() {
+    let svc = SchematicEditingService::new();
+    let mut project = empty_project();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "resistor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("R1".to_string()),
+            position: Point::new(100.0, 100.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "capacitor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("C1".to_string()),
+            position: Point::new(200.0, 200.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+    svc.connect_pins(
+        &mut project,
+        ConnectPinsRequest {
+            from_component_id: "R1".to_string(),
+            from_pin_id: "1".to_string(),
+            to_component_id: "C1".to_string(),
+            to_pin_id: "1".to_string(),
+            net_name: Some("net_rc".to_string()),
+        },
+    )
+    .unwrap();
+
+    assert_eq!(project.schematic.wires.len(), 1);
+
+    let result = svc.delete_component(
+        &mut project,
+        DeleteComponentRequest {
+            instance_id: "R1".to_string(),
+        },
+    );
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap().project.schematic.wires.len(), 0);
+}
+
+#[test]
+fn delete_connected_component_removes_stale_net_connected_pins() {
+    let svc = SchematicEditingService::new();
+    let mut project = empty_project();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "resistor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("R1".to_string()),
+            position: Point::new(100.0, 100.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "capacitor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("C1".to_string()),
+            position: Point::new(200.0, 200.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+    svc.connect_pins(
+        &mut project,
+        ConnectPinsRequest {
+            from_component_id: "R1".to_string(),
+            from_pin_id: "1".to_string(),
+            to_component_id: "C1".to_string(),
+            to_pin_id: "1".to_string(),
+            net_name: Some("net_rc".to_string()),
+        },
+    )
+    .unwrap();
+
+    let result = svc.delete_component(
+        &mut project,
+        DeleteComponentRequest {
+            instance_id: "R1".to_string(),
+        },
+    );
+    assert!(result.is_ok());
+    let edit = result.unwrap();
+    assert_eq!(edit.project.schematic.nets.len(), 1);
+    let net = &edit.project.schematic.nets[0];
+    assert!(!net.connected_pins.iter().any(|cp| cp.component_id == "R1"));
+    assert!(net.connected_pins.iter().any(|cp| cp.component_id == "C1"));
+}
+
+#[test]
+fn delete_connected_component_returns_floating_net_warning() {
+    let svc = SchematicEditingService::new();
+    let mut project = empty_project();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "resistor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("R1".to_string()),
+            position: Point::new(100.0, 100.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "capacitor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("C1".to_string()),
+            position: Point::new(200.0, 200.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+    svc.connect_pins(
+        &mut project,
+        ConnectPinsRequest {
+            from_component_id: "R1".to_string(),
+            from_pin_id: "1".to_string(),
+            to_component_id: "C1".to_string(),
+            to_pin_id: "1".to_string(),
+            net_name: Some("net_rc".to_string()),
+        },
+    )
+    .unwrap();
+
+    let result = svc.delete_component(
+        &mut project,
+        DeleteComponentRequest {
+            instance_id: "R1".to_string(),
+        },
+    );
+    assert!(result.is_ok());
+    let edit = result.unwrap();
+    // After deleting R1, C1 remains alone on the net → floating net warning
+    assert!(edit
+        .validation_warnings
+        .iter()
+        .any(|w| w.code == "floating_net"));
 }

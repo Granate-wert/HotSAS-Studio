@@ -541,6 +541,7 @@ fn require_variable<'a>(
     Ok(value)
 }
 
+#[allow(dead_code)]
 fn normalize_expression(expression: &str) -> String {
     expression
         .chars()

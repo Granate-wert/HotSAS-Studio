@@ -405,6 +405,7 @@ fn component(
         connected_nets: pins
             .into_iter()
             .map(|(pin_id, net_id)| ConnectedPin {
+                component_id: instance_id.to_string(),
                 pin_id: pin_id.to_string(),
                 net_id: net_id.to_string(),
             })
@@ -449,7 +450,8 @@ fn net(id: &str, name: &str, pins: Vec<(&str, &str)>) -> Net {
         connected_pins: pins
             .into_iter()
             .map(|(component_id, pin_id)| ConnectedPin {
-                pin_id: format!("{component_id}.{pin_id}"),
+                component_id: component_id.to_string(),
+                pin_id: pin_id.to_string(),
                 net_id: id.to_string(),
             })
             .collect(),

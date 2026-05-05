@@ -106,10 +106,10 @@ impl SchematicEditingService {
                 && w.to.component_id.as_ref() != Some(&request.instance_id)
         });
 
-        // Remove connected_pins from nets
+        // Remove connected_pins from nets belonging to deleted component
         for net in &mut project.schematic.nets {
             net.connected_pins
-                .retain(|cp| cp.pin_id != request.instance_id);
+                .retain(|cp| cp.component_id != request.instance_id);
         }
 
         project.schematic.components.remove(idx);
@@ -121,6 +121,20 @@ impl SchematicEditingService {
             validation_warnings: validation.warnings,
             message: format!("Deleted component {}", request.instance_id),
         })
+    }
+
+    fn component_has_pin(project: &CircuitProject, component_id: &str, pin_id: &str) -> bool {
+        if let Some(comp) = project
+            .schematic
+            .components
+            .iter()
+            .find(|c| c.instance_id == component_id)
+        {
+            if let Some(symbol) = hotsas_core::seed_symbol_for_kind(&comp.definition_id) {
+                return symbol.pins.iter().any(|p| p.id == pin_id);
+            }
+        }
+        true
     }
 
     pub fn connect_pins(
@@ -150,6 +164,19 @@ impl SchematicEditingService {
             return Err(format!("component '{}' not found", request.to_component_id));
         }
 
+        if !Self::component_has_pin(project, &request.from_component_id, &request.from_pin_id) {
+            return Err(format!(
+                "pin '{}' not found on component '{}'",
+                request.from_pin_id, request.from_component_id
+            ));
+        }
+        if !Self::component_has_pin(project, &request.to_component_id, &request.to_pin_id) {
+            return Err(format!(
+                "pin '{}' not found on component '{}'",
+                request.to_pin_id, request.to_component_id
+            ));
+        }
+
         let net_name = request.net_name.clone().unwrap_or_else(|| {
             format!(
                 "net_{}_{}",
@@ -173,10 +200,12 @@ impl SchematicEditingService {
 
         // Update component pin net associations
         let from_pin = ConnectedPin {
+            component_id: request.from_component_id.clone(),
             pin_id: request.from_pin_id.clone(),
             net_id: net_id.clone(),
         };
         let to_pin = ConnectedPin {
+            component_id: request.to_component_id.clone(),
             pin_id: request.to_pin_id.clone(),
             net_id: net_id.clone(),
         };
@@ -187,8 +216,9 @@ impl SchematicEditingService {
             .iter_mut()
             .find(|c| c.instance_id == request.from_component_id)
         {
-            comp.connected_nets
-                .retain(|cn| cn.pin_id != request.from_pin_id);
+            comp.connected_nets.retain(|cn| {
+                !(cn.component_id == request.from_component_id && cn.pin_id == request.from_pin_id)
+            });
             comp.connected_nets.push(from_pin);
         }
 
@@ -198,20 +228,27 @@ impl SchematicEditingService {
             .iter_mut()
             .find(|c| c.instance_id == request.to_component_id)
         {
-            comp.connected_nets
-                .retain(|cn| cn.pin_id != request.to_pin_id);
+            comp.connected_nets.retain(|cn| {
+                !(cn.component_id == request.to_component_id && cn.pin_id == request.to_pin_id)
+            });
             comp.connected_nets.push(to_pin);
         }
 
         // Update net connected_pins
         if let Some(net) = project.schematic.nets.iter_mut().find(|n| n.id == net_id) {
-            net.connected_pins
-                .retain(|cp| !(cp.pin_id == request.from_pin_id || cp.pin_id == request.to_pin_id));
+            net.connected_pins.retain(|cp| {
+                !((cp.component_id == request.from_component_id
+                    && cp.pin_id == request.from_pin_id)
+                    || (cp.component_id == request.to_component_id
+                        && cp.pin_id == request.to_pin_id))
+            });
             net.connected_pins.push(ConnectedPin {
+                component_id: request.from_component_id.clone(),
                 pin_id: request.from_pin_id.clone(),
                 net_id: net_id.clone(),
             });
             net.connected_pins.push(ConnectedPin {
+                component_id: request.to_component_id.clone(),
                 pin_id: request.to_pin_id.clone(),
                 net_id: net_id.clone(),
             });

@@ -50,6 +50,7 @@ fn circuit_with_floating_net() -> CircuitModel {
         id: "floating".to_string(),
         name: "floating".to_string(),
         connected_pins: vec![ConnectedPin {
+            component_id: "unknown".to_string(),
             pin_id: "1".to_string(),
             net_id: "floating".to_string(),
         }],

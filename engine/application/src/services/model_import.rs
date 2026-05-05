@@ -5,7 +5,6 @@ use hotsas_core::{
     TouchstoneImportReport,
 };
 use hotsas_ports::{PortError, SpiceModelParserPort, TouchstoneParserPort};
-use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]

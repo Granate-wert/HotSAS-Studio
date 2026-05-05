@@ -275,7 +275,7 @@ fn list_report_section_capabilities_returns_non_empty_list() {
 
 #[test]
 fn generate_advanced_report_without_project_returns_empty_report() {
-    let mut api = fake_api();
+    let api = fake_api();
     let request = AdvancedReportRequestDto {
         report_id: "test-1".to_string(),
         title: "Test Report".to_string(),
@@ -298,7 +298,7 @@ fn generate_advanced_report_without_project_returns_empty_report() {
 
 #[test]
 fn export_advanced_report_returns_success() {
-    let mut api = fake_api();
+    let api = fake_api();
     let request = AdvancedReportRequestDto {
         report_id: "test-2".to_string(),
         title: "Export Test".to_string(),
@@ -334,7 +334,7 @@ fn get_last_advanced_report_returns_none_initially() {
 
 #[test]
 fn get_last_advanced_report_returns_generated_report() {
-    let mut api = fake_api();
+    let api = fake_api();
     let request = AdvancedReportRequestDto {
         report_id: "test-3".to_string(),
         title: "Last Report Test".to_string(),
@@ -357,7 +357,7 @@ fn get_last_advanced_report_returns_generated_report() {
 
 #[test]
 fn export_html_format_returns_html_content() {
-    let mut api = fake_api();
+    let api = fake_api();
     let request = AdvancedReportRequestDto {
         report_id: "test-4".to_string(),
         title: "HTML Export Test".to_string(),
@@ -389,7 +389,7 @@ fn export_html_format_returns_html_content() {
 
 #[test]
 fn export_json_format_returns_valid_json_string() {
-    let mut api = fake_api();
+    let api = fake_api();
     let request = AdvancedReportRequestDto {
         report_id: "test-5".to_string(),
         title: "JSON Export Test".to_string(),
@@ -419,7 +419,7 @@ fn export_json_format_returns_valid_json_string() {
 
 #[test]
 fn export_csv_summary_format_returns_csv_lines() {
-    let mut api = fake_api();
+    let api = fake_api();
     let request = AdvancedReportRequestDto {
         report_id: "test-6".to_string(),
         title: "CSV Export Test".to_string(),

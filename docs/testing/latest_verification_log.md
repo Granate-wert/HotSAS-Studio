@@ -2,19 +2,21 @@
 
 ## Current Version
 
-[v2.5 — Schematic Editor Hardening](./verification_logs/v2.5_schematic_editor_hardening.md)
+[v2.5 — Schematic Editor Hardening (v2.5-fix applied)](./verification_logs/v2.5_schematic_editor_hardening.md)
 
-## v2.5 Summary
+## v2.5-fix Summary
 
 ```text
-Version: v2.5 — Schematic Editor Hardening
-Implementation commit: TBD
+Version: v2.5-fix — Schematic Editing Validation & Verification Correction
+Original v2.5 implementation commit: c31cadc
+Fix commit: TBD
 Verification/docs commit: TBD
+Branch: main
 Verification log: docs/testing/verification_logs/v2.5_schematic_editor_hardening.md
 
 Checks:
 - cargo fmt --check — PASS
-- cargo test — PASS (200+ Rust tests)
+- cargo test — PASS (200+ Rust tests, exit code 0)
 - npm run format:check — PASS
 - npm run typecheck — PASS
 - npm run test — PASS (95 frontend tests)
@@ -23,10 +25,18 @@ Checks:
 
 Internal build:
 - EXE path: apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
-- EXE size bytes: 13253120
-- EXE SHA256: 827F0F58EBCB6CADA518E777AC3ACBAEEE5969E31DE30DFA7A332F0F95C2DE76
+- EXE size bytes: 13262336
+- EXE SHA256: 4A6F584786FE5CCF6ED6076BC2198FB42CF9161B9800FAA9106624C308A25B96
 - ZIP: NOT CREATED (manual bundling required)
 - Public GitHub Release: NO
+
+Fixes applied:
+- cargo test exit code 0 (cleaned all warnings)
+- connect_pins validates real pin ids via seed_symbol_for_kind
+- delete_component removes stale wires/nets/connected_pins using component_id
+- Added component_id to ConnectedPin core model + DTO + frontend types
+- Git hygiene: removed 4 service files from tracking, updated .gitignore
+- New Rust tests: 6 schematic editing tests for pin validation and delete cleanup
 ```
 
 ## Previous Versions

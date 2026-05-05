@@ -3,7 +3,6 @@ use hotsas_core::{
     SpiceModelKind, SpiceModelParameter, SpiceSubcircuitDefinition,
 };
 use hotsas_ports::{PortError, SpiceModelParserPort};
-use std::collections::HashMap;
 
 pub struct SimpleSpiceModelParser;
 
@@ -95,7 +94,7 @@ impl SpiceModelParserPort for SimpleSpiceModelParser {
         let mut models: Vec<SpiceModelDefinition> = Vec::new();
         let mut subcircuits: Vec<SpiceSubcircuitDefinition> = Vec::new();
         let mut warnings: Vec<String> = Vec::new();
-        let mut errors: Vec<String> = Vec::new();
+        let errors: Vec<String> = Vec::new();
 
         // Preprocess: handle line continuations and comments
         let lines: Vec<&str> = content.lines().collect();

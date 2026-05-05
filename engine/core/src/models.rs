@@ -63,6 +63,8 @@ pub struct ComponentInstance {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ConnectedPin {
+    #[serde(default)]
+    pub component_id: String,
     pub pin_id: String,
     pub net_id: String,
 }

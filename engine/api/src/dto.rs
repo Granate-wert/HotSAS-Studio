@@ -59,6 +59,7 @@ impl From<&CircuitProject> for ProjectDto {
                                 .connected_nets
                                 .iter()
                                 .map(|cn| ConnectedPinDto {
+                                    component_id: cn.component_id.clone(),
                                     pin_id: cn.pin_id.clone(),
                                     net_id: cn.net_id.clone(),
                                 })
@@ -144,6 +145,8 @@ pub struct SymbolDto {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectedPinDto {
+    #[serde(default)]
+    pub component_id: String,
     pub pin_id: String,
     pub net_id: String,
 }

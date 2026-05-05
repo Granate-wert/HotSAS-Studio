@@ -30,6 +30,7 @@ export type SymbolDto = {
 };
 
 export type ConnectedPinDto = {
+  component_id: string;
   pin_id: string;
   net_id: string;
 };
