@@ -8,8 +8,8 @@
 
 ```text
 Version: v2.6 — Project Persistence / Save-Load UX Hardening
-Implementation commit: 568ffa3
-Verification/docs commit: 568ffa3
+Implementation commit: 882ec5d
+Verification/docs commit: 882ec5d
 Branch: main
 Verification log: docs/testing/verification_logs/v2.6_project_persistence_save_load_ux.md
 
