@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { Button, Group, Text, TextInput, Badge, Tooltip } from "@mantine/core";
-import {
-  CircuitBoard,
-  FolderOpen,
-  Save,
-  SaveAll,
-  FilePlus,
-} from "lucide-react";
+import { CircuitBoard, FolderOpen, Save, SaveAll, FilePlus } from "lucide-react";
 import type { ProjectSessionStateDto } from "../../types";
 
 type ProjectToolbarProps = {

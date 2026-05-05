@@ -150,7 +150,10 @@ type HotSasState = {
   setSchematicEditError: (error: string | null) => void;
   setPendingConnectionStart: (start: { componentId: string; pinId: string } | null) => void;
   setProjectSessionState: (
-    state: ProjectSessionStateDto | null | ((prev: ProjectSessionStateDto | null) => ProjectSessionStateDto | null),
+    state:
+      | ProjectSessionStateDto
+      | null
+      | ((prev: ProjectSessionStateDto | null) => ProjectSessionStateDto | null),
   ) => void;
   setRecentProjects: (projects: RecentProjectEntryDto[]) => void;
   setProjectPersistenceLoading: (loading: boolean) => void;
@@ -277,8 +280,9 @@ export const useHotSasStore = create<HotSasState>((set) => ({
     set({ schematicEditorCapabilities }),
   setSchematicEditLoading: (schematicEditLoading) => set({ schematicEditLoading }),
   setSchematicEditError: (schematicEditError) => set({ schematicEditError }),
-  setPendingConnectionStart: (pendingConnectionStart: { componentId: string; pinId: string } | null) =>
-    set({ pendingConnectionStart }),
+  setPendingConnectionStart: (
+    pendingConnectionStart: { componentId: string; pinId: string } | null,
+  ) => set({ pendingConnectionStart }),
   setProjectSessionState: (projectSessionState) =>
     set((state) => ({
       projectSessionState:

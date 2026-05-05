@@ -9,13 +9,14 @@
 ```text
 Version: v2.6 — Project Persistence / Save-Load UX Hardening
 Implementation commit: 882ec5d
-Verification/docs commit: 882ec5d
+Verification/docs commit: ad9e573
 Branch: main
 Verification log: docs/testing/verification_logs/v2.6_project_persistence_save_load_ux.md
 
 Checks:
 - cargo fmt --check — PASS
 - cargo test — PASS (200+ Rust tests, exit code 0)
+- prettier format:check — PASS
 - typecheck (tsc --noEmit) — PASS
 - vitest run — PASS (17 test files, 103 frontend tests)
 - vite build — PASS
@@ -39,6 +40,8 @@ New in v2.6:
 - Dirty tracking integrated into existing mutating schematic/component commands
 - Frontend tests for new project UI components
 - Rust integration tests for project_session service and API
+- docs/project_persistence/PROJECT_PERSISTENCE_V2_6.md created
+- docs/testing/TESTING.md updated with v2.6 section and manual save/load smoke checklist
 ```
 
 ## Previous Versions

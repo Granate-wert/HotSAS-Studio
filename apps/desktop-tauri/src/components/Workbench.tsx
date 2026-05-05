@@ -445,21 +445,14 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
           .catch((err) => setSchematicEditError(err instanceof Error ? err.message : String(err)))
           .finally(() => setSchematicEditLoading(false));
       },
-      loadProjectSessionState: () =>
-        run(
-          backend.getProjectSessionState,
-          setProjectSessionState,
-        ),
+      loadProjectSessionState: () => run(backend.getProjectSessionState, setProjectSessionState),
       saveCurrentProject: () =>
-        run(
-          backend.saveCurrentProject,
-          (result) => {
-            setLastProjectSaveResult(result);
-            setProjectSessionState((prev: ProjectSessionStateDto | null) =>
-              prev ? { ...prev, dirty: false, last_saved_at: result.saved_at } : null,
-            );
-          },
-        ),
+        run(backend.saveCurrentProject, (result) => {
+          setLastProjectSaveResult(result);
+          setProjectSessionState((prev: ProjectSessionStateDto | null) =>
+            prev ? { ...prev, dirty: false, last_saved_at: result.saved_at } : null,
+          );
+        }),
       saveProjectAs: (path: string) =>
         run(
           () => backend.saveProjectAs(path),
@@ -493,18 +486,14 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
           },
         );
       },
-      listRecentProjects: () =>
-        run(backend.listRecentProjects, setRecentProjects),
+      listRecentProjects: () => run(backend.listRecentProjects, setRecentProjects),
       removeRecentProject: (path: string) =>
         run(
           () => backend.removeRecentProject(path),
           () => actions.listRecentProjects(),
         ),
       clearMissingRecentProjects: () =>
-        run(
-          backend.clearMissingRecentProjects,
-          () => actions.listRecentProjects(),
-        ),
+        run(backend.clearMissingRecentProjects, () => actions.listRecentProjects()),
     }),
     [
       savePath,

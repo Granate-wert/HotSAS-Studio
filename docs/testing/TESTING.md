@@ -677,9 +677,64 @@ This stage verifies:
 12. Verify validation warnings appear in the Validation tab after edits.
 13. Verify old screens still work: Component Library, Formula Library, Export Center, DC-DC.
 
+## v2.6 — Project Persistence / Save-Load UX Hardening
+
+### Rust tests
+
+- **Project Session Service** (`engine/application/tests/project_session_tests.rs`)
+  - New session is clean (no project, not dirty)
+  - `mark_dirty` sets dirty flag
+  - `save_project_as` sets path and clears dirty
+  - `save_current_project` without path returns error
+  - `open_project_package` without confirm on dirty returns error
+  - Recent projects updated after save
+  - Remove recent project works
+
+- **Project Session API** (`engine/api/tests/project_session_api_tests.rs`)
+  - `get_project_session_state` returns clean initially
+  - `save_project_as` without project returns error
+  - `open_project_package` without confirm on dirty fails
+  - `list_recent_projects` works
+
+- **Dependency Boundaries** (`api/tests/dependency_boundaries.rs`) — verified no `hotsas_adapters` in `hotsas_api` dependencies
+
+### Frontend tests
+
+- **Project Toolbar** (`src/components/project/__tests__/ProjectToolbar.test.tsx`)
+  - Renders no-project state
+  - Shows dirty indicator when dirty
+  - Calls onSave when Save clicked
+
+- **Recent Projects Panel** (`src/components/project/__tests__/RecentProjectsPanel.test.tsx`)
+  - Renders empty state
+  - Renders recent projects
+  - Calls onRemove when remove clicked
+
+- **Unsaved Changes Banner** (`src/components/project/__tests__/UnsavedChangesBanner.test.tsx`)
+  - Renders nothing when not dirty
+  - Renders banner when dirty
+
+### Manual v2.6 Save/Load Smoke Check
+
+1. Open the app.
+2. Create the RC low-pass demo project.
+3. Verify **Project Toolbar** shows project name and dirty indicator.
+4. Add a component via the palette.
+5. Verify dirty indicator appears.
+6. Click **Save As**, enter a path, confirm.
+7. Verify dirty indicator clears.
+8. Verify the project appears in **Recent Projects**.
+9. Close and reopen the app.
+10. Open the saved project from **Recent Projects**.
+11. Verify schematic edits are preserved.
+12. Make another edit, then try to open a different project.
+13. Verify **Unsaved Changes** confirmation appears.
+
+---
+
 ## Test Summary
 
-As of v2.5, the Rust workspace runs **200+ tests** across all crates with **zero failures**, and the frontend runs **95 UI tests** with **zero failures**.
+As of v2.6, the Rust workspace runs **200+ tests** across all crates with **zero failures**, and the frontend runs **103 UI tests** with **zero failures**.
 
 ---
 
