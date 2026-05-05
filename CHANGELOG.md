@@ -2,6 +2,30 @@
 
 All notable changes to HotSAS Studio are documented in this file.
 
+## [v2.7] — CLI / Headless Mode Foundation
+
+### Added
+- New `hotsas_cli` crate with `hotsas-cli` binary in `engine/cli/`.
+- CLI commands delegating to `HotSasApi` facade (zero duplicated business logic):
+  - `validate <path>` — validate a `.circuit` project package.
+  - `formula <id> [key=value...]` — evaluate a formula with variables.
+  - `netlist <path> [--out <file>]` — generate SPICE netlist.
+  - `export <path> <format> [--out <file>]` — export report (markdown, html, json, csv-summary).
+  - `simulate <path> <profile> [--engine <engine>] [--out <file>]` — run simulation (mock or ngspice).
+  - `library check` — verify built-in component library integrity.
+  - `--version` / `--help` — standard CLI metadata.
+- Global `--json` flag for structured JSON output on every command.
+- Strict exit code policy: 0 success, 1 internal/IO, 2 validation/input, 3 usage, 4 unsupported.
+- `CliOutput<T>` generic output wrapper with human-readable and JSON modes.
+- `build_headless_api()` factory reusing the same adapter wiring as Tauri desktop.
+- `initialize_cli()` loading built-in formula packs and component library on startup.
+- 10 CLI integration tests in `engine/cli/tests/cli_integration.rs` (version, help, validate, formula, netlist, export, simulate, library check, JSON output, error codes).
+- Total Rust tests: 361 (all passing).
+
+### Changed
+- `engine/Cargo.toml` workspace now includes `cli` member.
+- `engine/cli/Cargo.toml` depends on `clap` (derive feature), `serde`, `serde_json`, and all internal workspace crates.
+
 ## [0.1.4-fix] — Generic Formula Engine Completion Gate
 
 ### Added

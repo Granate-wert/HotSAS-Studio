@@ -1,0 +1,25 @@
+[package]
+name = "hotsas_cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+name = "hotsas_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hotsas-cli"
+path = "src/main.rs"
+
+[dependencies]
+hotsas_core = { path = "../core" }
+hotsas_ports = { path = "../ports" }
+hotsas_application = { path = "../application" }
+hotsas_adapters = { path = "../adapters" }
+hotsas_api = { path = "../api" }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
