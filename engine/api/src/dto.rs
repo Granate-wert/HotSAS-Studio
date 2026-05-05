@@ -2305,3 +2305,103 @@ pub struct SchematicToolCapabilityDto {
     pub available: bool,
     pub limitation: Option<String>,
 }
+
+// v2.6 Project Persistence DTOs
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectSessionStateDto {
+    pub current_project_id: Option<String>,
+    pub current_project_name: Option<String>,
+    pub current_project_path: Option<String>,
+    pub dirty: bool,
+    pub last_saved_at: Option<String>,
+    pub last_loaded_at: Option<String>,
+    pub last_error: Option<String>,
+}
+
+impl From<&hotsas_core::ProjectSessionState> for ProjectSessionStateDto {
+    fn from(state: &hotsas_core::ProjectSessionState) -> Self {
+        Self {
+            current_project_id: state.current_project_id.clone(),
+            current_project_name: state.current_project_name.clone(),
+            current_project_path: state.current_project_path.clone(),
+            dirty: state.dirty,
+            last_saved_at: state.last_saved_at.clone(),
+            last_loaded_at: state.last_loaded_at.clone(),
+            last_error: state.last_error.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RecentProjectEntryDto {
+    pub path: String,
+    pub display_name: String,
+    pub last_opened_at: String,
+    pub exists: bool,
+}
+
+impl From<&hotsas_core::RecentProjectEntry> for RecentProjectEntryDto {
+    fn from(entry: &hotsas_core::RecentProjectEntry) -> Self {
+        Self {
+            path: entry.path.clone(),
+            display_name: entry.display_name.clone(),
+            last_opened_at: entry.last_opened_at.clone(),
+            exists: entry.exists,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectPersistenceWarningDto {
+    pub code: String,
+    pub message: String,
+    pub severity: String,
+}
+
+impl From<&hotsas_core::ProjectPersistenceWarning> for ProjectPersistenceWarningDto {
+    fn from(w: &hotsas_core::ProjectPersistenceWarning) -> Self {
+        Self {
+            code: w.code.clone(),
+            message: w.message.clone(),
+            severity: format!("{:?}", w.severity),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectSaveResultDto {
+    pub project_id: String,
+    pub path: String,
+    pub saved_at: String,
+    pub warnings: Vec<ProjectPersistenceWarningDto>,
+}
+
+impl From<&hotsas_core::ProjectSaveResult> for ProjectSaveResultDto {
+    fn from(result: &hotsas_core::ProjectSaveResult) -> Self {
+        Self {
+            project_id: result.project_id.clone(),
+            path: result.path.clone(),
+            saved_at: result.saved_at.clone(),
+            warnings: result
+                .warnings
+                .iter()
+                .map(ProjectPersistenceWarningDto::from)
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectOpenRequestDto {
+    pub path: String,
+    pub confirm_discard_unsaved: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectOpenResultDto {
+    pub project: ProjectDto,
+    pub path: String,
+    pub opened_at: String,
+    pub validation_warnings: Vec<ProjectPersistenceWarningDto>,
+}

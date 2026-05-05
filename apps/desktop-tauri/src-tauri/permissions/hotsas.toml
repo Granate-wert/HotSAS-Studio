@@ -2,6 +2,13 @@
 identifier = "allow-hotsas-commands"
 description = "Allows the main HotSAS Studio window to invoke all backend commands."
 commands.allow = [
+  "get_project_session_state",
+  "save_current_project",
+  "save_project_as",
+  "open_project_package",
+  "list_recent_projects",
+  "remove_recent_project",
+  "clear_missing_recent_projects",
   "create_rc_low_pass_demo_project",
   "calculate_rc_low_pass",
   "nearest_e24_for_resistor",

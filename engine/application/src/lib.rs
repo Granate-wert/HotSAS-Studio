@@ -9,6 +9,6 @@ pub use services::{
     EngineeringNotebookService, ExportCenterService, ExportService, FormulaRegistryService,
     FormulaService, IssueSeverity, ModelImportService, NetlistGenerationService,
     NgspiceSimulationService, ParameterIssue, PreferredValuesService, ProductWorkflowService,
-    ProjectPackageService, ProjectService, SchematicEditingService, SelectedRegionAnalysisService,
-    SimulationEngineChoice, SimulationService,
+    ProjectPackageService, ProjectService, ProjectSessionService, SchematicEditingService,
+    SelectedRegionAnalysisService, SimulationEngineChoice, SimulationService,
 };

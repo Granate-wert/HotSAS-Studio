@@ -127,8 +127,10 @@ dependencies = [
 name = "hotsas_application"
 version = "0.1.4"
 dependencies = [
+ "chrono",
  "hotsas_core",
  "hotsas_ports",
+ "serde",
  "serde_json",
 ]
 

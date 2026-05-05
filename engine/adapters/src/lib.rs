@@ -16,6 +16,7 @@ use std::path::{Path, PathBuf};
 pub mod component_library_storage;
 pub mod export_center;
 pub mod expression_evaluator;
+pub mod local_settings_storage;
 pub mod ngspice;
 pub mod project_package_storage;
 pub mod spice_model_parser;
@@ -25,6 +26,7 @@ pub use export_center::{
     AltiumWorkflowPackageExporter, BomCsvExporter, ComponentLibraryJsonExporter,
     CsvSimulationDataExporter, SvgSchematicExporter,
 };
+pub use local_settings_storage::LocalSettingsStorage;
 pub use ngspice::{NgspiceBinaryResolver, NgspiceOutputParser, NgspiceSimulationAdapter};
 pub use project_package_storage::CircuitProjectPackageStorage;
 pub use spice_model_parser::SimpleSpiceModelParser;

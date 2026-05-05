@@ -8,11 +8,13 @@ use crate::{
     FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto, FormulaResultDto,
     FormulaSummaryDto, KeyValueDto, MoveComponentRequestDto, NgspiceAvailabilityDto,
     NotebookEvaluationRequestDto, NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto,
-    ProductWorkflowStatusDto, ProjectDto, ProjectPackageManifestDto,
-    ProjectPackageValidationReportDto, RenameNetRequestDto, SaveProjectDto, SchematicEditResultDto,
-    SchematicToolCapabilityDto, SelectedComponentDto, SelectedRegionAnalysisRequestDto,
-    SelectedRegionAnalysisResultDto, SelectedRegionPreviewDto, SimulationModelDto,
-    SimulationResultDto, SimulationRunRequestDto, SymbolDto, ValueDto, VerticalSliceDto,
+    ProductWorkflowStatusDto, ProjectDto, ProjectOpenRequestDto, ProjectOpenResultDto,
+    ProjectPackageManifestDto, ProjectPackageValidationReportDto, ProjectPersistenceWarningDto,
+    ProjectSaveResultDto, ProjectSessionStateDto, RecentProjectEntryDto, RenameNetRequestDto,
+    SaveProjectDto, SchematicEditResultDto, SchematicToolCapabilityDto, SelectedComponentDto,
+    SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionPreviewDto,
+    SimulationModelDto, SimulationResultDto, SimulationRunRequestDto, SymbolDto, ValueDto,
+    VerticalSliceDto,
 };
 use hotsas_application::{
     AppDiagnosticsService, AppServices, FormulaRegistryService, ProductWorkflowService,
@@ -39,6 +41,10 @@ pub struct HotSasApi {
 }
 
 impl HotSasApi {
+    pub fn services_mut(&mut self) -> &mut AppServices {
+        &mut self.services
+    }
+
     pub fn new(services: AppServices) -> Self {
         let library = services
             .component_library_service()
@@ -142,6 +148,9 @@ impl HotSasApi {
     pub fn create_rc_low_pass_demo_project(&self) -> Result<ProjectDto, ApiError> {
         let project = self.services.create_rc_low_pass_demo_project();
         self.replace_current_project(project.clone())?;
+        self.services
+            .project_session_service()
+            .set_current_project(&project, None);
         Ok(ProjectDto::from(&project))
     }
 
@@ -244,6 +253,9 @@ impl HotSasApi {
             .services
             .load_project_package(Path::new(&package_dir))?;
         self.replace_current_project(project.clone())?;
+        self.services
+            .project_session_service()
+            .set_current_project(&project, Some(package_dir));
         Ok(ProjectDto::from(&project))
     }
 
@@ -800,7 +812,8 @@ impl HotSasApi {
             .as_ref()
             .map(|p| p.id.clone());
         let new_id = project.id.clone();
-        if old_id != Some(new_id) {
+        let same_project = old_id == Some(new_id.clone());
+        if !same_project {
             if let Ok(mut guard) = self.last_advanced_report.lock() {
                 *guard = None;
             }
@@ -813,6 +826,12 @@ impl HotSasApi {
             .lock()
             .map_err(|_| ApiError::State("current project lock poisoned".to_string()))?;
         *guard = Some(project);
+        drop(guard);
+        if same_project {
+            self.services
+                .project_session_service()
+                .mark_dirty("project mutated");
+        }
         Ok(())
     }
 
@@ -1041,6 +1060,9 @@ impl HotSasApi {
             .product_workflow
             .create_integrated_demo_project(&self.services);
         self.replace_current_project(project.clone())?;
+        self.services
+            .project_session_service()
+            .set_current_project(&project, None);
         Ok(ProjectDto::from(&project))
     }
 
@@ -1878,6 +1900,77 @@ impl HotSasApi {
             .lock()
             .map_err(|_| ApiError::State("component library lock poisoned".to_string()))
             .map(|guard| guard.clone())
+    }
+
+    pub fn get_project_session_state(&self) -> Result<ProjectSessionStateDto, ApiError> {
+        let state = self.services.project_session_service().get_state();
+        Ok(ProjectSessionStateDto::from(&state))
+    }
+
+    pub fn save_current_project(&self) -> Result<ProjectSaveResultDto, ApiError> {
+        let project = self.current_project()?;
+        let result = self
+            .services
+            .project_session_service()
+            .save_current_project(&project)
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+        Ok(ProjectSaveResultDto::from(&result))
+    }
+
+    pub fn save_project_as(&self, path: String) -> Result<ProjectSaveResultDto, ApiError> {
+        let project = self.current_project()?;
+        let result = self
+            .services
+            .project_session_service()
+            .save_project_as(&project, path)
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+        Ok(ProjectSaveResultDto::from(&result))
+    }
+
+    pub fn open_project_package(
+        &self,
+        request: ProjectOpenRequestDto,
+    ) -> Result<ProjectOpenResultDto, ApiError> {
+        let result = self
+            .services
+            .project_session_service()
+            .open_project_package(request.path, request.confirm_discard_unsaved)
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))?;
+        self.replace_current_project(result.project.clone())?;
+        Ok(ProjectOpenResultDto {
+            project: ProjectDto::from(&result.project),
+            path: result.path,
+            opened_at: result.opened_at,
+            validation_warnings: result
+                .validation_warnings
+                .iter()
+                .map(ProjectPersistenceWarningDto::from)
+                .collect(),
+        })
+    }
+
+    pub fn list_recent_projects(&self) -> Result<Vec<RecentProjectEntryDto>, ApiError> {
+        Ok(self
+            .services
+            .project_session_service()
+            .list_recent_projects()
+            .iter()
+            .map(RecentProjectEntryDto::from)
+            .collect())
+    }
+
+    pub fn remove_recent_project(&self, path: String) -> Result<(), ApiError> {
+        self.services
+            .project_session_service()
+            .remove_recent_project(path)
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))
+    }
+
+    pub fn clear_missing_recent_projects(&self) -> Result<usize, ApiError> {
+        self.services
+            .project_session_service()
+            .clear_missing_recent_projects()
+            .map_err(|e| ApiError::InvalidInput(e.to_string()))
     }
 }
 

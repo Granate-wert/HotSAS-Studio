@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Tabs } from "@mantine/core";
 import { FormulaPanel } from "../components/FormulaPanel";
 import { LibraryPanel } from "../components/LibraryPanel";
@@ -85,9 +85,11 @@ export function SchematicScreen({
 }: SchematicScreenProps) {
   const [showConnectionPanel, setShowConnectionPanel] = useState(false);
   const [showNetEditor, setShowNetEditor] = useState(false);
+  const hasLoadedCapabilities = useRef(false);
 
   useEffect(() => {
-    if (hasProject && schematicCapabilities.length === 0) {
+    if (hasProject && schematicCapabilities.length === 0 && !hasLoadedCapabilities.current) {
+      hasLoadedCapabilities.current = true;
       onLoadSchematicCapabilities();
     }
   }, [hasProject, schematicCapabilities.length, onLoadSchematicCapabilities]);

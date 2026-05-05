@@ -2,45 +2,48 @@
 
 ## Current Version
 
-[v2.5 — Schematic Editor Hardening (v2.5-fix applied)](./verification_logs/v2.5_schematic_editor_hardening.md)
+[v2.6 — Project Persistence / Save-Load UX Hardening](./verification_logs/v2.6_project_persistence_save_load_ux.md)
 
-## v2.5-fix Summary
+## v2.6 Summary
 
 ```text
-Version: v2.5-fix — Schematic Editing Validation & Verification Correction
-Original v2.5 implementation commit: c31cadc
-Fix commit: 8b432b3
-Verification/docs commit: 8b432b3
+Version: v2.6 — Project Persistence / Save-Load UX Hardening
+Implementation commit: 568ffa3
+Verification/docs commit: 568ffa3
 Branch: main
-Verification log: docs/testing/verification_logs/v2.5_schematic_editor_hardening.md
+Verification log: docs/testing/verification_logs/v2.6_project_persistence_save_load_ux.md
 
 Checks:
 - cargo fmt --check — PASS
 - cargo test — PASS (200+ Rust tests, exit code 0)
-- npm run format:check — PASS
-- npm run typecheck — PASS
-- npm run test — PASS (95 frontend tests)
-- npm run build — PASS
-- npm run tauri:build — PASS
+- typecheck (tsc --noEmit) — PASS
+- vitest run — PASS (17 test files, 103 frontend tests)
+- vite build — PASS
+- tauri:build — PASS
 
 Internal build:
 - EXE path: apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
-- EXE size bytes: 13262336
-- EXE SHA256: 4A6F584786FE5CCF6ED6076BC2198FB42CF9161B9800FAA9106624C308A25B96
+- EXE size bytes: 13430272
+- EXE SHA256: C9AD31ADBA958C5832B6B002511487C14C3BE7267D348D282ED57A615073E6D4
 - ZIP: NOT CREATED (manual bundling required)
 - Public GitHub Release: NO
 
-Fixes applied:
-- cargo test exit code 0 (cleaned all warnings)
-- connect_pins validates real pin ids via seed_symbol_for_kind
-- delete_component removes stale wires/nets/connected_pins using component_id
-- Added component_id to ConnectedPin core model + DTO + frontend types
-- Git hygiene: removed 4 service files from tracking, updated .gitignore
-- New Rust tests: 6 schematic editing tests for pin validation and delete cleanup
+New in v2.6:
+- ProjectSessionState, RecentProjectEntry, ProjectSave/Open result core models
+- ProjectSessionService with dirty tracking, save/open/recent projects logic
+- LocalSettingsStorage adapter for JSON recent-projects persistence
+- API facade methods: get_project_session_state, save_current_project, save_project_as, open_project_package, list/remove/clear recent projects
+- 7 new Tauri commands with permissions
+- Frontend types, API wrappers, store state/setters for project session
+- ProjectToolbar, RecentProjectsPanel, UnsavedChangesBanner, ProjectPersistenceStatus components
+- Dirty tracking integrated into existing mutating schematic/component commands
+- Frontend tests for new project UI components
+- Rust integration tests for project_session service and API
 ```
 
 ## Previous Versions
 
+- [v2.5 — Schematic Editor Hardening (v2.5-fix applied)](./verification_logs/v2.5_schematic_editor_hardening.md)
 - [v2.4 — Real Component Parameters](./verification_logs/v2.4_real_component_parameters.md)
 - [v2.1 — Formula Library Expansion & Formula UX Hardening](./verification_logs/v2.1_formula_library_expansion.md)
 - [v2.0 — Product Beta Integration, Workflow Stabilization & Internal RC Build](./verification_logs/v2.0_product_beta_integration.md)

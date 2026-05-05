@@ -14,6 +14,10 @@ impl ProjectPackageService {
         Self { storage }
     }
 
+    pub fn storage(&self) -> Arc<dyn ProjectPackageStoragePort> {
+        self.storage.clone()
+    }
+
     pub fn save_project_package(
         &self,
         package_dir: &Path,

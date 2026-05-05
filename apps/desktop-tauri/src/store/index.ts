@@ -21,6 +21,10 @@ import type {
   ReportSectionCapabilityDto,
   SchematicEditResultDto,
   SchematicToolCapabilityDto,
+  ProjectOpenResultDto,
+  ProjectSaveResultDto,
+  ProjectSessionStateDto,
+  RecentProjectEntryDto,
   SelectedComponentDto,
   SelectedRegionAnalysisResultDto,
   SelectedRegionPreviewDto,
@@ -84,6 +88,13 @@ type HotSasState = {
   schematicEditLoading: boolean;
   schematicEditError: string | null;
   pendingConnectionStart: { componentId: string; pinId: string } | null;
+  // v2.6 project persistence
+  projectSessionState: ProjectSessionStateDto | null;
+  recentProjects: RecentProjectEntryDto[];
+  projectPersistenceLoading: boolean;
+  projectPersistenceError: string | null;
+  lastProjectSaveResult: ProjectSaveResultDto | null;
+  lastProjectOpenResult: ProjectOpenResultDto | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -138,6 +149,14 @@ type HotSasState = {
   setSchematicEditLoading: (loading: boolean) => void;
   setSchematicEditError: (error: string | null) => void;
   setPendingConnectionStart: (start: { componentId: string; pinId: string } | null) => void;
+  setProjectSessionState: (
+    state: ProjectSessionStateDto | null | ((prev: ProjectSessionStateDto | null) => ProjectSessionStateDto | null),
+  ) => void;
+  setRecentProjects: (projects: RecentProjectEntryDto[]) => void;
+  setProjectPersistenceLoading: (loading: boolean) => void;
+  setProjectPersistenceError: (error: string | null) => void;
+  setLastProjectSaveResult: (result: ProjectSaveResultDto | null) => void;
+  setLastProjectOpenResult: (result: ProjectOpenResultDto | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -194,6 +213,12 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   schematicEditLoading: false,
   schematicEditError: null,
   pendingConnectionStart: null,
+  projectSessionState: null,
+  recentProjects: [],
+  projectPersistenceLoading: false,
+  projectPersistenceError: null,
+  lastProjectSaveResult: null,
+  lastProjectOpenResult: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -252,5 +277,22 @@ export const useHotSasStore = create<HotSasState>((set) => ({
     set({ schematicEditorCapabilities }),
   setSchematicEditLoading: (schematicEditLoading) => set({ schematicEditLoading }),
   setSchematicEditError: (schematicEditError) => set({ schematicEditError }),
-  setPendingConnectionStart: (pendingConnectionStart) => set({ pendingConnectionStart }),
+  setPendingConnectionStart: (pendingConnectionStart: { componentId: string; pinId: string } | null) =>
+    set({ pendingConnectionStart }),
+  setProjectSessionState: (projectSessionState) =>
+    set((state) => ({
+      projectSessionState:
+        typeof projectSessionState === "function"
+          ? projectSessionState(state.projectSessionState)
+          : projectSessionState,
+    })),
+  setRecentProjects: (recentProjects: RecentProjectEntryDto[]) => set({ recentProjects }),
+  setProjectPersistenceLoading: (projectPersistenceLoading: boolean) =>
+    set({ projectPersistenceLoading }),
+  setProjectPersistenceError: (projectPersistenceError: string | null) =>
+    set({ projectPersistenceError }),
+  setLastProjectSaveResult: (lastProjectSaveResult: ProjectSaveResultDto | null) =>
+    set({ lastProjectSaveResult }),
+  setLastProjectOpenResult: (lastProjectOpenResult: ProjectOpenResultDto | null) =>
+    set({ lastProjectOpenResult }),
 }));

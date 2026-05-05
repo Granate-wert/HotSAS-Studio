@@ -67,6 +67,11 @@ import type {
   RenameNetRequestDto,
   SchematicEditResultDto,
   SchematicToolCapabilityDto,
+  ProjectSessionStateDto,
+  ProjectSaveResultDto,
+  ProjectOpenRequestDto,
+  ProjectOpenResultDto,
+  RecentProjectEntryDto,
 } from "../types";
 
 async function invokeCommand<T>(command: string, args?: Record<string, unknown>) {
@@ -217,4 +222,13 @@ export const backend = {
     invokeCommand<SchematicEditResultDto>("connect_schematic_pins", { request }),
   renameSchematicNet: (request: RenameNetRequestDto) =>
     invokeCommand<SchematicEditResultDto>("rename_schematic_net", { request }),
+  // v2.6 project persistence
+  getProjectSessionState: () => invokeCommand<ProjectSessionStateDto>("get_project_session_state"),
+  saveCurrentProject: () => invokeCommand<ProjectSaveResultDto>("save_current_project"),
+  saveProjectAs: (path: string) => invokeCommand<ProjectSaveResultDto>("save_project_as", { path }),
+  openProjectPackage: (request: ProjectOpenRequestDto) =>
+    invokeCommand<ProjectOpenResultDto>("open_project_package", { request }),
+  listRecentProjects: () => invokeCommand<RecentProjectEntryDto[]>("list_recent_projects"),
+  removeRecentProject: (path: string) => invokeCommand<void>("remove_recent_project", { path }),
+  clearMissingRecentProjects: () => invokeCommand<number>("clear_missing_recent_projects"),
 };

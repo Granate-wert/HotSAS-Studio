@@ -1,4 +1,4 @@
-use crate::services::{AdvancedReportService, DcdcCalculatorService};
+use crate::services::{AdvancedReportService, DcdcCalculatorService, ProjectSessionService};
 use crate::{
     ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
     ComponentParameterService, EngineeringNotebookService, ExportCenterService, ExportService,
@@ -16,7 +16,7 @@ use hotsas_ports::{
     SimulationDataExporterPort, SimulationEnginePort, SpiceModelParserPort, StoragePort,
     TouchstoneParserPort,
 };
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -40,6 +40,7 @@ pub struct AppServices {
     model_import_service: ModelImportService,
     dcdc_calculator_service: DcdcCalculatorService,
     advanced_report_service: AdvancedReportService,
+    project_session_service: ProjectSessionService,
 }
 
 impl AppServices {
@@ -61,7 +62,7 @@ impl AppServices {
     ) -> Self {
         Self {
             project_service: ProjectService::new(storage),
-            project_package_service: ProjectPackageService::new(project_package_storage),
+            project_package_service: ProjectPackageService::new(project_package_storage.clone()),
             formula_service: FormulaService::new(formula_engine),
             preferred_values_service: PreferredValuesService,
             circuit_template_service: CircuitTemplateService,
@@ -86,7 +87,16 @@ impl AppServices {
             model_import_service: ModelImportService::new(spice_parser, touchstone_parser),
             dcdc_calculator_service: crate::services::DcdcCalculatorService::new(),
             advanced_report_service: AdvancedReportService::new(),
+            project_session_service: ProjectSessionService::new(
+                std::env::temp_dir().join("hotsas_session.json"),
+                project_package_storage.clone(),
+            ),
         }
+    }
+
+    pub fn set_project_session_settings_path(&mut self, path: PathBuf) {
+        self.project_session_service =
+            ProjectSessionService::new(path, self.project_package_service.storage());
     }
 
     pub fn project_service(&self) -> &ProjectService {
@@ -163,6 +173,10 @@ impl AppServices {
 
     pub fn advanced_report_service(&self) -> &AdvancedReportService {
         &self.advanced_report_service
+    }
+
+    pub fn project_session_service(&self) -> &ProjectSessionService {
+        &self.project_session_service
     }
 
     pub fn create_rc_low_pass_demo_project(&self) -> CircuitProject {

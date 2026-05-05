@@ -57,9 +57,13 @@ function log(level: LogLevel, message: string, source: "frontend" | "backend" = 
       console.log(consoleMessage);
   }
 
-  void backend.writeLog(level, message).catch(() => {
-    // Ignore write_log failures to avoid infinite loops
-  });
+  try {
+    void backend.writeLog(level, message).catch(() => {
+      // Ignore write_log failures to avoid infinite loops
+    });
+  } catch {
+    // Ignore synchronous failures from Tauri bridge
+  }
 }
 
 export const logger = {

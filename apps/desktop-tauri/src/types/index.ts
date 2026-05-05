@@ -1007,3 +1007,47 @@ export type ParameterBundleDto =
   | { kind: "op_amp"; gbw: ValueDto | null; input_offset_voltage: ValueDto | null }
   | { kind: "regulator"; output_voltage: ValueDto | null; max_current: ValueDto | null }
   | { kind: "generic" };
+
+// v2.6 Project Persistence Types
+
+export type ProjectSessionStateDto = {
+  current_project_id: string | null;
+  current_project_name: string | null;
+  current_project_path: string | null;
+  dirty: boolean;
+  last_saved_at: string | null;
+  last_loaded_at: string | null;
+  last_error: string | null;
+};
+
+export type RecentProjectEntryDto = {
+  path: string;
+  display_name: string;
+  last_opened_at: string;
+  exists: boolean;
+};
+
+export type ProjectPersistenceWarningDto = {
+  code: string;
+  message: string;
+  severity: string;
+};
+
+export type ProjectSaveResultDto = {
+  project_id: string;
+  path: string;
+  saved_at: string;
+  warnings: ProjectPersistenceWarningDto[];
+};
+
+export type ProjectOpenRequestDto = {
+  path: string;
+  confirm_discard_unsaved: boolean;
+};
+
+export type ProjectOpenResultDto = {
+  project: ProjectDto;
+  path: string;
+  opened_at: string;
+  validation_warnings: ProjectPersistenceWarningDto[];
+};

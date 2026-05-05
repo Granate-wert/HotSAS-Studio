@@ -29,6 +29,7 @@ export function DebugLogPanel() {
   const clipboard = useClipboard();
 
   useEffect(() => {
+    logger.info("DebugLogPanel mounted");
     const unsubscribe = logger.subscribe(() => setEntries(logger.getEntries()));
     return () => {
       unsubscribe();

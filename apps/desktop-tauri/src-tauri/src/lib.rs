@@ -20,6 +20,8 @@ use hotsas_api::{
     SelectedRegionPreviewDto, SimulationResultDto, SimulationRunRequestDto, VerticalSliceDto,
     DcdcCalculationResultDto, DcdcInputDto, DcdcNetlistPreviewRequestDto, DcdcMockTransientRequestDto,
     DcdcTemplateDto, ComponentParameterSchemaDto, ComponentParameterIssueDto, TypedComponentParametersDto,
+    ProjectOpenRequestDto, ProjectOpenResultDto, ProjectSessionStateDto, RecentProjectEntryDto,
+    ProjectSaveResultDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -138,6 +140,62 @@ fn write_log(level: String, message: String) {
         "trace" => log::trace!("[frontend] {message}"),
         _ => log::info!("[frontend] {message}"),
     }
+}
+
+#[tauri::command]
+fn get_project_session_state(api: State<'_, HotSasApi>) -> Result<ProjectSessionStateDto, String> {
+    log::info!("COMMAND get_project_session_state");
+    let result = api.get_project_session_state().map_err(tauri_error);
+    log_command_result("get_project_session_state", &result);
+    result
+}
+
+#[tauri::command]
+fn save_current_project(api: State<'_, HotSasApi>) -> Result<ProjectSaveResultDto, String> {
+    log::info!("COMMAND save_current_project");
+    let result = api.save_current_project().map_err(tauri_error);
+    log_command_result("save_current_project", &result);
+    result
+}
+
+#[tauri::command]
+fn save_project_as(api: State<'_, HotSasApi>, path: String) -> Result<ProjectSaveResultDto, String> {
+    log::info!("COMMAND save_project_as path={path}");
+    let result = api.save_project_as(path).map_err(tauri_error);
+    log_command_result("save_project_as", &result);
+    result
+}
+
+#[tauri::command]
+fn open_project_package(api: State<'_, HotSasApi>, request: ProjectOpenRequestDto) -> Result<ProjectOpenResultDto, String> {
+    log::info!("COMMAND open_project_package path={}", request.path);
+    let result = api.open_project_package(request).map_err(tauri_error);
+    log_command_result("open_project_package", &result);
+    result
+}
+
+#[tauri::command]
+fn list_recent_projects(api: State<'_, HotSasApi>) -> Result<Vec<RecentProjectEntryDto>, String> {
+    log::info!("COMMAND list_recent_projects");
+    let result = api.list_recent_projects().map_err(tauri_error);
+    log_command_result("list_recent_projects", &result);
+    result
+}
+
+#[tauri::command]
+fn remove_recent_project(api: State<'_, HotSasApi>, path: String) -> Result<(), String> {
+    log::info!("COMMAND remove_recent_project path={path}");
+    let result = api.remove_recent_project(path).map_err(tauri_error);
+    log_command_result("remove_recent_project", &result);
+    result
+}
+
+#[tauri::command]
+fn clear_missing_recent_projects(api: State<'_, HotSasApi>) -> Result<usize, String> {
+    log::info!("COMMAND clear_missing_recent_projects");
+    let result = api.clear_missing_recent_projects().map_err(tauri_error);
+    log_command_result("clear_missing_recent_projects", &result);
+    result
 }
 
 #[tauri::command]
@@ -796,15 +854,34 @@ fn build_api() -> HotSasApi {
     ))
 }
 
+fn build_api_with_app_data_dir(app: &tauri::App) -> HotSasApi {
+    let mut api = build_api();
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .unwrap_or_else(|_| std::env::temp_dir());
+    api.services_mut()
+        .set_project_session_settings_path(app_data_dir.join("hotsas_session.json"));
+    api
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             init_logging(app);
+            let api = build_api_with_app_data_dir(app);
+            app.manage(api);
             Ok(())
         })
-        .manage(build_api())
         .invoke_handler(tauri::generate_handler![
+            get_project_session_state,
+            save_current_project,
+            save_project_as,
+            open_project_package,
+            list_recent_projects,
+            remove_recent_project,
+            clear_missing_recent_projects,
             create_rc_low_pass_demo_project,
             calculate_rc_low_pass,
             nearest_e24_for_resistor,

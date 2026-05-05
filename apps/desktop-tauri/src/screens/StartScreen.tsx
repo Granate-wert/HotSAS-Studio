@@ -1,7 +1,9 @@
 import { Button, Group, Stack, Text, Title } from "@mantine/core";
 import { Calculator, CircuitBoard, Sigma } from "lucide-react";
 import { ProjectMetrics } from "../components/ProjectMetrics";
+import { RecentProjectsPanel } from "../components/project/RecentProjectsPanel";
 import type { ProjectMetricsData } from "./screenTypes";
+import type { RecentProjectEntryDto } from "../types";
 
 type StartScreenProps = ProjectMetricsData & {
   busy: boolean;
@@ -9,6 +11,10 @@ type StartScreenProps = ProjectMetricsData & {
   onCreateDemo: () => void;
   onCalculate: () => void;
   onNearestE24: () => void;
+  recentProjects: RecentProjectEntryDto[];
+  onOpenRecent: (path: string) => void;
+  onRemoveRecent: (path: string) => void;
+  onClearMissingRecent: () => void;
 };
 
 export function StartScreen({
@@ -21,6 +27,10 @@ export function StartScreen({
   onCreateDemo,
   onCalculate,
   onNearestE24,
+  recentProjects,
+  onOpenRecent,
+  onRemoveRecent,
+  onClearMissingRecent,
 }: StartScreenProps) {
   return (
     <section className="screen-panel">
@@ -58,6 +68,12 @@ export function StartScreen({
             simulation={simulation}
           />
         </div>
+        <RecentProjectsPanel
+          projects={recentProjects}
+          onOpen={onOpenRecent}
+          onRemove={onRemoveRecent}
+          onClearMissing={onClearMissingRecent}
+        />
       </div>
     </section>
   );

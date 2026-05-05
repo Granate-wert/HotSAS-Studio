@@ -16,6 +16,7 @@ pub mod preferred_value_tables;
 pub mod preferred_values;
 pub mod product_workflow;
 pub mod project_package;
+pub mod project_session;
 pub mod schematic_editing;
 pub mod selected_region;
 pub mod symbol;
@@ -38,6 +39,7 @@ pub use notebook::*;
 pub use preferred_values::*;
 pub use product_workflow::*;
 pub use project_package::*;
+pub use project_session::*;
 pub use schematic_editing::*;
 pub use selected_region::*;
 pub use symbol::{

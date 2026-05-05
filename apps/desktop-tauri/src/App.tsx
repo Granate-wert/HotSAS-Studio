@@ -13,11 +13,13 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { DebugLogPanel } from "./components/DebugLogPanel";
 import { Workbench } from "./components/Workbench";
 import { navigationItems, type ScreenId } from "./screens/navigation";
+import { logger } from "./utils/logger";
 
 export default function App() {
   const [activeScreen, setActiveScreen] = useState<ScreenId>("start");
 
   useEffect(() => {
+    logger.info("App mounted");
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as ScreenId;
       if (navigationItems.some((item) => item.id === detail)) {
