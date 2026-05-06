@@ -160,6 +160,63 @@ pub fn handle_netlist(api: &HotSasApi, path: String, out: Option<String>, json: 
     }
 }
 
+fn generate_and_export_report(
+    api: &HotSasApi,
+    format: &str,
+    out: Option<String>,
+    json: bool,
+) -> Result<(String, String), i32> {
+    let ts = chrono::Local::now().timestamp_millis();
+    let report_id = format!("cli_{}_{}", format, ts);
+    let gen_request = AdvancedReportRequestDto {
+        report_id: report_id.clone(),
+        title: "Project Summary".to_string(),
+        report_type: "ProjectSummary".to_string(),
+        included_sections: vec!["ProjectInfo".to_string()],
+        export_options: ReportExportOptionsDto {
+            include_source_references: false,
+            include_graph_references: false,
+            include_assumptions: false,
+            max_table_rows: None,
+        },
+        metadata: std::collections::BTreeMap::new(),
+    };
+    if let Err(e) = api.generate_advanced_report(gen_request) {
+        let msg = format_error(&e);
+        let output = CliOutput::<()> {
+            status: CliStatus::Error,
+            command: "export".to_string(),
+            warnings: vec![],
+            errors: vec![msg.clone()],
+            data: None,
+        };
+        print_output(&output, json);
+        eprintln!("{}", msg);
+        return Err(exit_code(&e));
+    }
+    let export_request = AdvancedReportExportRequestDto {
+        report_id,
+        format: format.to_string(),
+        output_path: out,
+    };
+    match api.export_advanced_report(export_request) {
+        Ok(result) => Ok((result.content, format.to_string())),
+        Err(e) => {
+            let msg = format_error(&e);
+            let output = CliOutput::<()> {
+                status: CliStatus::Error,
+                command: "export".to_string(),
+                warnings: vec![],
+                errors: vec![msg.clone()],
+                data: None,
+            };
+            print_output(&output, json);
+            eprintln!("{}", msg);
+            Err(exit_code(&e))
+        }
+    }
+}
+
 pub fn handle_export(
     api: &HotSasApi,
     path: String,
@@ -205,93 +262,14 @@ pub fn handle_export(
                 return exit_code(&e);
             }
         },
-        "json" => {
-            let project_result = api.open_project_package(ProjectOpenRequestDto {
-                path: path.clone(),
-                confirm_discard_unsaved: false,
-            });
-            match project_result {
-                Ok(result) => match serde_json::to_string_pretty(&result.project) {
-                    Ok(c) => (c, "json"),
-                    Err(e) => {
-                        let msg = format!("JSON serialization error: {}", e);
-                        let output = CliOutput::<()> {
-                            status: CliStatus::Error,
-                            command: "export".to_string(),
-                            warnings: vec![],
-                            errors: vec![msg.clone()],
-                            data: None,
-                        };
-                        print_output(&output, json);
-                        eprintln!("{}", msg);
-                        return 1;
-                    }
-                },
-                Err(e) => {
-                    let msg = format_error(&e);
-                    let output = CliOutput::<()> {
-                        status: CliStatus::Error,
-                        command: "export".to_string(),
-                        warnings: vec![],
-                        errors: vec![msg.clone()],
-                        data: None,
-                    };
-                    print_output(&output, json);
-                    eprintln!("{}", msg);
-                    return exit_code(&e);
-                }
-            }
-        }
-        "csv-summary" => {
-            // Delegate to AdvancedReport service: generate report then export as CSV summary.
-            let gen_request = AdvancedReportRequestDto {
-                report_id: "cli_csv_summary".to_string(),
-                title: "Project Summary".to_string(),
-                report_type: "project_summary".to_string(),
-                included_sections: vec!["project_overview".to_string()],
-                export_options: ReportExportOptionsDto {
-                    include_source_references: false,
-                    include_graph_references: false,
-                    include_assumptions: false,
-                    max_table_rows: None,
-                },
-                metadata: std::collections::BTreeMap::new(),
-            };
-            if let Err(e) = api.generate_advanced_report(gen_request) {
-                let msg = format_error(&e);
-                let output = CliOutput::<()> {
-                    status: CliStatus::Error,
-                    command: "export".to_string(),
-                    warnings: vec![],
-                    errors: vec![msg.clone()],
-                    data: None,
-                };
-                print_output(&output, json);
-                eprintln!("{}", msg);
-                return exit_code(&e);
-            }
-            let export_request = AdvancedReportExportRequestDto {
-                report_id: "cli_csv_summary".to_string(),
-                format: "csv_summary".to_string(),
-                output_path: out.clone(),
-            };
-            match api.export_advanced_report(export_request) {
-                Ok(result) => (result.content, "csv"),
-                Err(e) => {
-                    let msg = format_error(&e);
-                    let output = CliOutput::<()> {
-                        status: CliStatus::Error,
-                        command: "export".to_string(),
-                        warnings: vec![],
-                        errors: vec![msg.clone()],
-                        data: None,
-                    };
-                    print_output(&output, json);
-                    eprintln!("{}", msg);
-                    return exit_code(&e);
-                }
-            }
-        }
+        "json" => match generate_and_export_report(api, "json", out.clone(), json) {
+            Ok((c, _)) => (c, "json"),
+            Err(code) => return code,
+        },
+        "csv-summary" => match generate_and_export_report(api, "csv_summary", out.clone(), json) {
+            Ok((c, _)) => (c, "csv"),
+            Err(code) => return code,
+        },
         other => {
             let msg = format!("Unsupported export format: {}", other);
             let output = CliOutput::<()> {
@@ -352,6 +330,7 @@ pub fn handle_simulate(
     profile: String,
     engine: Option<String>,
     out: Option<String>,
+    timeout: Option<u64>,
     json: bool,
 ) -> i32 {
     match load_project(api, &path, json) {
@@ -365,7 +344,7 @@ pub fn handle_simulate(
         analysis_kind: profile,
         profile_id: None,
         output_variables: vec![],
-        timeout_ms: None,
+        timeout_ms: timeout,
     };
 
     match api.run_simulation(request) {

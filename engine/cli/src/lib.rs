@@ -1,5 +1,4 @@
 pub mod commands;
-pub mod errors;
 pub mod output;
 
 use hotsas_api::{ApiError, HotSasApi};

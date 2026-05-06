@@ -60,8 +60,6 @@ fn cli_library_check_json_returns_valid_json() {
 
 #[test]
 fn cli_formula_ohms_law_returns_success() {
-    // Ensure formula packs are loaded by initializing through the library
-    // before invoking the CLI subprocess.
     let api = hotsas_cli::build_headless_api();
     let _ = hotsas_cli::initialize_cli(&api);
 
@@ -189,6 +187,38 @@ fn cli_export_markdown_demo_project_returns_success() {
 }
 
 #[test]
+fn cli_export_json_demo_project_returns_success() {
+    let api = hotsas_cli::build_headless_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "hotsas_cli_json_export_test_{}",
+        std::process::id()
+    ));
+    std::fs::create_dir_all(&temp_dir).unwrap();
+    let package_path = temp_dir.join("demo_project.circuit");
+
+    api.save_project_package(package_path.to_str().unwrap().to_string())
+        .unwrap();
+
+    let output = hotsas_cli()
+        .args(["export", package_path.to_str().unwrap(), "json", "--json"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    assert!(
+        output.status.success(),
+        "export json on demo project should succeed. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("should be valid JSON");
+    assert_eq!(json["status"], "success");
+}
+
+#[test]
 fn cli_simulate_mock_demo_project_returns_success() {
     let api = hotsas_cli::build_headless_api();
     api.create_rc_low_pass_demo_project().unwrap();
@@ -222,4 +252,79 @@ fn cli_simulate_mock_demo_project_returns_success() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let json: serde_json::Value = serde_json::from_str(&stdout).expect("should be valid JSON");
     assert_eq!(json["status"], "success");
+}
+
+#[test]
+fn cli_simulate_accepts_timeout_argument() {
+    let api = hotsas_cli::build_headless_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let temp_dir =
+        std::env::temp_dir().join(format!("hotsas_cli_timeout_test_{}", std::process::id()));
+    std::fs::create_dir_all(&temp_dir).unwrap();
+    let package_path = temp_dir.join("demo_project.circuit");
+
+    api.save_project_package(package_path.to_str().unwrap().to_string())
+        .unwrap();
+
+    let output = hotsas_cli()
+        .args([
+            "simulate",
+            package_path.to_str().unwrap(),
+            "ac_sweep",
+            "--engine",
+            "mock",
+            "--timeout",
+            "5000",
+            "--json",
+        ])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    assert!(
+        output.status.success(),
+        "simulate with timeout should succeed. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("should be valid JSON");
+    assert_eq!(json["status"], "success");
+}
+
+#[test]
+fn cli_simulate_rejects_invalid_timeout() {
+    let api = hotsas_cli::build_headless_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "hotsas_cli_bad_timeout_test_{}",
+        std::process::id()
+    ));
+    std::fs::create_dir_all(&temp_dir).unwrap();
+    let package_path = temp_dir.join("demo_project.circuit");
+
+    api.save_project_package(package_path.to_str().unwrap().to_string())
+        .unwrap();
+
+    let output = hotsas_cli()
+        .args([
+            "simulate",
+            package_path.to_str().unwrap(),
+            "ac_sweep",
+            "--engine",
+            "mock",
+            "--timeout",
+            "not_a_number",
+        ])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    assert!(
+        !output.status.success(),
+        "simulate with invalid timeout should fail"
+    );
 }

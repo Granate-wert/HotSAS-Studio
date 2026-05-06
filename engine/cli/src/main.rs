@@ -46,12 +46,14 @@ enum Commands {
     Simulate {
         #[arg(help = "Path to the project package directory")]
         path: String,
-        #[arg(help = "Simulation profile: ac, dc, tran, op")]
+        #[arg(help = "Simulation profile: ac_sweep, transient")]
         profile: String,
         #[arg(long, help = "Simulation engine: mock (default) or ngspice")]
         engine: Option<String>,
         #[arg(long, help = "Output file path for JSON results")]
         out: Option<String>,
+        #[arg(long, help = "Timeout in milliseconds")]
+        timeout: Option<u64>,
     },
     /// Library management commands
     Library {
@@ -86,7 +88,8 @@ fn main() {
             profile,
             engine,
             out,
-        } => commands::handle_simulate(&api, path, profile, engine, out, cli.json),
+            timeout,
+        } => commands::handle_simulate(&api, path, profile, engine, out, timeout, cli.json),
         Commands::Library { command } => match command {
             LibraryCommand::Check => commands::handle_library_check(&api, cli.json),
         },
