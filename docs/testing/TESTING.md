@@ -770,7 +770,19 @@ cargo test -p hotsas_cli --test cli_integration
 - `cli_validate_existing_demo_project_returns_success`
 - `cli_netlist_demo_project_returns_success`
 - `cli_export_markdown_demo_project_returns_success`
+- `cli_export_json_demo_project_returns_success`
 - `cli_simulate_mock_demo_project_returns_success`
+- `cli_simulate_accepts_timeout_argument`
+- `cli_simulate_rejects_invalid_timeout`
+
+### v2.7-fix notes
+
+Applied in commit `398f8f6`:
+- Dirty git state resolved (committed `Cargo.toml`/`Cargo.lock` changes)
+- Removed dead `engine/cli/src/errors.rs`
+- Export JSON delegates to `AdvancedReportService` instead of manual `serde_json`
+- csv-summary uses unique timestamp-based report ID
+- Added `--timeout <ms>` argument to `simulate` command
 
 ### Manual v2.7 CLI Smoke Check
 
@@ -785,15 +797,17 @@ cargo test -p hotsas_cli --test cli_integration
 9. Run `hotsas-cli netlist demo.circuit --json` — verify netlist JSON.
 10. Run `hotsas-cli export demo.circuit markdown --out report.md` — verify file written.
 11. Run `hotsas-cli export demo.circuit csv-summary` — verify CSV output.
-12. Run `hotsas-cli simulate demo.circuit ac_sweep --engine mock --json` — verify simulation JSON.
-13. Run `hotsas-cli validate nonexistent.circuit` — verify exit code 2.
-14. Run `hotsas-cli export demo.circuit unknown_format` — verify exit code 4.
+12. Run `hotsas-cli export demo.circuit json --out report.json` — verify JSON report via AdvancedReportService.
+13. Run `hotsas-cli simulate demo.circuit ac_sweep --engine mock --json` — verify simulation JSON.
+14. Run `hotsas-cli simulate demo.circuit ac_sweep --engine mock --timeout 5000 --json` — verify timeout accepted.
+15. Run `hotsas-cli validate nonexistent.circuit` — verify exit code 2.
+16. Run `hotsas-cli export demo.circuit unknown_format` — verify exit code 4.
 
 ---
 
 ## Test Summary
 
-As of v2.7, the Rust workspace runs **361 tests** across all crates with **zero failures**, and the frontend runs **103 UI tests** with **zero failures**.
+As of v2.7-fix, the Rust workspace runs **364 tests** across all crates with **zero failures**, and the frontend runs **103 UI tests** with **zero failures**.
 
 ---
 
