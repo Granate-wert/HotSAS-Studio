@@ -7,7 +7,7 @@ use crate::{
     ExportHistoryEntryDto, ExportRequestDto, ExportResultDto, FootprintDto,
     FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
     FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, KeyValueDto,
-    MoveComponentRequestDto, NetlistPreviewDto, NgspiceAvailabilityDto,
+    MoveComponentRequestDto, NetlistPreviewDto, NgspiceAvailabilityDto, NgspiceDiagnosticsDto,
     NotebookEvaluationRequestDto, NotebookEvaluationResultDto, NotebookStateDto,
     OperatingPointSettingsDto, PlaceComponentRequestDto, PlaceableComponentDto, PreferredValueDto,
     ProductWorkflowStatusDto, ProjectDto, ProjectOpenRequestDto, ProjectOpenResultDto,
@@ -16,11 +16,12 @@ use crate::{
     SaveProjectDto, SchematicEditResultDto, SchematicEditableFieldDto,
     SchematicSelectionDetailsDto, SchematicSelectionRequestDto, SchematicToolCapabilityDto,
     SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
-    SelectedRegionPreviewDto, SimulationMeasurementDto, SimulationModelDto, SimulationPointDto,
-    SimulationPreflightResultDto, SimulationProbeDto, SimulationProbeTargetDto,
-    SimulationResultDto, SimulationRunRequestDto, SimulationSeriesDto, SimulationWorkflowErrorDto,
-    SimulationWorkflowWarningDto, SymbolDto, TransientSettingsDto, UndoRedoStateDto,
-    UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
+    SelectedRegionPreviewDto, SimulationDiagnosticMessageDto, SimulationGraphViewDto,
+    SimulationMeasurementDto, SimulationModelDto, SimulationPointDto, SimulationPreflightResultDto,
+    SimulationProbeDto, SimulationProbeTargetDto, SimulationResultDto,
+    SimulationRunHistoryEntryDto, SimulationRunRequestDto, SimulationSeriesDto,
+    SimulationWorkflowErrorDto, SimulationWorkflowWarningDto, SymbolDto, TransientSettingsDto,
+    UndoRedoStateDto, UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
     UserCircuitSimulationResultDto, UserCircuitSimulationRunDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{
@@ -2360,6 +2361,134 @@ impl HotSasApi {
             .map_err(ApiError::Application)?;
         // Report integration is session-only in v2.9; project DTO returned for UI refresh
         Ok(ProjectDto::from(&project))
+    }
+
+    // ------------------------------------------------------------------
+    // v3.0 Simulation Diagnostics, History & Graph
+    // ------------------------------------------------------------------
+
+    pub fn check_ngspice_diagnostics(&self) -> Result<NgspiceDiagnosticsDto, ApiError> {
+        let diagnostics = self
+            .services
+            .simulation_diagnostics_service()
+            .check_ngspice_diagnostics()?;
+        Ok(NgspiceDiagnosticsDto::from(&diagnostics))
+    }
+
+    pub fn diagnose_simulation_preflight(
+        &self,
+        profile: UserCircuitSimulationProfileDto,
+    ) -> Result<Vec<SimulationDiagnosticMessageDto>, ApiError> {
+        let project = self.current_project()?;
+        let core_profile = from_profile_dto(profile)?;
+        let diagnostics = self
+            .services
+            .simulation_diagnostics_service()
+            .diagnose_simulation_preflight(&project, &core_profile)?;
+        Ok(diagnostics
+            .iter()
+            .map(SimulationDiagnosticMessageDto::from)
+            .collect())
+    }
+
+    pub fn diagnose_last_simulation_run(
+        &self,
+    ) -> Result<Vec<SimulationDiagnosticMessageDto>, ApiError> {
+        let project = self.current_project()?;
+        let run = self
+            .services
+            .simulation_workflow_service()
+            .get_last_user_circuit_simulation(&project.id)
+            .ok_or_else(|| ApiError::State("no simulation run found".to_string()))?;
+        let diagnostics = self
+            .services
+            .simulation_diagnostics_service()
+            .diagnose_failed_run(&run)?;
+        Ok(diagnostics
+            .iter()
+            .map(SimulationDiagnosticMessageDto::from)
+            .collect())
+    }
+
+    pub fn add_run_to_history(&self) -> Result<(), ApiError> {
+        let project = self.current_project()?;
+        let run = self
+            .services
+            .simulation_workflow_service()
+            .get_last_user_circuit_simulation(&project.id)
+            .ok_or_else(|| ApiError::State("no simulation run found".to_string()))?;
+        self.services
+            .simulation_history_service()
+            .add_run(&run)
+            .map_err(ApiError::Application)
+    }
+
+    pub fn list_simulation_history(&self) -> Result<Vec<SimulationRunHistoryEntryDto>, ApiError> {
+        let project = self.current_project()?;
+        let entries = self
+            .services
+            .simulation_history_service()
+            .list_runs(&project.id)?;
+        Ok(entries
+            .iter()
+            .map(SimulationRunHistoryEntryDto::from)
+            .collect())
+    }
+
+    pub fn delete_simulation_history_run(&self, run_id: String) -> Result<(), ApiError> {
+        let project = self.current_project()?;
+        self.services
+            .simulation_history_service()
+            .delete_run(&project.id, &run_id)
+            .map_err(ApiError::Application)
+    }
+
+    pub fn clear_simulation_history(&self) -> Result<(), ApiError> {
+        let project = self.current_project()?;
+        self.services
+            .simulation_history_service()
+            .clear_runs(&project.id)
+            .map_err(ApiError::Application)
+    }
+
+    pub fn build_simulation_graph_view(&self) -> Result<SimulationGraphViewDto, ApiError> {
+        let project = self.current_project()?;
+        let run = self
+            .services
+            .simulation_workflow_service()
+            .get_last_user_circuit_simulation(&project.id)
+            .ok_or_else(|| ApiError::State("no simulation run found".to_string()))?;
+        let view = self
+            .services
+            .simulation_graph_service()
+            .build_graph_view(&run)?;
+        Ok(SimulationGraphViewDto::from(&view))
+    }
+
+    pub fn export_run_series_csv(&self) -> Result<String, ApiError> {
+        let project = self.current_project()?;
+        let run = self
+            .services
+            .simulation_workflow_service()
+            .get_last_user_circuit_simulation(&project.id)
+            .ok_or_else(|| ApiError::State("no simulation run found".to_string()))?;
+        self.services
+            .simulation_graph_service()
+            .export_run_series_csv(&run)
+            .map_err(ApiError::Application)
+    }
+
+    pub fn export_run_series_json(&self) -> Result<String, ApiError> {
+        let project = self.current_project()?;
+        let run = self
+            .services
+            .simulation_workflow_service()
+            .get_last_user_circuit_simulation(&project.id)
+            .ok_or_else(|| ApiError::State("no simulation run found".to_string()))?;
+        self.services
+            .simulation_graph_service()
+            .export_run_series_json(&run)
+            .map_err(ApiError::Application)
     }
 }
 

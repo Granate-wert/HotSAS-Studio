@@ -308,4 +308,36 @@ export const backend = {
       simulation_model: null,
     }),
   writeLog: (_level: string, _message: string) => Promise.resolve(),
+  // v3.0 mocks
+  checkNgspiceDiagnostics: () =>
+    Promise.resolve({
+      availability: {
+        available: true,
+        executable_path: null,
+        version: null,
+        message: null,
+        warnings: [],
+      },
+      executable_path: null,
+      version: null,
+      checked_at: "now",
+      warnings: [],
+      errors: [],
+    }),
+  diagnoseSimulationPreflight: (_profile: unknown) => Promise.resolve([]),
+  diagnoseLastSimulationRun: () => Promise.resolve([]),
+  addRunToHistory: () => Promise.resolve(),
+  listSimulationHistory: () => Promise.resolve([]),
+  deleteSimulationHistoryRun: (_runId: string) => Promise.resolve(),
+  clearSimulationHistory: () => Promise.resolve(),
+  buildSimulationGraphView: () =>
+    Promise.resolve({
+      run_id: "mock",
+      title: "Mock",
+      x_axis: { label: "X", unit: null, scale: "Linear" },
+      y_axis: { label: "Y", unit: null, scale: "Linear" },
+      series: [],
+    }),
+  exportRunSeriesCsv: () => Promise.resolve("series_id,series_label,x,y"),
+  exportRunSeriesJson: () => Promise.resolve("{}"),
 };

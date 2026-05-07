@@ -2611,3 +2611,173 @@ pub struct SimulationPointDto {
     pub x: f64,
     pub y: f64,
 }
+
+// ---------------------------------------------------------------------------
+// v3.0 Simulation Diagnostics, History & Graph DTOs
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NgspiceDiagnosticsDto {
+    pub availability: NgspiceAvailabilityDto,
+    pub executable_path: Option<String>,
+    pub version: Option<String>,
+    pub checked_at: String,
+    pub warnings: Vec<SimulationDiagnosticMessageDto>,
+    pub errors: Vec<SimulationDiagnosticMessageDto>,
+}
+
+impl From<&hotsas_core::NgspiceDiagnostics> for NgspiceDiagnosticsDto {
+    fn from(d: &hotsas_core::NgspiceDiagnostics) -> Self {
+        Self {
+            availability: NgspiceAvailabilityDto::from(&d.availability),
+            executable_path: d.executable_path.clone(),
+            version: d.version.clone(),
+            checked_at: d.checked_at.clone(),
+            warnings: d
+                .warnings
+                .iter()
+                .map(SimulationDiagnosticMessageDto::from)
+                .collect(),
+            errors: d
+                .errors
+                .iter()
+                .map(SimulationDiagnosticMessageDto::from)
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationDiagnosticMessageDto {
+    pub code: String,
+    pub severity: String,
+    pub title: String,
+    pub message: String,
+    pub related_entity: Option<SimulationDiagnosticEntityRefDto>,
+    pub suggested_fix: Option<String>,
+}
+
+impl From<&hotsas_core::SimulationDiagnosticMessage> for SimulationDiagnosticMessageDto {
+    fn from(m: &hotsas_core::SimulationDiagnosticMessage) -> Self {
+        Self {
+            code: m.code.clone(),
+            severity: format!("{:?}", m.severity),
+            title: m.title.clone(),
+            message: m.message.clone(),
+            related_entity: m
+                .related_entity
+                .as_ref()
+                .map(SimulationDiagnosticEntityRefDto::from),
+            suggested_fix: m.suggested_fix.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationDiagnosticEntityRefDto {
+    pub kind: String,
+    pub id: String,
+}
+
+impl From<&hotsas_core::SimulationDiagnosticEntityRef> for SimulationDiagnosticEntityRefDto {
+    fn from(e: &hotsas_core::SimulationDiagnosticEntityRef) -> Self {
+        Self {
+            kind: format!("{:?}", e.kind),
+            id: e.id.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationRunHistoryEntryDto {
+    pub run_id: String,
+    pub profile_id: String,
+    pub profile_name: String,
+    pub analysis_type: String,
+    pub engine_used: String,
+    pub status: String,
+    pub created_at: String,
+    pub warnings_count: usize,
+    pub errors_count: usize,
+    pub series_count: usize,
+    pub measurements_count: usize,
+}
+
+impl From<&hotsas_core::SimulationRunHistoryEntry> for SimulationRunHistoryEntryDto {
+    fn from(e: &hotsas_core::SimulationRunHistoryEntry) -> Self {
+        Self {
+            run_id: e.run_id.clone(),
+            profile_id: e.profile_id.clone(),
+            profile_name: e.profile_name.clone(),
+            analysis_type: e.analysis_type.clone(),
+            engine_used: e.engine_used.clone(),
+            status: e.status.clone(),
+            created_at: e.created_at.clone(),
+            warnings_count: e.warnings_count,
+            errors_count: e.errors_count,
+            series_count: e.series_count,
+            measurements_count: e.measurements_count,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationGraphViewDto {
+    pub run_id: String,
+    pub title: String,
+    pub x_axis: SimulationAxisDto,
+    pub y_axis: SimulationAxisDto,
+    pub series: Vec<SimulationGraphSeriesDto>,
+}
+
+impl From<&hotsas_core::SimulationGraphView> for SimulationGraphViewDto {
+    fn from(v: &hotsas_core::SimulationGraphView) -> Self {
+        Self {
+            run_id: v.run_id.clone(),
+            title: v.title.clone(),
+            x_axis: SimulationAxisDto::from(&v.x_axis),
+            y_axis: SimulationAxisDto::from(&v.y_axis),
+            series: v
+                .series
+                .iter()
+                .map(SimulationGraphSeriesDto::from)
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationAxisDto {
+    pub label: String,
+    pub unit: Option<String>,
+    pub scale: String,
+}
+
+impl From<&hotsas_core::SimulationAxis> for SimulationAxisDto {
+    fn from(a: &hotsas_core::SimulationAxis) -> Self {
+        Self {
+            label: a.label.clone(),
+            unit: a.unit.map(|u| u.symbol().to_string()),
+            scale: format!("{:?}", a.scale),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationGraphSeriesDto {
+    pub id: String,
+    pub label: String,
+    pub visible_by_default: bool,
+    pub points_count: usize,
+}
+
+impl From<&hotsas_core::SimulationGraphSeries> for SimulationGraphSeriesDto {
+    fn from(s: &hotsas_core::SimulationGraphSeries) -> Self {
+        Self {
+            id: s.id.clone(),
+            label: s.label.clone(),
+            visible_by_default: s.visible_by_default,
+            points_count: s.points_count,
+        }
+    }
+}

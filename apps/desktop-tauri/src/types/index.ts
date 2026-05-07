@@ -1213,3 +1213,63 @@ export type SimulationPointDto = {
   x: number;
   y: number;
 };
+
+// v3.0 Simulation Diagnostics, History & Graph Types
+
+export type NgspiceDiagnosticsDto = {
+  availability: NgspiceAvailabilityDto;
+  executable_path: string | null;
+  version: string | null;
+  checked_at: string;
+  warnings: SimulationDiagnosticMessageDto[];
+  errors: SimulationDiagnosticMessageDto[];
+};
+
+export type SimulationDiagnosticMessageDto = {
+  code: string;
+  severity: string;
+  title: string;
+  message: string;
+  related_entity: SimulationDiagnosticEntityRefDto | null;
+  suggested_fix: string | null;
+};
+
+export type SimulationDiagnosticEntityRefDto = {
+  kind: string;
+  id: string;
+};
+
+export type SimulationRunHistoryEntryDto = {
+  run_id: string;
+  profile_id: string;
+  profile_name: string;
+  analysis_type: string;
+  engine_used: string;
+  status: string;
+  created_at: string;
+  warnings_count: number;
+  errors_count: number;
+  series_count: number;
+  measurements_count: number;
+};
+
+export type SimulationGraphViewDto = {
+  run_id: string;
+  title: string;
+  x_axis: SimulationAxisDto;
+  y_axis: SimulationAxisDto;
+  series: SimulationGraphSeriesDto[];
+};
+
+export type SimulationAxisDto = {
+  label: string;
+  unit: string | null;
+  scale: string;
+};
+
+export type SimulationGraphSeriesDto = {
+  id: string;
+  label: string;
+  visible_by_default: boolean;
+  points_count: number;
+};

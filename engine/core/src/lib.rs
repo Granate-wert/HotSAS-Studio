@@ -19,6 +19,9 @@ pub mod project_package;
 pub mod project_session;
 pub mod schematic_editing;
 pub mod selected_region;
+pub mod simulation_diagnostics;
+pub mod simulation_graph;
+pub mod simulation_history;
 pub mod simulation_workflow;
 pub mod symbol;
 pub mod templates;
@@ -43,6 +46,9 @@ pub use project_package::*;
 pub use project_session::*;
 pub use schematic_editing::*;
 pub use selected_region::*;
+pub use simulation_diagnostics::*;
+pub use simulation_graph::*;
+pub use simulation_history::*;
 pub use simulation_workflow::*;
 pub use symbol::{
     bjt_npn_symbol, bjt_pnp_symbol, capacitor_symbol, diode_symbol, ground_symbol, inductor_symbol,

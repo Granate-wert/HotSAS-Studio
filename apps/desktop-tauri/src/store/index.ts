@@ -14,6 +14,7 @@ import type {
   ImportedModelSummaryDto,
   NetlistPreviewDto,
   NgspiceAvailabilityDto,
+  NgspiceDiagnosticsDto,
   NotebookEvaluationResultDto,
   NotebookStateDto,
   PlaceableComponentDto,
@@ -32,9 +33,12 @@ import type {
   SelectedComponentDto,
   SelectedRegionAnalysisResultDto,
   SelectedRegionPreviewDto,
+  SimulationDiagnosticMessageDto,
+  SimulationGraphViewDto,
   SimulationPreflightResultDto,
   SimulationProbeDto,
   SimulationResultDto,
+  SimulationRunHistoryEntryDto,
   SpiceImportReportDto,
   TouchstoneImportReportDto,
   UserCircuitSimulationProfileDto,
@@ -125,6 +129,14 @@ type HotSasState = {
   simulationWorkflowLoading: boolean;
   simulationWorkflowError: string | null;
   simulationResultViewMode: "graph" | "table" | "netlist";
+  // v3.0 simulation diagnostics, history & graph
+  ngspiceDiagnostics: NgspiceDiagnosticsDto | null;
+  simulationDiagnostics: SimulationDiagnosticMessageDto[];
+  simulationDiagnosticsLoading: boolean;
+  simulationDiagnosticsError: string | null;
+  simulationRunHistory: SimulationRunHistoryEntryDto[];
+  simulationGraphView: SimulationGraphViewDto | null;
+  simulationGraphVisibleSeries: Record<string, boolean>;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -296,6 +308,14 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   simulationWorkflowLoading: false,
   simulationWorkflowError: null,
   simulationResultViewMode: "graph",
+  // v3.0 simulation diagnostics, history & graph
+  ngspiceDiagnostics: null,
+  simulationDiagnostics: [],
+  simulationDiagnosticsLoading: false,
+  simulationDiagnosticsError: null,
+  simulationRunHistory: [],
+  simulationGraphView: null,
+  simulationGraphVisibleSeries: {},
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -404,4 +424,19 @@ export const useHotSasStore = create<HotSasState>((set) => ({
     set({ simulationWorkflowError }),
   setSimulationResultViewMode: (simulationResultViewMode: "graph" | "table" | "netlist") =>
     set({ simulationResultViewMode }),
+  // v3.0 simulation diagnostics, history & graph setters
+  setNgspiceDiagnostics: (ngspiceDiagnostics: NgspiceDiagnosticsDto | null) =>
+    set({ ngspiceDiagnostics }),
+  setSimulationDiagnostics: (simulationDiagnostics: SimulationDiagnosticMessageDto[]) =>
+    set({ simulationDiagnostics }),
+  setSimulationDiagnosticsLoading: (simulationDiagnosticsLoading: boolean) =>
+    set({ simulationDiagnosticsLoading }),
+  setSimulationDiagnosticsError: (simulationDiagnosticsError: string | null) =>
+    set({ simulationDiagnosticsError }),
+  setSimulationRunHistory: (simulationRunHistory: SimulationRunHistoryEntryDto[]) =>
+    set({ simulationRunHistory }),
+  setSimulationGraphView: (simulationGraphView: SimulationGraphViewDto | null) =>
+    set({ simulationGraphView }),
+  setSimulationGraphVisibleSeries: (simulationGraphVisibleSeries: Record<string, boolean>) =>
+    set({ simulationGraphVisibleSeries }),
 }));

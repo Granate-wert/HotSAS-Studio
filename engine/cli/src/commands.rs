@@ -1,8 +1,8 @@
 use hotsas_api::{
     AcSweepSettingsDto, AdvancedReportExportRequestDto, AdvancedReportRequestDto, ApiError,
     FormulaCalculationRequestDto, FormulaVariableInputDto, HotSasApi, OperatingPointSettingsDto,
-    ProjectOpenRequestDto, ReportExportOptionsDto, SimulationRunRequestDto, TransientSettingsDto,
-    UserCircuitSimulationProfileDto,
+    ProjectOpenRequestDto, ReportExportOptionsDto, SimulationDiagnosticMessageDto,
+    SimulationRunRequestDto, TransientSettingsDto, UserCircuitSimulationProfileDto,
 };
 
 use crate::output::{print_output, CliOutput, CliStatus};
@@ -562,6 +562,295 @@ fn build_user_circuit_profile(
             op: None,
         }),
         other => Err(format!("Unknown profile ID: {}", other)),
+    }
+}
+
+pub fn handle_simulate_diagnostics(
+    api: &HotSasApi,
+    path: String,
+    profile: Option<String>,
+    out: Option<String>,
+    json: bool,
+) -> i32 {
+    match load_project(api, &path, json) {
+        Ok(_) => {}
+        Err(code) => return code,
+    }
+
+    let mut all_warnings: Vec<String> = vec![];
+    let mut all_errors: Vec<String> = vec![];
+
+    // 1. ngspice diagnostics
+    let ngspice_diag = match api.check_ngspice_diagnostics() {
+        Ok(d) => {
+            if !d.availability.available {
+                all_warnings.push(format!(
+                    "ngspice unavailable: {}",
+                    d.availability.message.clone().unwrap_or_default()
+                ));
+            }
+            Some(d)
+        }
+        Err(e) => {
+            let msg = format_error(&e);
+            all_errors.push(format!("ngspice diagnostics failed: {msg}"));
+            None
+        }
+    };
+
+    // 2. preflight diagnostics (if profile provided)
+    let preflight_diagnostics: Option<Vec<SimulationDiagnosticMessageDto>> =
+        if let Some(profile_id) = profile {
+            match build_user_circuit_profile(&profile_id, None) {
+                Ok(profile_dto) => match api.diagnose_simulation_preflight(profile_dto) {
+                    Ok(diagnostics) => {
+                        for d in &diagnostics {
+                            match d.severity.as_str() {
+                                "Blocking" => all_errors
+                                    .push(format!("[{}] {}: {}", d.code, d.title, d.message)),
+                                "Error" => all_errors
+                                    .push(format!("[{}] {}: {}", d.code, d.title, d.message)),
+                                "Warning" => all_warnings
+                                    .push(format!("[{}] {}: {}", d.code, d.title, d.message)),
+                                _ => {}
+                            }
+                        }
+                        Some(diagnostics)
+                    }
+                    Err(e) => {
+                        let msg = format_error(&e);
+                        all_errors.push(format!("preflight diagnostics failed: {msg}"));
+                        None
+                    }
+                },
+                Err(e) => {
+                    all_errors.push(format!("invalid profile: {e}"));
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
+    // 3. last run diagnostics
+    let last_run_diagnostics: Option<Vec<SimulationDiagnosticMessageDto>> = match api
+        .diagnose_last_simulation_run()
+    {
+        Ok(diagnostics) => {
+            for d in &diagnostics {
+                match d.severity.as_str() {
+                    "Blocking" => {
+                        all_errors.push(format!("[{}] {}: {}", d.code, d.title, d.message))
+                    }
+                    "Error" => all_errors.push(format!("[{}] {}: {}", d.code, d.title, d.message)),
+                    "Warning" => {
+                        all_warnings.push(format!("[{}] {}: {}", d.code, d.title, d.message))
+                    }
+                    _ => {}
+                }
+            }
+            Some(diagnostics)
+        }
+        Err(_) => {
+            // No last run is not an error
+            None
+        }
+    };
+
+    let blocking_count = preflight_diagnostics
+        .as_ref()
+        .map(|d| d.iter().filter(|x| x.severity == "Blocking").count())
+        .unwrap_or(0)
+        + last_run_diagnostics
+            .as_ref()
+            .map(|d| d.iter().filter(|x| x.severity == "Blocking").count())
+            .unwrap_or(0);
+    let error_count = preflight_diagnostics
+        .as_ref()
+        .map(|d| d.iter().filter(|x| x.severity == "Error").count())
+        .unwrap_or(0)
+        + last_run_diagnostics
+            .as_ref()
+            .map(|d| d.iter().filter(|x| x.severity == "Error").count())
+            .unwrap_or(0);
+    let warning_count = preflight_diagnostics
+        .as_ref()
+        .map(|d| d.iter().filter(|x| x.severity == "Warning").count())
+        .unwrap_or(0)
+        + last_run_diagnostics
+            .as_ref()
+            .map(|d| d.iter().filter(|x| x.severity == "Warning").count())
+            .unwrap_or(0)
+        + ngspice_diag
+            .as_ref()
+            .map(|d| d.warnings.len() + d.errors.len())
+            .unwrap_or(0);
+
+    let data = serde_json::json!({
+        "ngspice_diagnostics": ngspice_diag,
+        "preflight_diagnostics": preflight_diagnostics,
+        "last_run_diagnostics": last_run_diagnostics,
+        "summary": {
+            "blocking_count": blocking_count,
+            "error_count": error_count,
+            "warning_count": warning_count,
+            "info_count": preflight_diagnostics.as_ref().map(|d| d.iter().filter(|x| x.severity == "Info").count()).unwrap_or(0)
+                + last_run_diagnostics.as_ref().map(|d| d.iter().filter(|x| x.severity == "Info").count()).unwrap_or(0),
+        }
+    });
+
+    let status = if blocking_count > 0 || !all_errors.is_empty() {
+        CliStatus::ValidationError
+    } else if warning_count > 0 || !all_warnings.is_empty() {
+        CliStatus::Warning
+    } else {
+        CliStatus::Success
+    };
+
+    let output = CliOutput {
+        status,
+        command: "simulate-diagnostics".to_string(),
+        warnings: all_warnings,
+        errors: all_errors,
+        data: Some(data),
+    };
+
+    let json_str = match serde_json::to_string_pretty(&output) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("Serialization error: {e}");
+            return 1;
+        }
+    };
+
+    if let Some(out_path) = out {
+        if let Err(e) = std::fs::write(&out_path, &json_str) {
+            let msg = format!("Failed to write diagnostics to {out_path}: {e}");
+            let err_output = CliOutput::<()> {
+                status: CliStatus::Error,
+                command: "simulate-diagnostics".to_string(),
+                warnings: vec![],
+                errors: vec![msg.clone()],
+                data: None,
+            };
+            print_output(&err_output, json);
+            eprintln!("{msg}");
+            return 1;
+        }
+        let file_output = CliOutput {
+            status: CliStatus::Success,
+            command: "simulate-diagnostics".to_string(),
+            warnings: vec![],
+            errors: vec![],
+            data: Some(serde_json::json!({ "path": out_path })),
+        };
+        print_output(&file_output, json);
+    } else {
+        print_output(&output, json);
+    }
+
+    if blocking_count > 0 {
+        2
+    } else if error_count > 0 {
+        1
+    } else {
+        0
+    }
+}
+
+pub fn handle_simulation_history(
+    api: &HotSasApi,
+    path: String,
+    delete: Option<String>,
+    clear: bool,
+    json: bool,
+) -> i32 {
+    match load_project(api, &path, json) {
+        Ok(_) => {}
+        Err(code) => return code,
+    }
+
+    if clear {
+        match api.clear_simulation_history() {
+            Ok(_) => {
+                let output = CliOutput {
+                    status: CliStatus::Success,
+                    command: "simulation-history".to_string(),
+                    warnings: vec![],
+                    errors: vec![],
+                    data: Some(serde_json::json!({ "cleared": true })),
+                };
+                print_output(&output, json);
+                0
+            }
+            Err(e) => {
+                let msg = format_error(&e);
+                let output = CliOutput::<()> {
+                    status: CliStatus::Error,
+                    command: "simulation-history".to_string(),
+                    warnings: vec![],
+                    errors: vec![msg.clone()],
+                    data: None,
+                };
+                print_output(&output, json);
+                eprintln!("{msg}");
+                exit_code(&e)
+            }
+        }
+    } else if let Some(run_id) = delete {
+        match api.delete_simulation_history_run(run_id.clone()) {
+            Ok(_) => {
+                let output = CliOutput {
+                    status: CliStatus::Success,
+                    command: "simulation-history".to_string(),
+                    warnings: vec![],
+                    errors: vec![],
+                    data: Some(serde_json::json!({ "deleted_run_id": run_id })),
+                };
+                print_output(&output, json);
+                0
+            }
+            Err(e) => {
+                let msg = format_error(&e);
+                let output = CliOutput::<()> {
+                    status: CliStatus::Error,
+                    command: "simulation-history".to_string(),
+                    warnings: vec![],
+                    errors: vec![msg.clone()],
+                    data: None,
+                };
+                print_output(&output, json);
+                eprintln!("{msg}");
+                exit_code(&e)
+            }
+        }
+    } else {
+        match api.list_simulation_history() {
+            Ok(runs) => {
+                let output = CliOutput {
+                    status: CliStatus::Success,
+                    command: "simulation-history".to_string(),
+                    warnings: vec![],
+                    errors: vec![],
+                    data: Some(serde_json::json!({ "runs": runs })),
+                };
+                print_output(&output, json);
+                0
+            }
+            Err(e) => {
+                let msg = format_error(&e);
+                let output = CliOutput::<()> {
+                    status: CliStatus::Error,
+                    command: "simulation-history".to_string(),
+                    warnings: vec![],
+                    errors: vec![msg.clone()],
+                    data: None,
+                };
+                print_output(&output, json);
+                eprintln!("{msg}");
+                exit_code(&e)
+            }
+        }
     }
 }
 

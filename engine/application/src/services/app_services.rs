@@ -1,5 +1,8 @@
 use crate::services::SimulationWorkflowService;
-use crate::services::{AdvancedReportService, DcdcCalculatorService, ProjectSessionService};
+use crate::services::{
+    AdvancedReportService, DcdcCalculatorService, ProjectSessionService,
+    SimulationDiagnosticsService, SimulationGraphService, SimulationHistoryService,
+};
 use crate::{
     ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
     ComponentParameterService, EngineeringNotebookService, ExportCenterService, ExportService,
@@ -43,6 +46,9 @@ pub struct AppServices {
     advanced_report_service: AdvancedReportService,
     project_session_service: ProjectSessionService,
     simulation_workflow_service: SimulationWorkflowService,
+    simulation_diagnostics_service: SimulationDiagnosticsService,
+    simulation_history_service: SimulationHistoryService,
+    simulation_graph_service: SimulationGraphService,
 }
 
 impl AppServices {
@@ -78,8 +84,11 @@ impl AppServices {
             ),
             simulation_workflow_service: SimulationWorkflowService::new(
                 netlist_exporter.clone(),
-                NgspiceSimulationService::new(mock_engine, ngspice_engine),
+                NgspiceSimulationService::new(mock_engine.clone(), ngspice_engine.clone()),
             ),
+            simulation_diagnostics_service: SimulationDiagnosticsService::new(ngspice_engine),
+            simulation_history_service: SimulationHistoryService::new(),
+            simulation_graph_service: SimulationGraphService::new(),
             export_service: ExportService::new(report_exporter.clone()),
             export_center_service: ExportCenterService::new(
                 report_exporter,
@@ -190,6 +199,18 @@ impl AppServices {
 
     pub fn simulation_workflow_service(&self) -> &SimulationWorkflowService {
         &self.simulation_workflow_service
+    }
+
+    pub fn simulation_diagnostics_service(&self) -> &SimulationDiagnosticsService {
+        &self.simulation_diagnostics_service
+    }
+
+    pub fn simulation_history_service(&self) -> &SimulationHistoryService {
+        &self.simulation_history_service
+    }
+
+    pub fn simulation_graph_service(&self) -> &SimulationGraphService {
+        &self.simulation_graph_service
     }
 
     pub fn create_rc_low_pass_demo_project(&self) -> CircuitProject {

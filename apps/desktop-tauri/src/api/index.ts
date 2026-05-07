@@ -30,6 +30,7 @@ import type {
   ImportedModelSummaryDto,
   NetlistPreviewDto,
   NgspiceAvailabilityDto,
+  NgspiceDiagnosticsDto,
   NotebookEvaluationRequestDto,
   NotebookEvaluationResultDto,
   NotebookStateDto,
@@ -50,9 +51,12 @@ import type {
   SelectedRegionAnalysisResultDto,
   SelectedRegionIssueDto,
   SelectedRegionPreviewDto,
+  SimulationDiagnosticMessageDto,
+  SimulationGraphViewDto,
   SimulationPreflightResultDto,
   SimulationProbeDto,
   SimulationResultDto,
+  SimulationRunHistoryEntryDto,
   SimulationRunRequestDto,
   SpiceImportReportDto,
   UserCircuitSimulationProfileDto,
@@ -275,4 +279,20 @@ export const backend = {
   clearLastUserCircuitSimulation: () => invokeCommand<void>("clear_last_user_circuit_simulation"),
   addLastSimulationToAdvancedReport: () =>
     invokeCommand<ProjectDto>("add_last_simulation_to_advanced_report"),
+  // v3.0 simulation diagnostics, history & graph
+  checkNgspiceDiagnostics: () => invokeCommand<NgspiceDiagnosticsDto>("check_ngspice_diagnostics"),
+  diagnoseSimulationPreflight: (profile: UserCircuitSimulationProfileDto) =>
+    invokeCommand<SimulationDiagnosticMessageDto[]>("diagnose_simulation_preflight", { profile }),
+  diagnoseLastSimulationRun: () =>
+    invokeCommand<SimulationDiagnosticMessageDto[]>("diagnose_last_simulation_run"),
+  addRunToHistory: () => invokeCommand<void>("add_run_to_history"),
+  listSimulationHistory: () =>
+    invokeCommand<SimulationRunHistoryEntryDto[]>("list_simulation_history"),
+  deleteSimulationHistoryRun: (runId: string) =>
+    invokeCommand<void>("delete_simulation_history_run", { runId }),
+  clearSimulationHistory: () => invokeCommand<void>("clear_simulation_history"),
+  buildSimulationGraphView: () =>
+    invokeCommand<SimulationGraphViewDto>("build_simulation_graph_view"),
+  exportRunSeriesCsv: () => invokeCommand<string>("export_run_series_csv"),
+  exportRunSeriesJson: () => invokeCommand<string>("export_run_series_json"),
 };

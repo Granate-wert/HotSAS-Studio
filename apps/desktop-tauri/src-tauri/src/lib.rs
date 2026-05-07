@@ -15,19 +15,19 @@ use hotsas_api::{
     ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto, ExportResultDto,
     FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto, FormulaPackDto,
     FormulaResultDto, FormulaSummaryDto, HotSasApi, MoveComponentRequestDto, NetlistPreviewDto,
-    NgspiceAvailabilityDto, NotebookEvaluationRequestDto, NotebookEvaluationResultDto,
-    NotebookStateDto, PlaceComponentRequestDto, PlaceableComponentDto, PreferredValueDto,
-    ProductWorkflowStatusDto, ProjectDto, ProjectOpenRequestDto, ProjectOpenResultDto,
-    ProjectPackageManifestDto, ProjectPackageValidationReportDto, ProjectSaveResultDto,
-    ProjectSessionStateDto, RecentProjectEntryDto, RenameNetRequestDto, SaveProjectDto,
-    SchematicEditResultDto, SchematicSelectionDetailsDto, SchematicSelectionRequestDto,
-    SchematicToolCapabilityDto, SelectedComponentDto, SelectedRegionAnalysisRequestDto,
-    SelectedRegionAnalysisResultDto, SelectedRegionIssueDto, SelectedRegionPreviewDto,
+    NgspiceAvailabilityDto, NgspiceDiagnosticsDto, NotebookEvaluationRequestDto,
+    NotebookEvaluationResultDto, NotebookStateDto, PlaceComponentRequestDto, PlaceableComponentDto,
+    PreferredValueDto, ProductWorkflowStatusDto, ProjectDto, ProjectOpenRequestDto,
+    ProjectOpenResultDto, ProjectPackageManifestDto, ProjectPackageValidationReportDto,
+    ProjectSaveResultDto, ProjectSessionStateDto, RecentProjectEntryDto, RenameNetRequestDto,
+    SaveProjectDto, SchematicEditResultDto, SchematicSelectionDetailsDto,
+    SchematicSelectionRequestDto, SchematicToolCapabilityDto, SelectedComponentDto,
+    SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionIssueDto,
+    SelectedRegionPreviewDto, SimulationDiagnosticMessageDto, SimulationGraphViewDto,
     SimulationPreflightResultDto, SimulationProbeDto, SimulationResultDto,
-    SimulationRunRequestDto, TypedComponentParametersDto, UndoRedoStateDto,
-    UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
-    UserCircuitSimulationRunDto,
-    VerticalSliceDto,
+    SimulationRunHistoryEntryDto, SimulationRunRequestDto, TypedComponentParametersDto,
+    UndoRedoStateDto, UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
+    UserCircuitSimulationRunDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -1065,6 +1065,98 @@ fn add_last_simulation_to_advanced_report(api: State<'_, HotSasApi>) -> Result<P
     result
 }
 
+#[tauri::command]
+fn check_ngspice_diagnostics(api: State<'_, HotSasApi>) -> Result<NgspiceDiagnosticsDto, String> {
+    log::info!("COMMAND check_ngspice_diagnostics");
+    let result = api.check_ngspice_diagnostics().map_err(tauri_error);
+    log_command_result("check_ngspice_diagnostics", &result);
+    result
+}
+
+#[tauri::command]
+fn diagnose_simulation_preflight(
+    api: State<'_, HotSasApi>,
+    profile: UserCircuitSimulationProfileDto,
+) -> Result<Vec<SimulationDiagnosticMessageDto>, String> {
+    log::info!("COMMAND diagnose_simulation_preflight");
+    let result = api.diagnose_simulation_preflight(profile).map_err(tauri_error);
+    log_command_result("diagnose_simulation_preflight", &result);
+    result
+}
+
+#[tauri::command]
+fn diagnose_last_simulation_run(
+    api: State<'_, HotSasApi>,
+) -> Result<Vec<SimulationDiagnosticMessageDto>, String> {
+    log::info!("COMMAND diagnose_last_simulation_run");
+    let result = api.diagnose_last_simulation_run().map_err(tauri_error);
+    log_command_result("diagnose_last_simulation_run", &result);
+    result
+}
+
+#[tauri::command]
+fn add_run_to_history(api: State<'_, HotSasApi>) -> Result<(), String> {
+    log::info!("COMMAND add_run_to_history");
+    let result = api.add_run_to_history().map_err(tauri_error);
+    log_command_result("add_run_to_history", &result);
+    result
+}
+
+#[tauri::command]
+fn list_simulation_history(
+    api: State<'_, HotSasApi>,
+) -> Result<Vec<SimulationRunHistoryEntryDto>, String> {
+    log::info!("COMMAND list_simulation_history");
+    let result = api.list_simulation_history().map_err(tauri_error);
+    log_command_result("list_simulation_history", &result);
+    result
+}
+
+#[tauri::command]
+fn delete_simulation_history_run(
+    api: State<'_, HotSasApi>,
+    run_id: String,
+) -> Result<(), String> {
+    log::info!("COMMAND delete_simulation_history_run run_id={run_id}");
+    let result = api.delete_simulation_history_run(run_id).map_err(tauri_error);
+    log_command_result("delete_simulation_history_run", &result);
+    result
+}
+
+#[tauri::command]
+fn clear_simulation_history(api: State<'_, HotSasApi>) -> Result<(), String> {
+    log::info!("COMMAND clear_simulation_history");
+    let result = api.clear_simulation_history().map_err(tauri_error);
+    log_command_result("clear_simulation_history", &result);
+    result
+}
+
+#[tauri::command]
+fn build_simulation_graph_view(
+    api: State<'_, HotSasApi>,
+) -> Result<SimulationGraphViewDto, String> {
+    log::info!("COMMAND build_simulation_graph_view");
+    let result = api.build_simulation_graph_view().map_err(tauri_error);
+    log_command_result("build_simulation_graph_view", &result);
+    result
+}
+
+#[tauri::command]
+fn export_run_series_csv(api: State<'_, HotSasApi>) -> Result<String, String> {
+    log::info!("COMMAND export_run_series_csv");
+    let result = api.export_run_series_csv().map_err(tauri_error);
+    log_command_result("export_run_series_csv", &result);
+    result
+}
+
+#[tauri::command]
+fn export_run_series_json(api: State<'_, HotSasApi>) -> Result<String, String> {
+    log::info!("COMMAND export_run_series_json");
+    let result = api.export_run_series_json().map_err(tauri_error);
+    log_command_result("export_run_series_json", &result);
+    result
+}
+
 fn build_api() -> HotSasApi {
     HotSasApi::new(AppServices::new(
         Arc::new(JsonProjectStorage),
@@ -1196,6 +1288,16 @@ pub fn run() {
             get_last_user_circuit_simulation,
             clear_last_user_circuit_simulation,
             add_last_simulation_to_advanced_report,
+            check_ngspice_diagnostics,
+            diagnose_simulation_preflight,
+            diagnose_last_simulation_run,
+            add_run_to_history,
+            list_simulation_history,
+            delete_simulation_history_run,
+            clear_simulation_history,
+            build_simulation_graph_view,
+            export_run_series_csv,
+            export_run_series_json,
             write_log
         ])
         .run(tauri::generate_context!())

@@ -22,6 +22,9 @@ mod project_session;
 mod schematic_editing;
 mod selected_region_analysis;
 mod simulation;
+mod simulation_diagnostics;
+mod simulation_graph;
+mod simulation_history;
 mod simulation_workflow;
 
 pub use advanced_report::AdvancedReportService;
@@ -48,4 +51,7 @@ pub use project_session::ProjectSessionService;
 pub use schematic_editing::SchematicEditingService;
 pub use selected_region_analysis::SelectedRegionAnalysisService;
 pub use simulation::SimulationService;
+pub use simulation_diagnostics::SimulationDiagnosticsService;
+pub use simulation_graph::SimulationGraphService;
+pub use simulation_history::SimulationHistoryService;
 pub use simulation_workflow::SimulationWorkflowService;

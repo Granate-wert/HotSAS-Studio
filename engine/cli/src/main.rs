@@ -71,6 +71,27 @@ enum Commands {
         #[command(subcommand)]
         command: LibraryCommand,
     },
+    /// Run simulation diagnostics on a project
+    SimulateDiagnostics {
+        #[arg(help = "Path to the project package directory")]
+        path: String,
+        #[arg(
+            long,
+            help = "Simulation profile ID: mock-ac, mock-op, mock-transient, auto-ac"
+        )]
+        profile: Option<String>,
+        #[arg(long, help = "Output file path for JSON results")]
+        out: Option<String>,
+    },
+    /// List simulation run history for a project
+    SimulationHistory {
+        #[arg(help = "Path to the project package directory")]
+        path: String,
+        #[arg(long, help = "Delete a specific run by ID")]
+        delete: Option<String>,
+        #[arg(long, help = "Clear all history")]
+        clear: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -110,6 +131,14 @@ fn main() {
         Commands::Library { command } => match command {
             LibraryCommand::Check => commands::handle_library_check(&api, cli.json),
         },
+        Commands::SimulateDiagnostics { path, profile, out } => {
+            commands::handle_simulate_diagnostics(&api, path, profile, out, cli.json)
+        }
+        Commands::SimulationHistory {
+            path,
+            delete,
+            clear,
+        } => commands::handle_simulation_history(&api, path, delete, clear, cli.json),
     };
     std::process::exit(result);
 }
