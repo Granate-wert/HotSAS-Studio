@@ -1,7 +1,8 @@
 use hotsas_api::{
-    AdvancedReportExportRequestDto, AdvancedReportRequestDto, ApiError,
-    FormulaCalculationRequestDto, FormulaVariableInputDto, HotSasApi, ProjectOpenRequestDto,
-    ReportExportOptionsDto, SimulationRunRequestDto,
+    AcSweepSettingsDto, AdvancedReportExportRequestDto, AdvancedReportRequestDto, ApiError,
+    FormulaCalculationRequestDto, FormulaVariableInputDto, HotSasApi, OperatingPointSettingsDto,
+    ProjectOpenRequestDto, ReportExportOptionsDto, SimulationRunRequestDto,
+    TransientSettingsDto, UserCircuitSimulationProfileDto,
 };
 
 use crate::output::{print_output, CliOutput, CliStatus};
@@ -412,6 +413,155 @@ pub fn handle_simulate(
             eprintln!("{}", msg);
             exit_code(&e)
         }
+    }
+}
+
+pub fn handle_user_circuit_simulate(
+    api: &HotSasApi,
+    path: String,
+    profile_id: String,
+    engine: Option<String>,
+    out: Option<String>,
+    json: bool,
+) -> i32 {
+    match load_project(api, &path, json) {
+        Ok(_) => {}
+        Err(code) => return code,
+    }
+
+    // Build a profile DTO from the profile ID
+    let profile = build_user_circuit_profile(&profile_id, engine);
+    let profile = match profile {
+        Ok(p) => p,
+        Err(e) => {
+            let output = CliOutput::<()> {
+                status: CliStatus::Error,
+                command: "user-circuit-simulate".to_string(),
+                warnings: vec![],
+                errors: vec![e.clone()],
+                data: None,
+            };
+            print_output(&output, json);
+            eprintln!("{}", e);
+            return 2;
+        }
+    };
+
+    match api.run_current_circuit_simulation(profile) {
+        Ok(result) => {
+            if let Some(out_path) = out {
+                let json_str = match serde_json::to_string_pretty(&result) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        let msg = format!("Serialization error: {}", e);
+                        let output = CliOutput::<()> {
+                            status: CliStatus::Error,
+                            command: "user-circuit-simulate".to_string(),
+                            warnings: vec![],
+                            errors: vec![msg.clone()],
+                            data: None,
+                        };
+                        print_output(&output, json);
+                        eprintln!("{}", msg);
+                        return 1;
+                    }
+                };
+                if let Err(e) = std::fs::write(&out_path, json_str) {
+                    let msg = format!("Failed to write simulation result to {}: {}", out_path, e);
+                    let output = CliOutput::<()> {
+                        status: CliStatus::Error,
+                        command: "user-circuit-simulate".to_string(),
+                        warnings: vec![],
+                        errors: vec![msg.clone()],
+                        data: None,
+                    };
+                    print_output(&output, json);
+                    eprintln!("{}", msg);
+                    return 1;
+                }
+                let output = CliOutput {
+                    status: CliStatus::Success,
+                    command: "user-circuit-simulate".to_string(),
+                    warnings: vec![],
+                    errors: vec![],
+                    data: Some(serde_json::json!({ "path": out_path })),
+                };
+                print_output(&output, json);
+            } else {
+                let output = CliOutput {
+                    status: CliStatus::Success,
+                    command: "user-circuit-simulate".to_string(),
+                    warnings: vec![],
+                    errors: vec![],
+                    data: Some(result),
+                };
+                print_output(&output, json);
+            }
+            0
+        }
+        Err(e) => {
+            let msg = format_error(&e);
+            let output = CliOutput::<()> {
+                status: CliStatus::Error,
+                command: "user-circuit-simulate".to_string(),
+                warnings: vec![],
+                errors: vec![msg.clone()],
+                data: None,
+            };
+            print_output(&output, json);
+            eprintln!("{}", msg);
+            exit_code(&e)
+        }
+    }
+}
+
+fn build_user_circuit_profile(
+    profile_id: &str,
+    engine: Option<String>,
+) -> Result<UserCircuitSimulationProfileDto, String> {
+    let engine = engine.unwrap_or_else(|| "Mock".to_string());
+    match profile_id {
+        "mock-ac" | "ac-sweep" => Ok(UserCircuitSimulationProfileDto {
+            id: "mock-ac".to_string(),
+            name: "AC Sweep".to_string(),
+            analysis_type: "AcSweep".to_string(),
+            engine,
+            probes: vec![],
+            ac: Some(AcSweepSettingsDto {
+                start_hz: 10.0,
+                stop_hz: 1_000_000.0,
+                points_per_decade: 100,
+            }),
+            transient: None,
+            op: None,
+        }),
+        "mock-op" | "operating-point" => Ok(UserCircuitSimulationProfileDto {
+            id: "mock-op".to_string(),
+            name: "Operating Point".to_string(),
+            analysis_type: "OperatingPoint".to_string(),
+            engine,
+            probes: vec![],
+            ac: None,
+            transient: None,
+            op: Some(OperatingPointSettingsDto {
+                include_node_voltages: true,
+                include_branch_currents: true,
+            }),
+        }),
+        "mock-transient" | "transient" => Ok(UserCircuitSimulationProfileDto {
+            id: "mock-transient".to_string(),
+            name: "Transient".to_string(),
+            analysis_type: "Transient".to_string(),
+            engine,
+            probes: vec![],
+            ac: None,
+            transient: Some(TransientSettingsDto {
+                step_seconds: 1e-6,
+                stop_seconds: 1e-3,
+            }),
+            op: None,
+        }),
+        other => Err(format!("Unknown profile ID: {}", other)),
     }
 }
 

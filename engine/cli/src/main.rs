@@ -55,6 +55,17 @@ enum Commands {
         #[arg(long, help = "Timeout in milliseconds")]
         timeout: Option<u64>,
     },
+    /// Run user-circuit simulation workflow on a project
+    UserCircuitSimulate {
+        #[arg(help = "Path to the project package directory")]
+        path: String,
+        #[arg(help = "Simulation profile ID: mock-ac, mock-op, mock-transient, auto-ac")]
+        profile: String,
+        #[arg(long, help = "Simulation engine: Mock, Ngspice, Auto")]
+        engine: Option<String>,
+        #[arg(long, help = "Output file path for JSON results")]
+        out: Option<String>,
+    },
     /// Library management commands
     Library {
         #[command(subcommand)]
@@ -90,6 +101,12 @@ fn main() {
             out,
             timeout,
         } => commands::handle_simulate(&api, path, profile, engine, out, timeout, cli.json),
+        Commands::UserCircuitSimulate {
+            path,
+            profile,
+            engine,
+            out,
+        } => commands::handle_user_circuit_simulate(&api, path, profile, engine, out, cli.json),
         Commands::Library { command } => match command {
             LibraryCommand::Check => commands::handle_library_check(&api, cli.json),
         },

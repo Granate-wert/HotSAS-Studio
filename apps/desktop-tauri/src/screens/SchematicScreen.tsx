@@ -22,6 +22,7 @@ import { QuickParameterEditor } from "../components/schematic-editor/QuickParame
 import { UndoRedoToolbar } from "../components/schematic-editor/UndoRedoToolbar";
 import { NetlistPreviewPanel } from "../components/schematic-editor/NetlistPreviewPanel";
 import { ErcIssuePanel } from "../components/schematic-editor/ErcIssuePanel";
+import { UserCircuitSimulationPanel } from "../components/simulation/UserCircuitSimulationPanel";
 import type {
   CircuitValidationIssueDto,
   CircuitValidationReportDto,
@@ -285,6 +286,7 @@ export function SchematicScreen({
             <Tabs.Tab value="selection">Selection</Tabs.Tab>
             <Tabs.Tab value="validation">Validation</Tabs.Tab>
             <Tabs.Tab value="metrics">Metrics</Tabs.Tab>
+            <Tabs.Tab value="simulation">Simulation</Tabs.Tab>
             <Tabs.Tab value="region">Region</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="properties">
@@ -313,6 +315,9 @@ export function SchematicScreen({
               preferredValue={preferredValue}
               simulation={simulation}
             />
+          </Tabs.Panel>
+          <Tabs.Panel value="simulation">
+            <UserCircuitSimulationPanel />
           </Tabs.Panel>
           <Tabs.Panel value="region">
             <SelectedRegionPanel project={project} />

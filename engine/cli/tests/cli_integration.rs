@@ -328,3 +328,180 @@ fn cli_simulate_rejects_invalid_timeout() {
         "simulate with invalid timeout should fail"
     );
 }
+
+#[test]
+fn cli_user_circuit_simulate_mock_ac_returns_series() {
+    let api = hotsas_cli::build_headless_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "hotsas_cli_ucs_test_{}",
+        std::process::id()
+    ));
+    std::fs::create_dir_all(&temp_dir).unwrap();
+    let package_path = temp_dir.join("demo_project.circuit");
+
+    api.save_project_package(package_path.to_str().unwrap().to_string())
+        .unwrap();
+
+    let output = hotsas_cli()
+        .args([
+            "user-circuit-simulate",
+            package_path.to_str().unwrap(),
+            "mock-ac",
+            "--engine",
+            "Mock",
+            "--json",
+        ])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    assert!(
+        output.status.success(),
+        "user-circuit-simulate should succeed. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("should be valid JSON");
+    assert_eq!(json["status"], "success");
+    assert_eq!(json["data"]["status"], "Succeeded");
+    assert_eq!(json["data"]["engine_used"], "mock");
+    assert!(
+        json["data"]["result"].is_object(),
+        "result should contain simulation data"
+    );
+}
+
+#[test]
+fn cli_user_circuit_simulate_json_contains_status_and_engine() {
+    let api = hotsas_cli::build_headless_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "hotsas_cli_ucs_json_test_{}",
+        std::process::id()
+    ));
+    std::fs::create_dir_all(&temp_dir).unwrap();
+    let package_path = temp_dir.join("demo_project.circuit");
+
+    api.save_project_package(package_path.to_str().unwrap().to_string())
+        .unwrap();
+
+    let output = hotsas_cli()
+        .args([
+            "user-circuit-simulate",
+            package_path.to_str().unwrap(),
+            "mock-op",
+            "--engine",
+            "Mock",
+            "--json",
+        ])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    assert!(
+        output.status.success(),
+        "user-circuit-simulate op should succeed. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("should be valid JSON");
+    assert_eq!(json["status"], "success");
+    assert_eq!(json["data"]["status"], "Succeeded");
+    assert_eq!(json["data"]["engine_used"], "mock");
+    assert!(
+        json["data"]["generated_netlist"].is_string(),
+        "generated_netlist should be present"
+    );
+}
+
+#[test]
+fn cli_user_circuit_simulate_auto_fallback_contains_mock_warning() {
+    let api = hotsas_cli::build_headless_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "hotsas_cli_ucs_auto_test_{}",
+        std::process::id()
+    ));
+    std::fs::create_dir_all(&temp_dir).unwrap();
+    let package_path = temp_dir.join("demo_project.circuit");
+
+    api.save_project_package(package_path.to_str().unwrap().to_string())
+        .unwrap();
+
+    let output = hotsas_cli()
+        .args([
+            "user-circuit-simulate",
+            package_path.to_str().unwrap(),
+            "mock-ac",
+            "--engine",
+            "Auto",
+            "--json",
+        ])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    assert!(
+        output.status.success(),
+        "user-circuit-simulate auto should succeed. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("should be valid JSON");
+    assert_eq!(json["status"], "success");
+    assert_eq!(json["data"]["engine_used"], "mock");
+    assert!(
+        json["data"]["warnings"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|w| w["message"].as_str().unwrap_or("").contains("ngspice unavailable")),
+        "auto fallback should produce ngspice unavailable warning"
+    );
+}
+
+#[test]
+fn cli_user_circuit_simulate_invalid_profile_returns_exit_code_2() {
+    let api = hotsas_cli::build_headless_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "hotsas_cli_ucs_bad_profile_test_{}",
+        std::process::id()
+    ));
+    std::fs::create_dir_all(&temp_dir).unwrap();
+    let package_path = temp_dir.join("demo_project.circuit");
+
+    api.save_project_package(package_path.to_str().unwrap().to_string())
+        .unwrap();
+
+    let output = hotsas_cli()
+        .args([
+            "user-circuit-simulate",
+            package_path.to_str().unwrap(),
+            "invalid-profile",
+            "--json",
+        ])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    assert!(
+        !output.status.success(),
+        "user-circuit-simulate with invalid profile should fail"
+    );
+    let code = output.status.code();
+    assert!(
+        code == Some(2) || code == Some(1),
+        "invalid profile should return exit code 1 or 2, got {:?}",
+        code
+    );
+}

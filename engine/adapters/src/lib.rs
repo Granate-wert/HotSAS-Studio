@@ -21,6 +21,7 @@ pub mod ngspice;
 pub mod project_package_storage;
 pub mod spice_model_parser;
 pub mod touchstone_parser;
+pub mod user_circuit_netlist;
 pub use component_library_storage::JsonComponentLibraryStorage;
 pub use export_center::{
     AltiumWorkflowPackageExporter, BomCsvExporter, ComponentLibraryJsonExporter,
@@ -31,6 +32,7 @@ pub use ngspice::{NgspiceBinaryResolver, NgspiceOutputParser, NgspiceSimulationA
 pub use project_package_storage::CircuitProjectPackageStorage;
 pub use spice_model_parser::SimpleSpiceModelParser;
 pub use touchstone_parser::SimpleTouchstoneParser;
+pub use user_circuit_netlist::UserCircuitSpiceNetlistExporter;
 
 #[derive(Debug, Default)]
 pub struct FormulaPackFileLoader;
@@ -580,8 +582,7 @@ impl SimulationEnginePort for MockSimulationEngine {
         project: &CircuitProject,
         profile: &SimulationProfile,
     ) -> Result<SimulationResult, PortError> {
-        let resistance = require_component_parameter(project, "R1", "resistance")?;
-        let capacitance = require_component_parameter(project, "C1", "capacitance")?;
+        let (resistance, capacitance) = find_first_rc(project)?;
         let cutoff = 1.0 / (2.0 * PI * resistance.si_value() * capacitance.si_value());
         let start = profile
             .parameters
@@ -649,6 +650,119 @@ impl SimulationEnginePort for MockSimulationEngine {
             metadata: BTreeMap::new(),
         })
     }
+
+    fn run_operating_point(
+        &self,
+        project: &CircuitProject,
+        profile: &SimulationProfile,
+    ) -> Result<SimulationResult, PortError> {
+        let mut measurements = BTreeMap::new();
+
+        // Find first voltage source
+        if let Some(vsource) = project.schematic.components.iter().find(|c| {
+            c.definition_id.contains("voltage_source") || c.definition_id.contains("vsource")
+        }) {
+            if let Some(v) = vsource.overridden_parameters.get("voltage") {
+                measurements.insert(
+                    "V_source".to_string(),
+                    v.clone(),
+                );
+            }
+        }
+
+        // Find first resistor
+        if let Some(r) = project.schematic.components.iter().find(|c| c.definition_id.contains("resistor")) {
+            if let Some(rv) = r.overridden_parameters.get("resistance") {
+                measurements.insert("R_value".to_string(), rv.clone());
+            }
+        }
+
+        Ok(SimulationResult {
+            id: "mock-op".to_string(),
+            profile_id: profile.id.clone(),
+            status: SimulationStatus::Completed,
+            engine: "mock".to_string(),
+            graph_series: vec![],
+            measurements,
+            warnings: vec!["Mock operating point result".to_string()],
+            errors: vec![],
+            raw_data_path: None,
+            metadata: BTreeMap::new(),
+        })
+    }
+
+    fn run_transient(
+        &self,
+        _project: &CircuitProject,
+        profile: &SimulationProfile,
+    ) -> Result<SimulationResult, PortError> {
+        // Foundation transient: return a simple placeholder with a linear ramp
+        let stop = profile
+            .parameters
+            .get("stop")
+            .map(ValueWithUnit::si_value)
+            .unwrap_or(1e-3);
+        let mut points = Vec::new();
+        for i in 0..50 {
+            let t = i as f64 / 49.0 * stop;
+            points.push(GraphPoint { x: t, y: t * 1000.0 });
+        }
+
+        Ok(SimulationResult {
+            id: "mock-transient".to_string(),
+            profile_id: profile.id.clone(),
+            status: SimulationStatus::Completed,
+            engine: "mock".to_string(),
+            graph_series: vec![GraphSeries {
+                name: "Transient".to_string(),
+                x_unit: EngineeringUnit::Second,
+                y_unit: EngineeringUnit::Volt,
+                points,
+                metadata: BTreeMap::new(),
+            }],
+            measurements: BTreeMap::new(),
+            warnings: vec!["Mock transient result (foundation only)".to_string()],
+            errors: vec![],
+            raw_data_path: None,
+            metadata: BTreeMap::new(),
+        })
+    }
+}
+
+fn find_first_rc(project: &CircuitProject) -> Result<(ValueWithUnit, ValueWithUnit), PortError> {
+    let resistor = project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id.contains("resistor"))
+        .and_then(|c| {
+            c.overridden_parameters
+                .get("resistance")
+                .cloned()
+                .or_else(|| default_component_parameter(c, "resistance"))
+        })
+        .ok_or_else(|| PortError::Simulation("no resistor with resistance value found".to_string()))?;
+
+    let capacitor = project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id.contains("capacitor"))
+        .and_then(|c| {
+            c.overridden_parameters
+                .get("capacitance")
+                .cloned()
+                .or_else(|| default_component_parameter(c, "capacitance"))
+        })
+        .ok_or_else(|| PortError::Simulation("no capacitor with capacitance value found".to_string()))?;
+
+    Ok((resistor, capacitor))
+}
+
+fn default_component_parameter(component: &hotsas_core::ComponentInstance, param: &str) -> Option<ValueWithUnit> {
+    let library = hotsas_core::built_in_component_library();
+    let def = library.components.iter().find(|c| c.id == component.definition_id)?;
+    def.parameters.get(param).cloned()
 }
 
 #[derive(Debug, Default)]

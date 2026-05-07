@@ -6,6 +6,7 @@ use crate::{
     PreferredValuesService, ProjectPackageService, ProjectService, SchematicEditingService,
     SelectedRegionAnalysisService, SimulationEngineChoice, SimulationService,
 };
+use crate::services::SimulationWorkflowService;
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
     ReportModel, SimulationResult, ValueWithUnit,
@@ -41,6 +42,7 @@ pub struct AppServices {
     dcdc_calculator_service: DcdcCalculatorService,
     advanced_report_service: AdvancedReportService,
     project_session_service: ProjectSessionService,
+    simulation_workflow_service: SimulationWorkflowService,
 }
 
 impl AppServices {
@@ -70,7 +72,11 @@ impl AppServices {
             engineering_notebook_service: EngineeringNotebookService::new(),
             netlist_generation_service: NetlistGenerationService::new(netlist_exporter.clone()),
             simulation_service: SimulationService::new(mock_engine.clone()),
-            ngspice_simulation_service: NgspiceSimulationService::new(mock_engine, ngspice_engine),
+            ngspice_simulation_service: NgspiceSimulationService::new(mock_engine.clone(), ngspice_engine.clone()),
+            simulation_workflow_service: SimulationWorkflowService::new(
+                netlist_exporter.clone(),
+                NgspiceSimulationService::new(mock_engine, ngspice_engine),
+            ),
             export_service: ExportService::new(report_exporter.clone()),
             export_center_service: ExportCenterService::new(
                 report_exporter,
@@ -177,6 +183,10 @@ impl AppServices {
 
     pub fn project_session_service(&self) -> &ProjectSessionService {
         &self.project_session_service
+    }
+
+    pub fn simulation_workflow_service(&self) -> &SimulationWorkflowService {
+        &self.simulation_workflow_service
     }
 
     pub fn create_rc_low_pass_demo_project(&self) -> CircuitProject {

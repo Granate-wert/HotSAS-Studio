@@ -58,7 +58,15 @@ impl NgspiceSimulationService {
             .ok_or_else(|| {
                 ApplicationError::MissingProjectState("ac-sweep profile not found".to_string())
             })?;
+        self.run_ac_sweep_with_profile(project, profile, choice)
+    }
 
+    pub fn run_ac_sweep_with_profile(
+        &self,
+        project: &CircuitProject,
+        profile: &hotsas_core::SimulationProfile,
+        choice: SimulationEngineChoice,
+    ) -> Result<SimulationResult, ApplicationError> {
         let result = match choice {
             SimulationEngineChoice::Mock => self.mock_engine.run_ac_sweep(project, profile),
             SimulationEngineChoice::Ngspice => self.ngspice_engine.run_ac_sweep(project, profile),
@@ -88,7 +96,15 @@ impl NgspiceSimulationService {
         let profile = project.simulation_profiles.first().ok_or_else(|| {
             ApplicationError::MissingProjectState("no simulation profile found".to_string())
         })?;
+        self.run_operating_point_with_profile(project, profile, choice)
+    }
 
+    pub fn run_operating_point_with_profile(
+        &self,
+        project: &CircuitProject,
+        profile: &hotsas_core::SimulationProfile,
+        choice: SimulationEngineChoice,
+    ) -> Result<SimulationResult, ApplicationError> {
         let result = match choice {
             SimulationEngineChoice::Mock => self.mock_engine.run_operating_point(project, profile),
             SimulationEngineChoice::Ngspice => {
@@ -121,7 +137,15 @@ impl NgspiceSimulationService {
         let profile = project.simulation_profiles.first().ok_or_else(|| {
             ApplicationError::MissingProjectState("no simulation profile found".to_string())
         })?;
+        self.run_transient_with_profile(project, profile, choice)
+    }
 
+    pub fn run_transient_with_profile(
+        &self,
+        project: &CircuitProject,
+        profile: &hotsas_core::SimulationProfile,
+        choice: SimulationEngineChoice,
+    ) -> Result<SimulationResult, ApplicationError> {
         let result = match choice {
             SimulationEngineChoice::Mock => self.mock_engine.run_transient(project, profile),
             SimulationEngineChoice::Ngspice => self.ngspice_engine.run_transient(project, profile),

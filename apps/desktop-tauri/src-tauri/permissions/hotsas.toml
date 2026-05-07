@@ -56,4 +56,11 @@ commands.allow = [
   "get_product_workflow_status",
   "run_product_beta_self_check",
   "create_integrated_demo_project",
+  "list_user_circuit_simulation_profiles",
+  "suggest_user_circuit_simulation_probes",
+  "validate_current_circuit_for_simulation",
+  "run_current_circuit_simulation",
+  "get_last_user_circuit_simulation",
+  "clear_last_user_circuit_simulation",
+  "add_last_simulation_to_advanced_report",
 ]

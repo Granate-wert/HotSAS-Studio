@@ -3,7 +3,7 @@ use hotsas_adapters::{
     CsvSimulationDataExporter, FormulaPackFileLoader, JsonComponentLibraryStorage,
     JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine, NgspiceSimulationAdapter,
     SimpleFormulaEngine, SimpleSpiceModelParser, SimpleTouchstoneParser, SpiceNetlistExporter,
-    SvgSchematicExporter,
+    SvgSchematicExporter, UserCircuitSpiceNetlistExporter,
 };
 use hotsas_api::{
     AddComponentRequestDto, ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto,
@@ -23,8 +23,12 @@ use hotsas_api::{
     SchematicEditResultDto, SchematicSelectionDetailsDto, SchematicSelectionRequestDto,
     SchematicToolCapabilityDto, SelectedComponentDto, SelectedRegionAnalysisRequestDto,
     SelectedRegionAnalysisResultDto, SelectedRegionIssueDto, SelectedRegionPreviewDto,
-    SimulationResultDto, SimulationRunRequestDto, TypedComponentParametersDto, UndoRedoStateDto,
-    UpdateQuickParameterRequestDto, VerticalSliceDto,
+    SimulationMeasurementDto, SimulationPointDto, SimulationPreflightResultDto,
+    SimulationProbeDto, SimulationProbeTargetDto, SimulationResultDto, SimulationRunRequestDto,
+    SimulationSeriesDto, SimulationWorkflowErrorDto, SimulationWorkflowWarningDto,
+    TypedComponentParametersDto, UndoRedoStateDto, UpdateQuickParameterRequestDto,
+    UserCircuitSimulationProfileDto, UserCircuitSimulationResultDto, UserCircuitSimulationRunDto,
+    VerticalSliceDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -994,12 +998,80 @@ fn get_last_advanced_report(
     result
 }
 
+#[tauri::command]
+fn list_user_circuit_simulation_profiles(
+    api: State<'_, HotSasApi>,
+) -> Result<Vec<UserCircuitSimulationProfileDto>, String> {
+    log::info!("COMMAND list_user_circuit_simulation_profiles");
+    let result = api.list_user_circuit_simulation_profiles().map_err(tauri_error);
+    log_command_result("list_user_circuit_simulation_profiles", &result);
+    result
+}
+
+#[tauri::command]
+fn suggest_user_circuit_simulation_probes(
+    api: State<'_, HotSasApi>,
+) -> Result<Vec<SimulationProbeDto>, String> {
+    log::info!("COMMAND suggest_user_circuit_simulation_probes");
+    let result = api.suggest_user_circuit_simulation_probes().map_err(tauri_error);
+    log_command_result("suggest_user_circuit_simulation_probes", &result);
+    result
+}
+
+#[tauri::command]
+fn validate_current_circuit_for_simulation(
+    api: State<'_, HotSasApi>,
+    profile: UserCircuitSimulationProfileDto,
+) -> Result<SimulationPreflightResultDto, String> {
+    log::info!("COMMAND validate_current_circuit_for_simulation");
+    let result = api.validate_current_circuit_for_simulation(profile).map_err(tauri_error);
+    log_command_result("validate_current_circuit_for_simulation", &result);
+    result
+}
+
+#[tauri::command]
+fn run_current_circuit_simulation(
+    api: State<'_, HotSasApi>,
+    profile: UserCircuitSimulationProfileDto,
+) -> Result<UserCircuitSimulationRunDto, String> {
+    log::info!("COMMAND run_current_circuit_simulation");
+    let result = api.run_current_circuit_simulation(profile).map_err(tauri_error);
+    log_command_result("run_current_circuit_simulation", &result);
+    result
+}
+
+#[tauri::command]
+fn get_last_user_circuit_simulation(
+    api: State<'_, HotSasApi>,
+) -> Result<Option<UserCircuitSimulationRunDto>, String> {
+    log::info!("COMMAND get_last_user_circuit_simulation");
+    let result = api.get_last_user_circuit_simulation().map_err(tauri_error);
+    log_command_result("get_last_user_circuit_simulation", &result);
+    result
+}
+
+#[tauri::command]
+fn clear_last_user_circuit_simulation(api: State<'_, HotSasApi>) -> Result<(), String> {
+    log::info!("COMMAND clear_last_user_circuit_simulation");
+    let result = api.clear_last_user_circuit_simulation().map_err(tauri_error);
+    log_command_result("clear_last_user_circuit_simulation", &result);
+    result
+}
+
+#[tauri::command]
+fn add_last_simulation_to_advanced_report(api: State<'_, HotSasApi>) -> Result<ProjectDto, String> {
+    log::info!("COMMAND add_last_simulation_to_advanced_report");
+    let result = api.add_last_simulation_to_advanced_report().map_err(tauri_error);
+    log_command_result("add_last_simulation_to_advanced_report", &result);
+    result
+}
+
 fn build_api() -> HotSasApi {
     HotSasApi::new(AppServices::new(
         Arc::new(JsonProjectStorage),
         Arc::new(CircuitProjectPackageStorage::default()),
         Arc::new(SimpleFormulaEngine),
-        Arc::new(SpiceNetlistExporter),
+        Arc::new(UserCircuitSpiceNetlistExporter),
         Arc::new(MockSimulationEngine),
         Arc::new(NgspiceSimulationAdapter::new()),
         Arc::new(MarkdownReportExporter),
@@ -1118,6 +1190,13 @@ pub fn run() {
             generate_advanced_report,
             export_advanced_report,
             get_last_advanced_report,
+            list_user_circuit_simulation_profiles,
+            suggest_user_circuit_simulation_probes,
+            validate_current_circuit_for_simulation,
+            run_current_circuit_simulation,
+            get_last_user_circuit_simulation,
+            clear_last_user_circuit_simulation,
+            add_last_simulation_to_advanced_report,
             write_log
         ])
         .run(tauri::generate_context!())

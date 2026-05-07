@@ -15,8 +15,13 @@ use crate::{
     SaveProjectDto, SchematicEditResultDto, SchematicEditableFieldDto,
     SchematicSelectionDetailsDto, SchematicSelectionRequestDto, SchematicToolCapabilityDto,
     SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
-    SelectedRegionPreviewDto, SimulationModelDto, SimulationResultDto, SimulationRunRequestDto,
-    SymbolDto, UndoRedoStateDto, UpdateQuickParameterRequestDto, ValueDto, VerticalSliceDto,
+    AcSweepSettingsDto, OperatingPointSettingsDto, SelectedRegionPreviewDto,
+    SimulationMeasurementDto, SimulationModelDto, SimulationPointDto,
+    SimulationPreflightResultDto, SimulationProbeDto, SimulationProbeTargetDto,
+    SimulationResultDto, SimulationRunRequestDto, SimulationSeriesDto, TransientSettingsDto,
+    SimulationWorkflowErrorDto, SimulationWorkflowWarningDto, SymbolDto, UndoRedoStateDto,
+    UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto, UserCircuitSimulationResultDto,
+    UserCircuitSimulationRunDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{
     AppDiagnosticsService, AppServices, FormulaRegistryService, ProductWorkflowService,
@@ -2252,6 +2257,112 @@ impl HotSasApi {
             .clear_missing_recent_projects()
             .map_err(|e| ApiError::InvalidInput(e.to_string()))
     }
+
+    // v2.9 User-Circuit Simulation Workflow
+
+    pub fn list_user_circuit_simulation_profiles(
+        &self,
+    ) -> Result<Vec<UserCircuitSimulationProfileDto>, ApiError> {
+        let project = self.current_project()?;
+        let profiles = self
+            .services
+            .simulation_workflow_service()
+            .list_default_simulation_profiles(&project)?;
+        Ok(profiles.into_iter().map(into_profile_dto).collect())
+    }
+
+    pub fn suggest_user_circuit_simulation_probes(
+        &self,
+    ) -> Result<Vec<SimulationProbeDto>, ApiError> {
+        let project = self.current_project()?;
+        let probes = self
+            .services
+            .simulation_workflow_service()
+            .suggest_simulation_probes(&project)?;
+        Ok(probes.into_iter().map(into_probe_dto).collect())
+    }
+
+    pub fn validate_current_circuit_for_simulation(
+        &self,
+        profile: UserCircuitSimulationProfileDto,
+    ) -> Result<SimulationPreflightResultDto, ApiError> {
+        let project = self.current_project()?;
+        let core_profile = from_profile_dto(profile)?;
+        let result = self
+            .services
+            .simulation_workflow_service()
+            .validate_circuit_for_simulation(&project, &core_profile)?;
+        Ok(SimulationPreflightResultDto {
+            can_run: result.can_run,
+            blocking_errors: result
+                .blocking_errors
+                .into_iter()
+                .map(|e| SimulationWorkflowErrorDto {
+                    code: e.code,
+                    message: e.message,
+                })
+                .collect(),
+            warnings: result
+                .warnings
+                .into_iter()
+                .map(|w| SimulationWorkflowWarningDto {
+                    code: w.code,
+                    message: w.message,
+                })
+                .collect(),
+            generated_netlist_preview: result.generated_netlist_preview,
+        })
+    }
+
+    pub fn run_current_circuit_simulation(
+        &self,
+        profile: UserCircuitSimulationProfileDto,
+    ) -> Result<UserCircuitSimulationRunDto, ApiError> {
+        let project = self.current_project()?;
+        let core_profile = from_profile_dto(profile)?;
+        let run = self
+            .services
+            .simulation_workflow_service()
+            .run_user_circuit_simulation(&project, core_profile)?;
+        Ok(into_run_dto(run))
+    }
+
+    pub fn get_last_user_circuit_simulation(
+        &self,
+    ) -> Result<Option<UserCircuitSimulationRunDto>, ApiError> {
+        let project = self.current_project()?;
+        Ok(self
+            .services
+            .simulation_workflow_service()
+            .get_last_user_circuit_simulation(&project.id)
+            .map(into_run_dto))
+    }
+
+    pub fn clear_last_user_circuit_simulation(&self) -> Result<(), ApiError> {
+        let project = self.current_project()?;
+        self.services
+            .simulation_workflow_service()
+            .clear_last_user_circuit_simulation(&project.id)
+            .map_err(ApiError::Application)
+    }
+
+    pub fn add_last_simulation_to_advanced_report(
+        &self,
+    ) -> Result<ProjectDto, ApiError> {
+        let project = self.current_project()?;
+        let run = self
+            .services
+            .simulation_workflow_service()
+            .get_last_user_circuit_simulation(&project.id)
+            .ok_or_else(|| ApiError::State("no simulation run found".to_string()))?;
+        let _section = self
+            .services
+            .simulation_workflow_service()
+            .simulation_result_to_report_section(&run)
+            .map_err(ApiError::Application)?;
+        // Report integration is session-only in v2.9; project DTO returned for UI refresh
+        Ok(ProjectDto::from(&project))
+    }
 }
 
 fn parse_export_format(format: &str) -> Result<hotsas_core::ExportFormat, ApiError> {
@@ -2274,6 +2385,217 @@ fn parse_export_format(format: &str) -> Result<hotsas_core::ExportFormat, ApiErr
 fn parse_value(value: &str, unit: EngineeringUnit) -> Result<ValueWithUnit, ApiError> {
     ValueWithUnit::parse_with_default(value, unit)
         .map_err(|e| ApiError::InvalidInput(e.to_string()))
+}
+
+fn into_probe_dto(probe: hotsas_core::SimulationProbe) -> SimulationProbeDto {
+    SimulationProbeDto {
+        id: probe.id,
+        label: probe.label,
+        kind: format!("{:?}", probe.kind),
+        target: match probe.target {
+            hotsas_core::SimulationProbeTarget::Net { net_id } => SimulationProbeTargetDto {
+                net_id: Some(net_id),
+                component_id: None,
+                pin_id: None,
+                positive_net_id: None,
+                negative_net_id: None,
+            },
+            hotsas_core::SimulationProbeTarget::ComponentPin {
+                component_id,
+                pin_id,
+            } => SimulationProbeTargetDto {
+                net_id: None,
+                component_id: Some(component_id),
+                pin_id: Some(pin_id),
+                positive_net_id: None,
+                negative_net_id: None,
+            },
+            hotsas_core::SimulationProbeTarget::Component { component_id } => SimulationProbeTargetDto {
+                net_id: None,
+                component_id: Some(component_id),
+                pin_id: None,
+                positive_net_id: None,
+                negative_net_id: None,
+            },
+            hotsas_core::SimulationProbeTarget::NetPair {
+                positive_net_id,
+                negative_net_id,
+            } => SimulationProbeTargetDto {
+                net_id: None,
+                component_id: None,
+                pin_id: None,
+                positive_net_id: Some(positive_net_id),
+                negative_net_id: Some(negative_net_id),
+            },
+        },
+        unit: probe.unit.map(|u| u.symbol().to_string()),
+    }
+}
+
+fn into_profile_dto(profile: hotsas_core::UserCircuitSimulationProfile) -> UserCircuitSimulationProfileDto {
+    UserCircuitSimulationProfileDto {
+        id: profile.id,
+        name: profile.name,
+        analysis_type: format!("{:?}", profile.analysis_type),
+        engine: format!("{:?}", profile.engine),
+        probes: profile.probes.into_iter().map(into_probe_dto).collect(),
+        ac: profile.ac.map(|ac| AcSweepSettingsDto {
+            start_hz: ac.start_hz,
+            stop_hz: ac.stop_hz,
+            points_per_decade: ac.points_per_decade,
+        }),
+        transient: profile.transient.map(|tr| TransientSettingsDto {
+            step_seconds: tr.step_seconds,
+            stop_seconds: tr.stop_seconds,
+        }),
+        op: profile.op.map(|op| OperatingPointSettingsDto {
+            include_node_voltages: op.include_node_voltages,
+            include_branch_currents: op.include_branch_currents,
+        }),
+    }
+}
+
+fn from_profile_dto(
+    dto: UserCircuitSimulationProfileDto,
+) -> Result<hotsas_core::UserCircuitSimulationProfile, ApiError> {
+    Ok(hotsas_core::UserCircuitSimulationProfile {
+        id: dto.id,
+        name: dto.name,
+        analysis_type: match dto.analysis_type.as_str() {
+            "OperatingPoint" => hotsas_core::UserCircuitAnalysisType::OperatingPoint,
+            "AcSweep" => hotsas_core::UserCircuitAnalysisType::AcSweep,
+            "Transient" => hotsas_core::UserCircuitAnalysisType::Transient,
+            other => {
+                return Err(ApiError::InvalidInput(format!(
+                    "unknown analysis type: {other}"
+                )))
+            }
+        },
+        engine: match dto.engine.as_str() {
+            "Mock" => hotsas_core::UserCircuitSimulationEngine::Mock,
+            "Ngspice" => hotsas_core::UserCircuitSimulationEngine::Ngspice,
+            "Auto" => hotsas_core::UserCircuitSimulationEngine::Auto,
+            other => {
+                return Err(ApiError::InvalidInput(format!(
+                    "unknown engine: {other}"
+                )))
+            }
+        },
+        probes: dto
+            .probes
+            .into_iter()
+            .map(|p| {
+                let kind = match p.kind.as_str() {
+                    "NodeVoltage" => hotsas_core::SimulationProbeKind::NodeVoltage,
+                    "ComponentCurrent" => hotsas_core::SimulationProbeKind::ComponentCurrent,
+                    "DifferentialVoltage" => hotsas_core::SimulationProbeKind::DifferentialVoltage,
+                    _ => hotsas_core::SimulationProbeKind::NodeVoltage,
+                };
+                let target = if let Some(net_id) = p.target.net_id {
+                    hotsas_core::SimulationProbeTarget::Net { net_id }
+                } else if let (Some(cid), Some(pid)) =
+                    (p.target.component_id.clone(), p.target.pin_id.clone())
+                {
+                    hotsas_core::SimulationProbeTarget::ComponentPin {
+                        component_id: cid,
+                        pin_id: pid,
+                    }
+                } else if let Some(cid) = p.target.component_id.clone() {
+                    hotsas_core::SimulationProbeTarget::Component {
+                        component_id: cid,
+                    }
+                } else if let (Some(pos), Some(neg)) =
+                    (p.target.positive_net_id.clone(), p.target.negative_net_id.clone())
+                {
+                    hotsas_core::SimulationProbeTarget::NetPair {
+                        positive_net_id: pos,
+                        negative_net_id: neg,
+                    }
+                } else {
+                    hotsas_core::SimulationProbeTarget::Net {
+                        net_id: "unknown".to_string(),
+                    }
+                };
+                hotsas_core::SimulationProbe {
+                    id: p.id,
+                    label: p.label,
+                    kind,
+                    target,
+                    unit: p.unit.and_then(|u| hotsas_core::EngineeringUnit::parse(&u).ok()),
+                }
+            })
+            .collect(),
+        ac: dto.ac.map(|ac| hotsas_core::AcSweepSettings {
+            start_hz: ac.start_hz,
+            stop_hz: ac.stop_hz,
+            points_per_decade: ac.points_per_decade,
+        }),
+        transient: dto.transient.map(|tr| hotsas_core::TransientSettings {
+            step_seconds: tr.step_seconds,
+            stop_seconds: tr.stop_seconds,
+        }),
+        op: dto.op.map(|op| hotsas_core::OperatingPointSettings {
+            include_node_voltages: op.include_node_voltages,
+            include_branch_currents: op.include_branch_currents,
+        }),
+    })
+}
+
+fn into_run_dto(run: hotsas_core::UserCircuitSimulationRun) -> UserCircuitSimulationRunDto {
+    UserCircuitSimulationRunDto {
+        id: run.id,
+        project_id: run.project_id,
+        profile: into_profile_dto(run.profile),
+        generated_netlist: run.generated_netlist,
+        status: format!("{:?}", run.status),
+        engine_used: run.engine_used,
+        warnings: run
+            .warnings
+            .into_iter()
+            .map(|w| SimulationWorkflowWarningDto {
+                code: w.code,
+                message: w.message,
+            })
+            .collect(),
+        errors: run
+            .errors
+            .into_iter()
+            .map(|e| SimulationWorkflowErrorDto {
+                code: e.code,
+                message: e.message,
+            })
+            .collect(),
+        result: run.result.map(|r| UserCircuitSimulationResultDto {
+            summary: r
+                .summary
+                .into_iter()
+                .map(|m| SimulationMeasurementDto {
+                    name: m.name,
+                    si_value: m.value.si_value(),
+                    unit: m.value.unit.symbol().to_string(),
+                    display: format!("{:.6} {}", m.value.si_value(), m.value.unit.symbol()),
+                })
+                .collect(),
+            series: r
+                .series
+                .into_iter()
+                .map(|s| SimulationSeriesDto {
+                    id: s.id,
+                    label: s.label,
+                    x_unit: s.x_unit.map(|u| u.symbol().to_string()),
+                    y_unit: s.y_unit.map(|u| u.symbol().to_string()),
+                    points: s
+                        .points
+                        .into_iter()
+                        .map(|p| SimulationPointDto { x: p.x, y: p.y })
+                        .collect(),
+                })
+                .collect(),
+            raw_output_excerpt: r.raw_output_excerpt,
+            netlist_hash: r.netlist_hash,
+        }),
+        created_at: run.created_at,
+    }
 }
 
 fn fallback_formula_registry() -> FormulaRegistryService {

@@ -2495,3 +2495,119 @@ pub struct ProjectOpenResultDto {
     pub opened_at: String,
     pub validation_warnings: Vec<ProjectPersistenceWarningDto>,
 }
+
+// v2.9 User-Circuit Simulation Workflow DTOs
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserCircuitSimulationProfileDto {
+    pub id: String,
+    pub name: String,
+    pub analysis_type: String,
+    pub engine: String,
+    pub probes: Vec<SimulationProbeDto>,
+    pub ac: Option<AcSweepSettingsDto>,
+    pub transient: Option<TransientSettingsDto>,
+    pub op: Option<OperatingPointSettingsDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationProbeDto {
+    pub id: String,
+    pub label: String,
+    pub kind: String,
+    pub target: SimulationProbeTargetDto,
+    pub unit: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationProbeTargetDto {
+    pub net_id: Option<String>,
+    pub component_id: Option<String>,
+    pub pin_id: Option<String>,
+    pub positive_net_id: Option<String>,
+    pub negative_net_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AcSweepSettingsDto {
+    pub start_hz: f64,
+    pub stop_hz: f64,
+    pub points_per_decade: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TransientSettingsDto {
+    pub step_seconds: f64,
+    pub stop_seconds: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OperatingPointSettingsDto {
+    pub include_node_voltages: bool,
+    pub include_branch_currents: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationPreflightResultDto {
+    pub can_run: bool,
+    pub blocking_errors: Vec<SimulationWorkflowErrorDto>,
+    pub warnings: Vec<SimulationWorkflowWarningDto>,
+    pub generated_netlist_preview: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationWorkflowErrorDto {
+    pub code: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationWorkflowWarningDto {
+    pub code: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserCircuitSimulationRunDto {
+    pub id: String,
+    pub project_id: String,
+    pub profile: UserCircuitSimulationProfileDto,
+    pub generated_netlist: String,
+    pub status: String,
+    pub engine_used: String,
+    pub warnings: Vec<SimulationWorkflowWarningDto>,
+    pub errors: Vec<SimulationWorkflowErrorDto>,
+    pub result: Option<UserCircuitSimulationResultDto>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserCircuitSimulationResultDto {
+    pub summary: Vec<SimulationMeasurementDto>,
+    pub series: Vec<SimulationSeriesDto>,
+    pub raw_output_excerpt: Option<String>,
+    pub netlist_hash: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationMeasurementDto {
+    pub name: String,
+    pub si_value: f64,
+    pub unit: String,
+    pub display: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationSeriesDto {
+    pub id: String,
+    pub label: String,
+    pub x_unit: Option<String>,
+    pub y_unit: Option<String>,
+    pub points: Vec<SimulationPointDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationPointDto {
+    pub x: f64,
+    pub y: f64,
+}

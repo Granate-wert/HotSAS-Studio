@@ -1111,3 +1111,105 @@ export type ProjectOpenResultDto = {
   opened_at: string;
   validation_warnings: ProjectPersistenceWarningDto[];
 };
+
+// v2.9 User-Circuit Simulation Workflow Types
+
+export type UserCircuitSimulationProfileDto = {
+  id: string;
+  name: string;
+  analysis_type: string;
+  engine: string;
+  probes: SimulationProbeDto[];
+  ac: AcSweepSettingsDto | null;
+  transient: TransientSettingsDto | null;
+  op: OperatingPointSettingsDto | null;
+};
+
+export type SimulationProbeDto = {
+  id: string;
+  label: string;
+  kind: string;
+  target: SimulationProbeTargetDto;
+  unit: string | null;
+};
+
+export type SimulationProbeTargetDto = {
+  net_id: string | null;
+  component_id: string | null;
+  pin_id: string | null;
+  positive_net_id: string | null;
+  negative_net_id: string | null;
+};
+
+export type AcSweepSettingsDto = {
+  start_hz: number;
+  stop_hz: number;
+  points_per_decade: number;
+};
+
+export type TransientSettingsDto = {
+  step_seconds: number;
+  stop_seconds: number;
+};
+
+export type OperatingPointSettingsDto = {
+  include_node_voltages: boolean;
+  include_branch_currents: boolean;
+};
+
+export type SimulationPreflightResultDto = {
+  can_run: boolean;
+  blocking_errors: SimulationWorkflowErrorDto[];
+  warnings: SimulationWorkflowWarningDto[];
+  generated_netlist_preview: string | null;
+};
+
+export type SimulationWorkflowErrorDto = {
+  code: string;
+  message: string;
+};
+
+export type SimulationWorkflowWarningDto = {
+  code: string;
+  message: string;
+};
+
+export type UserCircuitSimulationRunDto = {
+  id: string;
+  project_id: string;
+  profile: UserCircuitSimulationProfileDto;
+  generated_netlist: string;
+  status: string;
+  engine_used: string;
+  warnings: SimulationWorkflowWarningDto[];
+  errors: SimulationWorkflowErrorDto[];
+  result: UserCircuitSimulationResultDto | null;
+  created_at: string;
+};
+
+export type UserCircuitSimulationResultDto = {
+  summary: SimulationMeasurementDto[];
+  series: SimulationSeriesDto[];
+  raw_output_excerpt: string | null;
+  netlist_hash: string | null;
+};
+
+export type SimulationMeasurementDto = {
+  name: string;
+  si_value: number;
+  unit: string;
+  display: string;
+};
+
+export type SimulationSeriesDto = {
+  id: string;
+  label: string;
+  x_unit: string | null;
+  y_unit: string | null;
+  points: SimulationPointDto[];
+};
+
+export type SimulationPointDto = {
+  x: number;
+  y: number;
+};

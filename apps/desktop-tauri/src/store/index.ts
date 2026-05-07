@@ -32,9 +32,13 @@ import type {
   SelectedComponentDto,
   SelectedRegionAnalysisResultDto,
   SelectedRegionPreviewDto,
+  SimulationPreflightResultDto,
+  SimulationProbeDto,
   SimulationResultDto,
   SpiceImportReportDto,
   TouchstoneImportReportDto,
+  UserCircuitSimulationProfileDto,
+  UserCircuitSimulationRunDto,
 } from "../types";
 
 type HotSasState = {
@@ -110,6 +114,17 @@ type HotSasState = {
   projectPersistenceError: string | null;
   lastProjectSaveResult: ProjectSaveResultDto | null;
   lastProjectOpenResult: ProjectOpenResultDto | null;
+  // v2.9 user-circuit simulation workflow
+  simulationProfiles: UserCircuitSimulationProfileDto[];
+  simulationProbes: SimulationProbeDto[];
+  selectedSimulationProfile: UserCircuitSimulationProfileDto | null;
+  selectedSimulationProbes: SimulationProbeDto[];
+  simulationPreflight: SimulationPreflightResultDto | null;
+  currentSimulationRun: UserCircuitSimulationRunDto | null;
+  lastSimulationRun: UserCircuitSimulationRunDto | null;
+  simulationWorkflowLoading: boolean;
+  simulationWorkflowError: string | null;
+  simulationResultViewMode: "graph" | "table" | "netlist";
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -260,6 +275,17 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   projectPersistenceError: null,
   lastProjectSaveResult: null,
   lastProjectOpenResult: null,
+  // v2.9 user-circuit simulation workflow
+  simulationProfiles: [],
+  simulationProbes: [],
+  selectedSimulationProfile: null,
+  selectedSimulationProbes: [],
+  simulationPreflight: null,
+  currentSimulationRun: null,
+  lastSimulationRun: null,
+  simulationWorkflowLoading: false,
+  simulationWorkflowError: null,
+  simulationResultViewMode: "graph",
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -348,4 +374,23 @@ export const useHotSasStore = create<HotSasState>((set) => ({
     set({ lastProjectSaveResult }),
   setLastProjectOpenResult: (lastProjectOpenResult: ProjectOpenResultDto | null) =>
     set({ lastProjectOpenResult }),
+  setSimulationProfiles: (simulationProfiles: UserCircuitSimulationProfileDto[]) =>
+    set({ simulationProfiles }),
+  setSimulationProbes: (simulationProbes: SimulationProbeDto[]) => set({ simulationProbes }),
+  setSelectedSimulationProfile: (selectedSimulationProfile: UserCircuitSimulationProfileDto | null) =>
+    set({ selectedSimulationProfile }),
+  setSelectedSimulationProbes: (selectedSimulationProbes: SimulationProbeDto[]) =>
+    set({ selectedSimulationProbes }),
+  setSimulationPreflight: (simulationPreflight: SimulationPreflightResultDto | null) =>
+    set({ simulationPreflight }),
+  setCurrentSimulationRun: (currentSimulationRun: UserCircuitSimulationRunDto | null) =>
+    set({ currentSimulationRun }),
+  setLastSimulationRun: (lastSimulationRun: UserCircuitSimulationRunDto | null) =>
+    set({ lastSimulationRun }),
+  setSimulationWorkflowLoading: (simulationWorkflowLoading: boolean) =>
+    set({ simulationWorkflowLoading }),
+  setSimulationWorkflowError: (simulationWorkflowError: string | null) =>
+    set({ simulationWorkflowError }),
+  setSimulationResultViewMode: (simulationResultViewMode: "graph" | "table" | "netlist") =>
+    set({ simulationResultViewMode }),
 }));

@@ -50,9 +50,13 @@ import type {
   SelectedRegionAnalysisResultDto,
   SelectedRegionIssueDto,
   SelectedRegionPreviewDto,
+  SimulationPreflightResultDto,
+  SimulationProbeDto,
   SimulationResultDto,
   SimulationRunRequestDto,
   SpiceImportReportDto,
+  UserCircuitSimulationProfileDto,
+  UserCircuitSimulationRunDto,
   SpiceImportRequestDto,
   SpicePinMappingRequestDto,
   SpicePinMappingValidationReportDto,
@@ -255,4 +259,19 @@ export const backend = {
   listRecentProjects: () => invokeCommand<RecentProjectEntryDto[]>("list_recent_projects"),
   removeRecentProject: (path: string) => invokeCommand<void>("remove_recent_project", { path }),
   clearMissingRecentProjects: () => invokeCommand<number>("clear_missing_recent_projects"),
+  // v2.9 user-circuit simulation workflow
+  listUserCircuitSimulationProfiles: () =>
+    invokeCommand<UserCircuitSimulationProfileDto[]>("list_user_circuit_simulation_profiles"),
+  suggestUserCircuitSimulationProbes: () =>
+    invokeCommand<SimulationProbeDto[]>("suggest_user_circuit_simulation_probes"),
+  validateCurrentCircuitForSimulation: (profile: UserCircuitSimulationProfileDto) =>
+    invokeCommand<SimulationPreflightResultDto>("validate_current_circuit_for_simulation", { profile }),
+  runCurrentCircuitSimulation: (profile: UserCircuitSimulationProfileDto) =>
+    invokeCommand<UserCircuitSimulationRunDto>("run_current_circuit_simulation", { profile }),
+  getLastUserCircuitSimulation: () =>
+    invokeCommand<UserCircuitSimulationRunDto | null>("get_last_user_circuit_simulation"),
+  clearLastUserCircuitSimulation: () =>
+    invokeCommand<void>("clear_last_user_circuit_simulation"),
+  addLastSimulationToAdvancedReport: () =>
+    invokeCommand<ProjectDto>("add_last_simulation_to_advanced_report"),
 };
