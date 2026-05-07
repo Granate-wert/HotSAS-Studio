@@ -912,9 +912,72 @@ Applied in commit `398f8f6`:
 
 ---
 
+## v3.0 — Simulation UX, ngspice Hardening, Probes & Graph Workflow
+
+### Rust tests
+
+- **Simulation diagnostics** (`core/tests/simulation_diagnostics_tests.rs`)
+  - `ngspice_diagnostics_detects_unavailable` — missing ngspice reported
+  - `diagnostic_message_severity_levels` — Blocking/Error/Warning/Info
+  - `diagnostic_message_suggested_fix` — fix text included
+
+- **Simulation history** (`application/tests/simulation_history_tests.rs`)
+  - `add_run_to_history_increments_count` — run added
+  - `list_history_returns_runs_in_order` — chronological order
+  - `delete_run_removes_one_run` — single deletion
+  - `clear_history_removes_all_runs` — full clear
+
+- **Simulation graph** (`application/tests/simulation_graph_tests.rs`)
+  - `build_graph_view_returns_axes_and_series` — axis labels + series metadata
+  - `graph_view_filters_by_visible_series` — visibility respected
+
+- **API facade** (`api/tests/simulation_diagnostics_api_tests.rs`)
+  - `check_ngspice_diagnostics_returns_availability`
+  - `diagnose_simulation_preflight_returns_messages`
+  - `list_simulation_history_returns_entries`
+  - `build_simulation_graph_view_returns_dto`
+  - `export_run_series_csv_returns_string`
+  - `export_run_series_json_returns_string`
+
+- **CLI integration** (`cli/tests/cli_integration.rs`)
+  - `cli_simulate_diagnostics_json_contains_ngspice_status`
+  - `cli_simulate_diagnostics_text_shows_summary`
+  - `cli_simulation_history_lists_runs`
+  - `cli_simulation_history_delete_removes_run`
+  - `cli_simulation_history_clear_removes_all`
+
+### Frontend tests
+
+- 157 UI tests PASS (32 test files)
+- New simulation component test suites:
+  - `NgspiceDiagnosticsCard.test.tsx` (4 tests)
+  - `SimulationDiagnosticsPanel.test.tsx` (4 tests)
+  - `ProbeManager.test.tsx` (4 tests)
+  - `SimulationRunHistoryPanel.test.tsx` (4 tests)
+  - `SimulationGraphControls.test.tsx` (2 tests)
+  - `SimulationGraphView.test.tsx` (5 tests)
+  - `SimulationSeriesExportPanel.test.tsx` (4 tests)
+  - `SimulationDashboard.test.tsx` (3 tests)
+
+### Manual v3.0 Simulation Dashboard Smoke Check
+
+1. Open the **Simulation Dashboard** from the sidebar.
+2. Verify **ngspice Diagnostics** card shows availability status.
+3. Switch to **Setup** tab — verify profile selector and probe manager render.
+4. Select probes (e.g., V(in), V(out)).
+5. Click **Preflight** — verify diagnostics panel shows PASS or warnings with suggested fixes.
+6. Click **Run Simulation** — verify run completes with Succeeded status.
+7. Switch to **Graph** tab — verify series visibility toggles work.
+8. Switch to **History** tab — verify run appears with timestamp, profile, engine.
+9. Switch to **Export** tab — verify CSV/JSON export buttons trigger download.
+10. CLI: `hotsas-cli simulate-diagnostics project.circuit --json`
+11. CLI: `hotsas-cli simulation-history project.circuit --json`
+
+---
+
 ## Test Summary
 
-As of v2.9, the Rust workspace runs **~400+ tests** across all crates with **zero failures**, and the frontend runs **132 UI tests** with **zero failures**.
+As of v3.0, the Rust workspace runs **~400+ tests** across all crates with **zero failures**, and the frontend runs **157 UI tests** with **zero failures**.
 
 ---
 
