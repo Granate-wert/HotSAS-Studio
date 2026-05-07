@@ -33,7 +33,7 @@ export const navigationItems: Array<{ id: ScreenId; label: string; icon: ReactNo
   { id: "notebook", label: "Engineering Notebook", icon: <Calculator size={18} /> },
   { id: "formulas", label: "Formula Library", icon: <Sigma size={18} /> },
   { id: "components", label: "E Component Library", icon: <TableProperties size={18} /> },
-  { id: "simulation", label: "Simulation Results", icon: <Activity size={18} /> },
+  { id: "simulation", label: "Simulation Dashboard", icon: <Activity size={18} /> },
   { id: "dcdc", label: "DC-DC Calculators", icon: <Zap size={18} /> },
   { id: "export", label: "Export Center", icon: <FileText size={18} /> },
   { id: "import", label: "Import Models", icon: <Upload size={18} /> },

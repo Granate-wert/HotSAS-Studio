@@ -224,6 +224,14 @@ type HotSasState = {
   setSimulationWorkflowLoading: (loading: boolean) => void;
   setSimulationWorkflowError: (error: string | null) => void;
   setSimulationResultViewMode: (mode: "graph" | "table" | "netlist") => void;
+  // v3.0 setters
+  setNgspiceDiagnostics: (diagnostics: NgspiceDiagnosticsDto | null) => void;
+  setSimulationDiagnostics: (diagnostics: SimulationDiagnosticMessageDto[]) => void;
+  setSimulationDiagnosticsLoading: (loading: boolean) => void;
+  setSimulationDiagnosticsError: (error: string | null) => void;
+  setSimulationRunHistory: (history: SimulationRunHistoryEntryDto[]) => void;
+  setSimulationGraphView: (view: SimulationGraphViewDto | null) => void;
+  setSimulationGraphVisibleSeries: (visible: Record<string, boolean>) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({

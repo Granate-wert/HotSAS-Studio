@@ -1058,18 +1058,7 @@ function renderScreen(
   }
 
   if (activeScreen === "simulation") {
-    return (
-      <SimulationScreen
-        simulation={context.simulation}
-        hasProject={context.hasProject}
-        ngspiceAvailability={context.ngspiceAvailability}
-        selectedEngine={context.selectedSimulationEngine}
-        isRunning={context.isSimulationRunning}
-        onCheckNgspice={context.actions.checkNgspice}
-        onRunSimulation={context.actions.runSimulationWithEngine}
-        onSetEngine={context.actions.setSimulationEngine}
-      />
-    );
+    return <SimulationScreen />;
   }
 
   if (activeScreen === "import") {
