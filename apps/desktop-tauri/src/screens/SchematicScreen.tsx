@@ -15,12 +15,23 @@ import { ConnectionPanel } from "../components/schematic-editor/ConnectionPanel"
 import { NetLabelEditor } from "../components/schematic-editor/NetLabelEditor";
 import { SchematicEditStatusPanel } from "../components/schematic-editor/SchematicEditStatusPanel";
 import { SchematicToolbar } from "../components/schematic-editor/SchematicToolbar";
+import { InteractiveSchematicToolbar } from "../components/schematic-editor/InteractiveSchematicToolbar";
+import { PlaceableComponentPalette } from "../components/schematic-editor/PlaceableComponentPalette";
+import { SchematicSelectionInspector } from "../components/schematic-editor/SchematicSelectionInspector";
+import { QuickParameterEditor } from "../components/schematic-editor/QuickParameterEditor";
+import { UndoRedoToolbar } from "../components/schematic-editor/UndoRedoToolbar";
+import { NetlistPreviewPanel } from "../components/schematic-editor/NetlistPreviewPanel";
+import { ErcIssuePanel } from "../components/schematic-editor/ErcIssuePanel";
 import type {
   CircuitValidationIssueDto,
   CircuitValidationReportDto,
+  NetlistPreviewDto,
+  PlaceableComponentDto,
   ProjectDto,
+  SchematicSelectionDetailsDto,
   SchematicToolCapabilityDto,
   SelectedComponentDto,
+  UndoRedoStateDto,
 } from "../types";
 import type { ProjectMetricsData } from "./screenTypes";
 
@@ -53,6 +64,41 @@ type SchematicScreenProps = ProjectMetricsData & {
   }) => void;
   onRenameNet: (netId: string, newName: string) => void;
   onSetPendingConnectionStart: (start: { componentId: string; pinId: string } | null) => void;
+  // v2.8 interactive schematic editing
+  schematicToolMode: "select" | "place" | "wire" | "delete";
+  placeableComponents: PlaceableComponentDto[];
+  pendingPlaceComponent: PlaceableComponentDto | null;
+  pendingWireStart: { componentId: string; pinId: string } | null;
+  selectedSchematicEntity: { kind: "component" | "wire" | "net"; id: string } | null;
+  schematicSelectionDetails: SchematicSelectionDetailsDto | null;
+  undoRedoState: UndoRedoStateDto | null;
+  netlistPreview: NetlistPreviewDto | null;
+  schematicInteractionLoading: boolean;
+  schematicInteractionError: string | null;
+  onLoadPlaceableComponents: () => void;
+  onPlaceSchematicComponent: (request: {
+    component_definition_id: string;
+    x: number;
+    y: number;
+    rotation_deg: number;
+  }) => void;
+  onDeleteSchematicWire: (wireId: string) => void;
+  onUpdateSchematicQuickParameter: (
+    componentId: string,
+    parameterId: string,
+    value: string,
+  ) => void;
+  onGetSchematicSelectionDetails: (kind: "component" | "wire" | "net", id: string) => void;
+  onUndoSchematicEdit: () => void;
+  onRedoSchematicEdit: () => void;
+  onGetSchematicUndoRedoState: () => void;
+  onGenerateCurrentSchematicNetlistPreview: () => void;
+  onSetSchematicToolMode: (mode: "select" | "place" | "wire" | "delete") => void;
+  onSetPendingPlaceComponent: (component: PlaceableComponentDto | null) => void;
+  onSetPendingWireStart: (start: { componentId: string; pinId: string } | null) => void;
+  onSetSelectedSchematicEntity: (
+    entity: { kind: "component" | "wire" | "net"; id: string } | null,
+  ) => void;
 };
 
 export function SchematicScreen({
@@ -82,10 +128,36 @@ export function SchematicScreen({
   onConnectPins,
   onRenameNet,
   onSetPendingConnectionStart,
+  // v2.8
+  schematicToolMode,
+  placeableComponents,
+  pendingPlaceComponent,
+  pendingWireStart,
+  selectedSchematicEntity,
+  schematicSelectionDetails,
+  undoRedoState,
+  netlistPreview,
+  schematicInteractionLoading,
+  schematicInteractionError,
+  onLoadPlaceableComponents,
+  onPlaceSchematicComponent,
+  onDeleteSchematicWire,
+  onUpdateSchematicQuickParameter,
+  onGetSchematicSelectionDetails,
+  onUndoSchematicEdit,
+  onRedoSchematicEdit,
+  onGetSchematicUndoRedoState,
+  onGenerateCurrentSchematicNetlistPreview,
+  onSetSchematicToolMode,
+  onSetPendingPlaceComponent,
+  onSetPendingWireStart,
+  onSetSelectedSchematicEntity,
 }: SchematicScreenProps) {
   const [showConnectionPanel, setShowConnectionPanel] = useState(false);
   const [showNetEditor, setShowNetEditor] = useState(false);
+  const [showNetlistPreview, setShowNetlistPreview] = useState(false);
   const hasLoadedCapabilities = useRef(false);
+  const hasLoadedPlaceable = useRef(false);
 
   useEffect(() => {
     if (hasProject && schematicCapabilities.length === 0 && !hasLoadedCapabilities.current) {
@@ -94,8 +166,22 @@ export function SchematicScreen({
     }
   }, [hasProject, schematicCapabilities.length, onLoadSchematicCapabilities]);
 
+  useEffect(() => {
+    if (hasProject && placeableComponents.length === 0 && !hasLoadedPlaceable.current) {
+      hasLoadedPlaceable.current = true;
+      onLoadPlaceableComponents();
+    }
+  }, [hasProject, placeableComponents.length, onLoadPlaceableComponents]);
+
+  useEffect(() => {
+    if (hasProject) {
+      onGetSchematicUndoRedoState();
+    }
+  }, [hasProject, project, onGetSchematicUndoRedoState]);
+
   const selectedInstanceId = selectedComponent?.instance_id ?? null;
   const validationWarnings = validationReport?.warnings ?? [];
+  const validationErrors = validationReport?.errors ?? [];
 
   return (
     <div className="grid" style={{ gridTemplateRows: "auto 1fr auto" }}>
@@ -108,7 +194,31 @@ export function SchematicScreen({
           disabled={!hasProject || schematicEditLoading}
           editError={schematicEditError}
         />
-        {hasProject && <ComponentPalette onAdd={onAddComponent} disabled={schematicEditLoading} />}
+        <InteractiveSchematicToolbar
+          toolMode={schematicToolMode}
+          onSetToolMode={onSetSchematicToolMode}
+          disabled={!hasProject || schematicEditLoading || schematicInteractionLoading}
+        />
+        <UndoRedoToolbar
+          canUndo={undoRedoState?.can_undo ?? false}
+          canRedo={undoRedoState?.can_redo ?? false}
+          lastActionLabel={undoRedoState?.last_action_label ?? null}
+          nextRedoLabel={undoRedoState?.next_redo_label ?? null}
+          onUndo={onUndoSchematicEdit}
+          onRedo={onRedoSchematicEdit}
+          disabled={!hasProject || schematicInteractionLoading}
+        />
+        {schematicToolMode === "place" && hasProject && (
+          <PlaceableComponentPalette
+            components={placeableComponents}
+            onSelect={onSetPendingPlaceComponent}
+            selected={pendingPlaceComponent}
+            disabled={schematicInteractionLoading}
+          />
+        )}
+        {hasProject && schematicToolMode !== "place" && (
+          <ComponentPalette onAdd={onAddComponent} disabled={schematicEditLoading} />
+        )}
         {showConnectionPanel && hasProject && (
           <ConnectionPanel
             components={project?.schematic.components ?? []}
@@ -129,21 +239,50 @@ export function SchematicScreen({
             onCancel={() => setShowNetEditor(false)}
           />
         )}
+        {schematicInteractionError && (
+          <div style={{ padding: 8, background: "#ff444433", color: "#ffcccc" }}>
+            {schematicInteractionError}
+          </div>
+        )}
       </section>
 
       <section className="schematic-panel">
         <SchematicCanvas
           project={project}
-          onSelectComponent={onSelectComponent}
+          onSelectComponent={(id) => {
+            onSelectComponent(id);
+            onSetSelectedSchematicEntity({ kind: "component", id });
+            onGetSchematicSelectionDetails("component", id);
+          }}
           onMoveComponent={onMoveComponent}
-          disabled={!hasProject || schematicEditLoading}
+          onSelectWire={(id) => {
+            onSetSelectedSchematicEntity({ kind: "wire", id });
+            onGetSchematicSelectionDetails("wire", id);
+          }}
+          onConnect={(req) => onConnectPins({ ...req, net_name: null })}
+          disabled={!hasProject || schematicEditLoading || schematicInteractionLoading}
         />
+        {pendingPlaceComponent && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 8,
+              left: 8,
+              padding: 8,
+              background: "#333",
+              borderRadius: 4,
+            }}
+          >
+            Click canvas to place {pendingPlaceComponent.name}
+          </div>
+        )}
       </section>
 
       <aside className="side-panel">
         <Tabs defaultValue="properties" className="tabs">
           <Tabs.List>
             <Tabs.Tab value="properties">Properties</Tabs.Tab>
+            <Tabs.Tab value="selection">Selection</Tabs.Tab>
             <Tabs.Tab value="validation">Validation</Tabs.Tab>
             <Tabs.Tab value="metrics">Metrics</Tabs.Tab>
             <Tabs.Tab value="region">Region</Tabs.Tab>
@@ -151,11 +290,21 @@ export function SchematicScreen({
           <Tabs.Panel value="properties">
             <SchematicPropertyPanel component={selectedComponent} onUpdate={onPropertyUpdate} />
           </Tabs.Panel>
+          <Tabs.Panel value="selection">
+            <SchematicSelectionInspector
+              entity={selectedSchematicEntity}
+              details={schematicSelectionDetails}
+              onDeleteWire={onDeleteSchematicWire}
+              onUpdateParameter={onUpdateSchematicQuickParameter}
+              loading={schematicInteractionLoading}
+            />
+          </Tabs.Panel>
           <Tabs.Panel value="validation">
             <CircuitValidationPanel report={validationReport} onValidate={onValidate} />
             <div style={{ marginTop: 8, padding: 8 }}>
               <SchematicEditStatusPanel warnings={validationWarnings} />
             </div>
+            <ErcIssuePanel errors={validationErrors} warnings={validationWarnings} />
           </Tabs.Panel>
           <Tabs.Panel value="metrics">
             <ProjectMetrics
@@ -175,6 +324,12 @@ export function SchematicScreen({
         <Tabs defaultValue="netlist" className="tabs">
           <Tabs.List>
             <Tabs.Tab value="netlist">Netlist</Tabs.Tab>
+            <Tabs.Tab
+              value="netlist-preview"
+              onClick={() => onGenerateCurrentSchematicNetlistPreview()}
+            >
+              Netlist Preview
+            </Tabs.Tab>
             <Tabs.Tab value="graph">Graph</Tabs.Tab>
             <Tabs.Tab value="formula">Formula</Tabs.Tab>
             <Tabs.Tab value="report">Report</Tabs.Tab>
@@ -182,6 +337,9 @@ export function SchematicScreen({
           </Tabs.List>
           <Tabs.Panel value="netlist">
             <PreBlock text={netlist || "Generate SPICE netlist"} />
+          </Tabs.Panel>
+          <Tabs.Panel value="netlist-preview">
+            <NetlistPreviewPanel preview={netlistPreview} loading={schematicInteractionLoading} />
           </Tabs.Panel>
           <Tabs.Panel value="graph">
             <SimulationChart simulation={simulation} />

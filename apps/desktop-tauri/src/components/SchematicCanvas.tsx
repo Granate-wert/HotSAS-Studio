@@ -36,6 +36,13 @@ type SchematicCanvasProps = {
   project: ProjectDto | null;
   onSelectComponent?: (instanceId: string) => void;
   onMoveComponent?: (instanceId: string, x: number, y: number) => void;
+  onSelectWire?: (wireId: string) => void;
+  onConnect?: (request: {
+    from_component_id: string;
+    from_pin_id: string;
+    to_component_id: string;
+    to_pin_id: string;
+  }) => void;
   disabled?: boolean;
 };
 
@@ -43,6 +50,8 @@ export function SchematicCanvas({
   project,
   onSelectComponent,
   onMoveComponent,
+  onSelectWire,
+  onConnect,
   disabled,
 }: SchematicCanvasProps) {
   const { nodes, edges } = useMemo(() => {
@@ -89,6 +98,41 @@ export function SchematicCanvas({
     [disabled, onMoveComponent],
   );
 
+  const handleEdgeClick = useCallback(
+    (_event: React.MouseEvent, edge: Edge) => {
+      if (!disabled && onSelectWire) {
+        onSelectWire(edge.id);
+      }
+    },
+    [disabled, onSelectWire],
+  );
+
+  const handleConnect = useCallback(
+    (params: {
+      source: string | null;
+      sourceHandle: string | null;
+      target: string | null;
+      targetHandle: string | null;
+    }) => {
+      if (
+        !disabled &&
+        onConnect &&
+        params.source &&
+        params.sourceHandle &&
+        params.target &&
+        params.targetHandle
+      ) {
+        onConnect({
+          from_component_id: params.source,
+          from_pin_id: params.sourceHandle,
+          to_component_id: params.target,
+          to_pin_id: params.targetHandle,
+        });
+      }
+    },
+    [disabled, onConnect],
+  );
+
   return (
     <div className="canvas">
       <ReactFlow
@@ -97,6 +141,8 @@ export function SchematicCanvas({
         nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
+        onEdgeClick={handleEdgeClick}
+        onConnect={handleConnect}
         fitView
       >
         <Background />

@@ -2295,6 +2295,7 @@ pub struct RenameNetRequestDto {
 pub struct SchematicEditResultDto {
     pub project: ProjectDto,
     pub validation_warnings: Vec<CircuitValidationIssueDto>,
+    pub validation_errors: Vec<CircuitValidationIssueDto>,
     pub message: String,
 }
 
@@ -2304,6 +2305,95 @@ pub struct SchematicToolCapabilityDto {
     pub label: String,
     pub available: bool,
     pub limitation: Option<String>,
+}
+
+// v2.8 Interactive Schematic Editing MVP DTOs
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlaceableComponentDto {
+    pub definition_id: String,
+    pub name: String,
+    pub category: String,
+    pub component_kind: String,
+    pub has_symbol: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlaceComponentRequestDto {
+    pub component_definition_id: String,
+    pub x: f64,
+    pub y: f64,
+    pub rotation_deg: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PinRefDto {
+    pub component_id: String,
+    pub pin_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectWireRequestDto {
+    pub from: PinRefDto,
+    pub to: PinRefDto,
+    pub net_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteWireRequestDto {
+    pub wire_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateQuickParameterRequestDto {
+    pub component_id: String,
+    pub parameter_id: String,
+    pub value: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SchematicSelectionRequestDto {
+    pub kind: String,
+    pub id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SchematicEditableFieldDto {
+    pub field_id: String,
+    pub label: String,
+    pub current_value: String,
+    pub editable: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SchematicSelectionDetailsDto {
+    pub kind: String,
+    pub id: Option<String>,
+    pub display_name: Option<String>,
+    pub editable_fields: Vec<SchematicEditableFieldDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SchematicEditActionDto {
+    pub id: String,
+    pub label: String,
+    pub timestamp: String,
+    pub kind: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UndoRedoStateDto {
+    pub can_undo: bool,
+    pub can_redo: bool,
+    pub last_action_label: Option<String>,
+    pub next_redo_label: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NetlistPreviewDto {
+    pub netlist: String,
+    pub warnings: Vec<String>,
+    pub errors: Vec<String>,
 }
 
 // v2.6 Project Persistence DTOs

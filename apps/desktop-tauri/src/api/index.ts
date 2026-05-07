@@ -15,6 +15,7 @@ import type {
   ComponentSearchRequestDto,
   ComponentSearchResultDto,
   ComponentSummaryDto,
+  DeleteWireRequestDto,
   ExportCapabilityDto,
   ExportHistoryEntryDto,
   ExportRequestDto,
@@ -27,16 +28,23 @@ import type {
   FormulaSummaryDto,
   ImportedModelDetailsDto,
   ImportedModelSummaryDto,
+  NetlistPreviewDto,
   NgspiceAvailabilityDto,
   NotebookEvaluationRequestDto,
   NotebookEvaluationResultDto,
   NotebookStateDto,
+  PlaceableComponentDto,
+  PlaceComponentRequestDto,
   PreferredValueDto,
   ProjectDto,
   ProjectPackageManifestDto,
   ProjectPackageValidationReportDto,
   ReportSectionCapabilityDto,
   SaveProjectDto,
+  SchematicEditResultDto,
+  SchematicSelectionDetailsDto,
+  SchematicSelectionRequestDto,
+  SchematicToolCapabilityDto,
   SelectedComponentDto,
   SelectedRegionAnalysisRequestDto,
   SelectedRegionAnalysisResultDto,
@@ -50,6 +58,8 @@ import type {
   SpicePinMappingValidationReportDto,
   TouchstoneImportReportDto,
   TouchstoneImportRequestDto,
+  UndoRedoStateDto,
+  UpdateQuickParameterRequestDto,
   ProductWorkflowStatusDto,
   VerticalSliceDto,
   DcdcCalculationResultDto,
@@ -65,8 +75,6 @@ import type {
   DeleteComponentRequestDto,
   ConnectPinsRequestDto,
   RenameNetRequestDto,
-  SchematicEditResultDto,
-  SchematicToolCapabilityDto,
   ProjectSessionStateDto,
   ProjectSaveResultDto,
   ProjectOpenRequestDto,
@@ -222,6 +230,22 @@ export const backend = {
     invokeCommand<SchematicEditResultDto>("connect_schematic_pins", { request }),
   renameSchematicNet: (request: RenameNetRequestDto) =>
     invokeCommand<SchematicEditResultDto>("rename_schematic_net", { request }),
+  // v2.8 interactive schematic editing
+  listPlaceableComponents: () =>
+    invokeCommand<PlaceableComponentDto[]>("list_placeable_components"),
+  placeSchematicComponent: (request: PlaceComponentRequestDto) =>
+    invokeCommand<SchematicEditResultDto>("place_schematic_component", { request }),
+  deleteSchematicWire: (request: DeleteWireRequestDto) =>
+    invokeCommand<SchematicEditResultDto>("delete_schematic_wire", { request }),
+  updateSchematicQuickParameter: (request: UpdateQuickParameterRequestDto) =>
+    invokeCommand<SchematicEditResultDto>("update_schematic_quick_parameter", { request }),
+  getSchematicSelectionDetails: (request: SchematicSelectionRequestDto) =>
+    invokeCommand<SchematicSelectionDetailsDto>("get_schematic_selection_details", { request }),
+  undoSchematicEdit: () => invokeCommand<ProjectDto>("undo_schematic_edit"),
+  redoSchematicEdit: () => invokeCommand<ProjectDto>("redo_schematic_edit"),
+  getSchematicUndoRedoState: () => invokeCommand<UndoRedoStateDto>("get_schematic_undo_redo_state"),
+  generateCurrentSchematicNetlistPreview: () =>
+    invokeCommand<NetlistPreviewDto>("generate_current_schematic_netlist_preview"),
   // v2.6 project persistence
   getProjectSessionState: () => invokeCommand<ProjectSessionStateDto>("get_project_session_state"),
   saveCurrentProject: () => invokeCommand<ProjectSaveResultDto>("save_current_project"),

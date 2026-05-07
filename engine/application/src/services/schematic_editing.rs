@@ -1,7 +1,8 @@
 use hotsas_core::{
     AddComponentRequest, CircuitEndpoint, CircuitModel, CircuitProject, CircuitValidationReport,
-    ComponentInstance, ConnectPinsRequest, ConnectedPin, DeleteComponentRequest,
-    MoveComponentRequest, Net, Point, RenameNetRequest, SchematicEditResult, Wire,
+    ComponentInstance, ConnectPinsRequest, ConnectedPin, DeleteComponentRequest, DeleteWireRequest,
+    MoveComponentRequest, Net, Point, RenameNetRequest, SchematicEditResult,
+    UpdateQuickParameterRequest, ValueWithUnit, Wire,
 };
 
 #[derive(Clone)]
@@ -61,6 +62,7 @@ impl SchematicEditingService {
         Ok(SchematicEditResult {
             project: project.clone(),
             validation_warnings: validation.warnings,
+            validation_errors: validation.errors,
             message: format!("Added component {instance_id}"),
         })
     }
@@ -84,6 +86,7 @@ impl SchematicEditingService {
         Ok(SchematicEditResult {
             project: project.clone(),
             validation_warnings: validation.warnings,
+            validation_errors: validation.errors,
             message: format!("Moved component {}", request.instance_id),
         })
     }
@@ -119,6 +122,7 @@ impl SchematicEditingService {
         Ok(SchematicEditResult {
             project: project.clone(),
             validation_warnings: validation.warnings,
+            validation_errors: validation.errors,
             message: format!("Deleted component {}", request.instance_id),
         })
     }
@@ -269,6 +273,7 @@ impl SchematicEditingService {
                 point: Point::new(0.0, 0.0),
             },
             net_id: net_id.clone(),
+            geometry: None,
         });
 
         project.updated_at = format!("{:?}", std::time::SystemTime::now());
@@ -277,6 +282,7 @@ impl SchematicEditingService {
         Ok(SchematicEditResult {
             project: project.clone(),
             validation_warnings: validation.warnings,
+            validation_errors: validation.errors,
             message: format!("Connected pins via net {net_name}"),
         })
     }
@@ -304,7 +310,113 @@ impl SchematicEditingService {
         Ok(SchematicEditResult {
             project: project.clone(),
             validation_warnings: validation.warnings,
+            validation_errors: validation.errors,
             message: format!("Renamed net to {}", request.new_name),
+        })
+    }
+
+    pub fn delete_wire(
+        &self,
+        project: &mut CircuitProject,
+        request: DeleteWireRequest,
+    ) -> Result<SchematicEditResult, String> {
+        let wire = project
+            .schematic
+            .wires
+            .iter()
+            .find(|w| w.id == request.wire_id)
+            .cloned()
+            .ok_or_else(|| format!("wire '{}' not found", request.wire_id))?;
+
+        // Remove wire
+        project.schematic.wires.retain(|w| w.id != request.wire_id);
+
+        // Remove connected_pins from net that belong to this wire's endpoints
+        if let Some(net) = project
+            .schematic
+            .nets
+            .iter_mut()
+            .find(|n| n.id == wire.net_id)
+        {
+            net.connected_pins.retain(|cp| {
+                !((Some(&cp.component_id) == wire.from.component_id.as_ref()
+                    && Some(&cp.pin_id) == wire.from.pin_id.as_ref())
+                    || (Some(&cp.component_id) == wire.to.component_id.as_ref()
+                        && Some(&cp.pin_id) == wire.to.pin_id.as_ref()))
+            });
+        }
+
+        // Remove connected_nets from components that belong to this wire
+        if let Some(from_id) = &wire.from.component_id {
+            if let Some(comp) = project
+                .schematic
+                .components
+                .iter_mut()
+                .find(|c| c.instance_id == *from_id)
+            {
+                if let Some(pin_id) = &wire.from.pin_id {
+                    comp.connected_nets
+                        .retain(|cn| !(cn.component_id == *from_id && cn.pin_id == *pin_id));
+                }
+            }
+        }
+        if let Some(to_id) = &wire.to.component_id {
+            if let Some(comp) = project
+                .schematic
+                .components
+                .iter_mut()
+                .find(|c| c.instance_id == *to_id)
+            {
+                if let Some(pin_id) = &wire.to.pin_id {
+                    comp.connected_nets
+                        .retain(|cn| !(cn.component_id == *to_id && cn.pin_id == *pin_id));
+                }
+            }
+        }
+
+        project.updated_at = format!("{:?}", std::time::SystemTime::now());
+
+        let validation = self.validate_after_edit(&project.schematic);
+        Ok(SchematicEditResult {
+            project: project.clone(),
+            validation_warnings: validation.warnings,
+            validation_errors: validation.errors,
+            message: format!("Deleted wire {}", request.wire_id),
+        })
+    }
+
+    pub fn update_component_quick_parameter(
+        &self,
+        project: &mut CircuitProject,
+        request: UpdateQuickParameterRequest,
+    ) -> Result<SchematicEditResult, String> {
+        let component = project
+            .schematic
+            .components
+            .iter_mut()
+            .find(|c| c.instance_id == request.component_id)
+            .ok_or_else(|| format!("component '{}' not found", request.component_id))?;
+
+        let value = ValueWithUnit::parse_with_default(
+            &request.value,
+            hotsas_core::EngineeringUnit::Unitless,
+        )
+        .map_err(|e| format!("invalid value: {e}"))?;
+
+        component
+            .overridden_parameters
+            .insert(request.parameter_id.clone(), value);
+        project.updated_at = format!("{:?}", std::time::SystemTime::now());
+
+        let validation = self.validate_after_edit(&project.schematic);
+        Ok(SchematicEditResult {
+            project: project.clone(),
+            validation_warnings: validation.warnings,
+            validation_errors: validation.errors,
+            message: format!(
+                "Updated {}.{} = {}",
+                request.component_id, request.parameter_id, request.value
+            ),
         })
     }
 

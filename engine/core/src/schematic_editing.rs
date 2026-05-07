@@ -37,9 +37,22 @@ pub struct RenameNetRequest {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DeleteWireRequest {
+    pub wire_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UpdateQuickParameterRequest {
+    pub component_id: String,
+    pub parameter_id: String,
+    pub value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SchematicEditResult {
     pub project: CircuitProject,
     pub validation_warnings: Vec<CircuitValidationIssue>,
+    pub validation_errors: Vec<CircuitValidationIssue>,
     pub message: String,
 }
 

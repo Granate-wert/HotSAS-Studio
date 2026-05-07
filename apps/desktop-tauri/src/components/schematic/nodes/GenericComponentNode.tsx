@@ -46,6 +46,8 @@ export function GenericComponentNode({ data, selected }: NodeProps) {
           type="source"
           id={pin.id}
           position={mapSide(pin.side)}
+          isConnectableStart={true}
+          isConnectableEnd={true}
           style={{
             width: 8,
             height: 8,

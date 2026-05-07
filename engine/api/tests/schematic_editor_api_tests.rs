@@ -1,4 +1,4 @@
-use hotsas_api::HotSasApi;
+use hotsas_api::{DeleteWireRequestDto, HotSasApi, PlaceComponentRequestDto};
 use hotsas_application::AppServices;
 use hotsas_ports::{
     BomExporterPort, ComponentLibraryExporterPort, FormulaEnginePort, NetlistExporterPort,
@@ -109,7 +109,7 @@ impl NetlistExporterPort for FakeNetlistExporter {
         &self,
         _project: &hotsas_core::CircuitProject,
     ) -> Result<String, PortError> {
-        Err(PortError::Export("not implemented".to_string()))
+        Ok("* SPICE netlist\nR1 1 2 10k\nC1 2 0 100n\nV1 1 0 DC 5\n".to_string())
     }
 }
 
@@ -314,4 +314,154 @@ impl hotsas_ports::TouchstoneParserPort for FakeTouchstoneParser {
             errors: vec![],
         })
     }
+}
+
+#[test]
+fn list_placeable_components_returns_real_library_items() {
+    let api = fake_api();
+    let components = api.list_placeable_components().unwrap();
+    assert!(!components.is_empty());
+    assert!(components
+        .iter()
+        .any(|c| c.definition_id == "generic_resistor"));
+}
+
+#[test]
+fn place_component_adds_instance_at_position() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+    let before = api.get_current_project().unwrap();
+    let count_before = before.schematic.components.len();
+
+    let result = api.place_schematic_component(PlaceComponentRequestDto {
+        component_definition_id: "generic_capacitor".to_string(),
+        x: 350.0,
+        y: 450.0,
+        rotation_deg: 0.0,
+    });
+    assert!(result.is_ok());
+    let after = api.get_current_project().unwrap();
+    assert_eq!(after.schematic.components.len(), count_before + 1);
+    let placed = after
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.x == 350.0 && c.y == 450.0);
+    assert!(placed.is_some());
+}
+
+#[test]
+fn place_component_marks_project_dirty() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    // Save clears dirty
+    api.save_project_as("D:\\test\\project.circuit".to_string())
+        .unwrap();
+    let state_saved = api.get_project_session_state().unwrap();
+    assert!(!state_saved.dirty);
+
+    api.place_schematic_component(PlaceComponentRequestDto {
+        component_definition_id: "generic_capacitor".to_string(),
+        x: 100.0,
+        y: 100.0,
+        rotation_deg: 0.0,
+    })
+    .unwrap();
+
+    let state_after = api.get_project_session_state().unwrap();
+    assert!(state_after.dirty);
+}
+
+#[test]
+fn delete_wire_removes_connection_and_updates_net() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+    let before = api.get_current_project().unwrap();
+    let wire_id = before.schematic.wires[0].id.clone();
+
+    let result = api.delete_schematic_wire(DeleteWireRequestDto {
+        wire_id: wire_id.clone(),
+    });
+    assert!(result.is_ok());
+    let after = api.get_current_project().unwrap();
+    assert!(!after.schematic.wires.iter().any(|w| w.id == wire_id));
+}
+
+#[test]
+fn undo_after_add_component_removes_component() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+    let before = api.get_current_project().unwrap();
+    let count_before = before.schematic.components.len();
+
+    api.place_schematic_component(PlaceComponentRequestDto {
+        component_definition_id: "generic_capacitor".to_string(),
+        x: 100.0,
+        y: 100.0,
+        rotation_deg: 0.0,
+    })
+    .unwrap();
+
+    let after_place = api.get_current_project().unwrap();
+    assert_eq!(after_place.schematic.components.len(), count_before + 1);
+
+    let undone = api.undo_schematic_edit().unwrap();
+    assert_eq!(undone.schematic.components.len(), count_before);
+}
+
+#[test]
+fn redo_after_undo_restores_component() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+    let before = api.get_current_project().unwrap();
+    let count_before = before.schematic.components.len();
+
+    api.place_schematic_component(PlaceComponentRequestDto {
+        component_definition_id: "generic_capacitor".to_string(),
+        x: 100.0,
+        y: 100.0,
+        rotation_deg: 0.0,
+    })
+    .unwrap();
+
+    api.undo_schematic_edit().unwrap();
+    let redone = api.redo_schematic_edit().unwrap();
+    assert_eq!(redone.schematic.components.len(), count_before + 1);
+}
+
+#[test]
+fn undo_after_connect_wire_removes_wire() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+    let before = api.get_current_project().unwrap();
+    let wire_count_before = before.schematic.wires.len();
+
+    api.connect_schematic_pins(hotsas_api::ConnectPinsRequestDto {
+        from_component_id: "R1".to_string(),
+        from_pin_id: "2".to_string(),
+        to_component_id: "C1".to_string(),
+        to_pin_id: "1".to_string(),
+        net_name: None,
+    })
+    .unwrap();
+
+    let after_connect = api.get_current_project().unwrap();
+    assert_eq!(after_connect.schematic.wires.len(), wire_count_before + 1);
+
+    let undone = api.undo_schematic_edit().unwrap();
+    assert_eq!(undone.schematic.wires.len(), wire_count_before);
+}
+
+#[test]
+fn netlist_preview_uses_backend_netlist_service() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+    let preview = api.generate_current_schematic_netlist_preview().unwrap();
+    assert!(!preview.netlist.is_empty());
+    assert!(
+        preview.netlist.contains("R1")
+            || preview.netlist.contains("C1")
+            || preview.netlist.contains("V1")
+    );
 }

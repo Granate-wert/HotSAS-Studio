@@ -1,27 +1,30 @@
 use hotsas_adapters::{
-    BomCsvExporter, CircuitProjectPackageStorage,
-    ComponentLibraryJsonExporter, CsvSimulationDataExporter, FormulaPackFileLoader,
-    JsonComponentLibraryStorage, JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine,
-    NgspiceSimulationAdapter, SimpleFormulaEngine, SimpleSpiceModelParser, SimpleTouchstoneParser,
-    SpiceNetlistExporter, SvgSchematicExporter,
+    BomCsvExporter, CircuitProjectPackageStorage, ComponentLibraryJsonExporter,
+    CsvSimulationDataExporter, FormulaPackFileLoader, JsonComponentLibraryStorage,
+    JsonProjectStorage, MarkdownReportExporter, MockSimulationEngine, NgspiceSimulationAdapter,
+    SimpleFormulaEngine, SimpleSpiceModelParser, SimpleTouchstoneParser, SpiceNetlistExporter,
+    SvgSchematicExporter,
 };
 use hotsas_api::{
     AddComponentRequestDto, ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto,
-    AssignComponentRequestDto, CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto,
-    ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto, ConnectPinsRequestDto,
-    DeleteComponentRequestDto, ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto,
-    ExportResultDto, FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
-    FormulaPackDto, FormulaResultDto, FormulaSummaryDto, HotSasApi, MoveComponentRequestDto,
+    AssignComponentRequestDto, CircuitValidationReportDto, ComponentDetailsDto,
+    ComponentLibraryDto, ComponentParameterIssueDto, ComponentParameterSchemaDto,
+    ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto,
+    ConnectPinsRequestDto, DcdcCalculationResultDto, DcdcInputDto, DcdcMockTransientRequestDto,
+    DcdcNetlistPreviewRequestDto, DcdcTemplateDto, DeleteComponentRequestDto, DeleteWireRequestDto,
+    ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto, ExportResultDto,
+    FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto, FormulaPackDto,
+    FormulaResultDto, FormulaSummaryDto, HotSasApi, MoveComponentRequestDto, NetlistPreviewDto,
     NgspiceAvailabilityDto, NotebookEvaluationRequestDto, NotebookEvaluationResultDto,
-    NotebookStateDto, PreferredValueDto, ProductWorkflowStatusDto, ProjectDto,
-    ProjectPackageManifestDto, ProjectPackageValidationReportDto, RenameNetRequestDto,
-    SaveProjectDto, SchematicEditResultDto, SchematicToolCapabilityDto, SelectedComponentDto,
-    SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionIssueDto,
-    SelectedRegionPreviewDto, SimulationResultDto, SimulationRunRequestDto, VerticalSliceDto,
-    DcdcCalculationResultDto, DcdcInputDto, DcdcNetlistPreviewRequestDto, DcdcMockTransientRequestDto,
-    DcdcTemplateDto, ComponentParameterSchemaDto, ComponentParameterIssueDto, TypedComponentParametersDto,
-    ProjectOpenRequestDto, ProjectOpenResultDto, ProjectSessionStateDto, RecentProjectEntryDto,
-    ProjectSaveResultDto,
+    NotebookStateDto, PlaceComponentRequestDto, PlaceableComponentDto, PreferredValueDto,
+    ProductWorkflowStatusDto, ProjectDto, ProjectOpenRequestDto, ProjectOpenResultDto,
+    ProjectPackageManifestDto, ProjectPackageValidationReportDto, ProjectSaveResultDto,
+    ProjectSessionStateDto, RecentProjectEntryDto, RenameNetRequestDto, SaveProjectDto,
+    SchematicEditResultDto, SchematicSelectionDetailsDto, SchematicSelectionRequestDto,
+    SchematicToolCapabilityDto, SelectedComponentDto, SelectedRegionAnalysisRequestDto,
+    SelectedRegionAnalysisResultDto, SelectedRegionIssueDto, SelectedRegionPreviewDto,
+    SimulationResultDto, SimulationRunRequestDto, TypedComponentParametersDto, UndoRedoStateDto,
+    UpdateQuickParameterRequestDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -75,8 +78,13 @@ fn preview_selected_region(
     api: State<'_, HotSasApi>,
     component_ids: Vec<String>,
 ) -> Result<SelectedRegionPreviewDto, String> {
-    log::info!("COMMAND preview_selected_region: {} components", component_ids.len());
-    let result = api.preview_selected_region(component_ids).map_err(tauri_error);
+    log::info!(
+        "COMMAND preview_selected_region: {} components",
+        component_ids.len()
+    );
+    let result = api
+        .preview_selected_region(component_ids)
+        .map_err(tauri_error);
     log_command_result("preview_selected_region", &result);
     result
 }
@@ -159,7 +167,10 @@ fn save_current_project(api: State<'_, HotSasApi>) -> Result<ProjectSaveResultDt
 }
 
 #[tauri::command]
-fn save_project_as(api: State<'_, HotSasApi>, path: String) -> Result<ProjectSaveResultDto, String> {
+fn save_project_as(
+    api: State<'_, HotSasApi>,
+    path: String,
+) -> Result<ProjectSaveResultDto, String> {
     log::info!("COMMAND save_project_as path={path}");
     let result = api.save_project_as(path).map_err(tauri_error);
     log_command_result("save_project_as", &result);
@@ -167,7 +178,10 @@ fn save_project_as(api: State<'_, HotSasApi>, path: String) -> Result<ProjectSav
 }
 
 #[tauri::command]
-fn open_project_package(api: State<'_, HotSasApi>, request: ProjectOpenRequestDto) -> Result<ProjectOpenResultDto, String> {
+fn open_project_package(
+    api: State<'_, HotSasApi>,
+    request: ProjectOpenRequestDto,
+) -> Result<ProjectOpenResultDto, String> {
     log::info!("COMMAND open_project_package path={}", request.path);
     let result = api.open_project_package(request).map_err(tauri_error);
     log_command_result("open_project_package", &result);
@@ -263,7 +277,11 @@ fn run_simulation(
     api: State<'_, HotSasApi>,
     request: SimulationRunRequestDto,
 ) -> Result<SimulationResultDto, String> {
-    log::info!("COMMAND run_simulation engine={} analysis={}", request.engine, request.analysis_kind);
+    log::info!(
+        "COMMAND run_simulation engine={} analysis={}",
+        request.engine,
+        request.analysis_kind
+    );
     let result = api.run_simulation(request).map_err(tauri_error);
     log_command_result("run_simulation", &result);
     result
@@ -300,7 +318,9 @@ fn import_touchstone_model(
 }
 
 #[tauri::command]
-fn list_imported_models(api: State<'_, HotSasApi>) -> Result<Vec<hotsas_api::ImportedModelSummaryDto>, String> {
+fn list_imported_models(
+    api: State<'_, HotSasApi>,
+) -> Result<Vec<hotsas_api::ImportedModelSummaryDto>, String> {
     log::info!("COMMAND list_imported_models");
     let result = api.list_imported_models().map_err(tauri_error);
     log_command_result("list_imported_models", &result);
@@ -335,7 +355,9 @@ fn attach_imported_model_to_component(
     request: hotsas_api::AttachImportedModelRequestDto,
 ) -> Result<hotsas_api::ComponentDetailsDto, String> {
     log::info!("COMMAND attach_imported_model_to_component");
-    let result = api.attach_imported_model_to_component(request).map_err(tauri_error);
+    let result = api
+        .attach_imported_model_to_component(request)
+        .map_err(tauri_error);
     log_command_result("attach_imported_model_to_component", &result);
     result
 }
@@ -392,7 +414,9 @@ fn validate_project_package(
     package_dir: String,
 ) -> Result<ProjectPackageValidationReportDto, String> {
     log::info!("COMMAND validate_project_package package_dir={package_dir}");
-    let result = api.validate_project_package(package_dir).map_err(tauri_error);
+    let result = api
+        .validate_project_package(package_dir)
+        .map_err(tauri_error);
     log_command_result("validate_project_package", &result);
     result
 }
@@ -492,7 +516,10 @@ fn calculate_formula(
     api: State<'_, HotSasApi>,
     request: FormulaCalculationRequestDto,
 ) -> Result<FormulaEvaluationResultDto, String> {
-    log::info!("COMMAND calculate_formula formula_id={}", request.formula_id);
+    log::info!(
+        "COMMAND calculate_formula formula_id={}",
+        request.formula_id
+    );
     for variable in &request.variables {
         log::info!(
             "  variable {} = {} (unit: {:?})",
@@ -616,21 +643,27 @@ async fn get_app_diagnostics(api: State<'_, HotSasApi>) -> Result<AppDiagnostics
 }
 
 #[tauri::command]
-async fn run_readiness_self_check(api: State<'_, HotSasApi>) -> Result<AppDiagnosticsReportDto, String> {
+async fn run_readiness_self_check(
+    api: State<'_, HotSasApi>,
+) -> Result<AppDiagnosticsReportDto, String> {
     let result = api.run_readiness_self_check().map_err(tauri_error);
     log_command_result("run_readiness_self_check", &result);
     result
 }
 
 #[tauri::command]
-async fn get_product_workflow_status(api: State<'_, HotSasApi>) -> Result<ProductWorkflowStatusDto, String> {
+async fn get_product_workflow_status(
+    api: State<'_, HotSasApi>,
+) -> Result<ProductWorkflowStatusDto, String> {
     let result = api.get_product_workflow_status().map_err(tauri_error);
     log_command_result("get_product_workflow_status", &result);
     result
 }
 
 #[tauri::command]
-async fn run_product_beta_self_check(api: State<'_, HotSasApi>) -> Result<ProductWorkflowStatusDto, String> {
+async fn run_product_beta_self_check(
+    api: State<'_, HotSasApi>,
+) -> Result<ProductWorkflowStatusDto, String> {
     let result = api.run_product_beta_self_check().map_err(tauri_error);
     log_command_result("run_product_beta_self_check", &result);
     result
@@ -649,7 +682,9 @@ fn get_component_parameter_schema(
     category: String,
 ) -> Result<Option<ComponentParameterSchemaDto>, String> {
     log::info!("COMMAND get_component_parameter_schema category={category}");
-    let result = api.get_component_parameter_schema(category).map_err(tauri_error);
+    let result = api
+        .get_component_parameter_schema(category)
+        .map_err(tauri_error);
     log_command_result("get_component_parameter_schema", &result);
     result
 }
@@ -660,7 +695,9 @@ fn validate_component_parameters(
     component_id: String,
 ) -> Result<Vec<ComponentParameterIssueDto>, String> {
     log::info!("COMMAND validate_component_parameters component_id={component_id}");
-    let result = api.validate_component_parameters(component_id).map_err(tauri_error);
+    let result = api
+        .validate_component_parameters(component_id)
+        .map_err(tauri_error);
     log_command_result("validate_component_parameters", &result);
     result
 }
@@ -671,7 +708,9 @@ fn get_typed_component_parameters(
     component_id: String,
 ) -> Result<TypedComponentParametersDto, String> {
     log::info!("COMMAND get_typed_component_parameters component_id={component_id}");
-    let result = api.get_typed_component_parameters(component_id).map_err(tauri_error);
+    let result = api
+        .get_typed_component_parameters(component_id)
+        .map_err(tauri_error);
     log_command_result("get_typed_component_parameters", &result);
     result
 }
@@ -681,7 +720,9 @@ fn list_schematic_editor_capabilities(
     api: State<'_, HotSasApi>,
 ) -> Result<Vec<SchematicToolCapabilityDto>, String> {
     log::info!("COMMAND list_schematic_editor_capabilities");
-    let result = api.list_schematic_editor_capabilities().map_err(tauri_error);
+    let result = api
+        .list_schematic_editor_capabilities()
+        .map_err(tauri_error);
     log_command_result("list_schematic_editor_capabilities", &result);
     result
 }
@@ -691,7 +732,10 @@ fn add_schematic_component(
     api: State<'_, HotSasApi>,
     request: AddComponentRequestDto,
 ) -> Result<SchematicEditResultDto, String> {
-    log::info!("COMMAND add_schematic_component kind={}", request.component_kind);
+    log::info!(
+        "COMMAND add_schematic_component kind={}",
+        request.component_kind
+    );
     let result = api.add_schematic_component(request).map_err(tauri_error);
     log_command_result("add_schematic_component", &result);
     result
@@ -702,7 +746,10 @@ fn move_schematic_component(
     api: State<'_, HotSasApi>,
     request: MoveComponentRequestDto,
 ) -> Result<SchematicEditResultDto, String> {
-    log::info!("COMMAND move_schematic_component instance_id={}", request.instance_id);
+    log::info!(
+        "COMMAND move_schematic_component instance_id={}",
+        request.instance_id
+    );
     let result = api.move_schematic_component(request).map_err(tauri_error);
     log_command_result("move_schematic_component", &result);
     result
@@ -713,7 +760,10 @@ fn delete_schematic_component(
     api: State<'_, HotSasApi>,
     request: DeleteComponentRequestDto,
 ) -> Result<SchematicEditResultDto, String> {
-    log::info!("COMMAND delete_schematic_component instance_id={}", request.instance_id);
+    log::info!(
+        "COMMAND delete_schematic_component instance_id={}",
+        request.instance_id
+    );
     let result = api.delete_schematic_component(request).map_err(tauri_error);
     log_command_result("delete_schematic_component", &result);
     result
@@ -738,6 +788,111 @@ fn rename_schematic_net(
     log::info!("COMMAND rename_schematic_net net_id={}", request.net_id);
     let result = api.rename_schematic_net(request).map_err(tauri_error);
     log_command_result("rename_schematic_net", &result);
+    result
+}
+
+#[tauri::command]
+fn list_placeable_components(
+    api: State<'_, HotSasApi>,
+) -> Result<Vec<PlaceableComponentDto>, String> {
+    log::info!("COMMAND list_placeable_components");
+    let result = api.list_placeable_components().map_err(tauri_error);
+    log_command_result("list_placeable_components", &result);
+    result
+}
+
+#[tauri::command]
+fn place_schematic_component(
+    api: State<'_, HotSasApi>,
+    request: PlaceComponentRequestDto,
+) -> Result<SchematicEditResultDto, String> {
+    log::info!(
+        "COMMAND place_schematic_component definition_id={}",
+        request.component_definition_id
+    );
+    let result = api.place_schematic_component(request).map_err(tauri_error);
+    log_command_result("place_schematic_component", &result);
+    result
+}
+
+#[tauri::command]
+fn delete_schematic_wire(
+    api: State<'_, HotSasApi>,
+    request: DeleteWireRequestDto,
+) -> Result<SchematicEditResultDto, String> {
+    log::info!("COMMAND delete_schematic_wire wire_id={}", request.wire_id);
+    let result = api.delete_schematic_wire(request).map_err(tauri_error);
+    log_command_result("delete_schematic_wire", &result);
+    result
+}
+
+#[tauri::command]
+fn update_schematic_quick_parameter(
+    api: State<'_, HotSasApi>,
+    request: UpdateQuickParameterRequestDto,
+) -> Result<SchematicEditResultDto, String> {
+    log::info!(
+        "COMMAND update_schematic_quick_parameter component_id={} parameter={}",
+        request.component_id,
+        request.parameter_id
+    );
+    let result = api
+        .update_schematic_quick_parameter(request)
+        .map_err(tauri_error);
+    log_command_result("update_schematic_quick_parameter", &result);
+    result
+}
+
+#[tauri::command]
+fn get_schematic_selection_details(
+    api: State<'_, HotSasApi>,
+    request: SchematicSelectionRequestDto,
+) -> Result<SchematicSelectionDetailsDto, String> {
+    log::info!(
+        "COMMAND get_schematic_selection_details kind={} id={}",
+        request.kind,
+        request.id
+    );
+    let result = api
+        .get_schematic_selection_details(request)
+        .map_err(tauri_error);
+    log_command_result("get_schematic_selection_details", &result);
+    result
+}
+
+#[tauri::command]
+fn undo_schematic_edit(api: State<'_, HotSasApi>) -> Result<ProjectDto, String> {
+    log::info!("COMMAND undo_schematic_edit");
+    let result = api.undo_schematic_edit().map_err(tauri_error);
+    log_command_result("undo_schematic_edit", &result);
+    result
+}
+
+#[tauri::command]
+fn redo_schematic_edit(api: State<'_, HotSasApi>) -> Result<ProjectDto, String> {
+    log::info!("COMMAND redo_schematic_edit");
+    let result = api.redo_schematic_edit().map_err(tauri_error);
+    log_command_result("redo_schematic_edit", &result);
+    result
+}
+
+#[tauri::command]
+fn get_schematic_undo_redo_state(api: State<'_, HotSasApi>) -> Result<UndoRedoStateDto, String> {
+    log::info!("COMMAND get_schematic_undo_redo_state");
+    let result = api.get_schematic_undo_redo_state().map_err(tauri_error);
+    log_command_result("get_schematic_undo_redo_state", &result);
+    result
+}
+
+#[tauri::command]
+fn generate_current_schematic_netlist_preview(
+    api: State<'_, HotSasApi>,
+) -> Result<NetlistPreviewDto, String> {
+    log::info!("COMMAND generate_current_schematic_netlist_preview");
+    let result = api
+        .generate_current_schematic_netlist_preview()
+        .map_err(tauri_error);
+    log_command_result("generate_current_schematic_netlist_preview", &result);
     result
 }
 
@@ -777,7 +932,9 @@ fn generate_dcdc_netlist_preview(
     request: DcdcNetlistPreviewRequestDto,
 ) -> Result<String, String> {
     log::info!("COMMAND generate_dcdc_netlist_preview");
-    let result = api.generate_dcdc_netlist_preview(request).map_err(tauri_error);
+    let result = api
+        .generate_dcdc_netlist_preview(request)
+        .map_err(tauri_error);
     log_command_result("generate_dcdc_netlist_preview", &result);
     result
 }
@@ -788,7 +945,9 @@ fn run_dcdc_mock_transient_preview(
     request: DcdcMockTransientRequestDto,
 ) -> Result<SimulationResultDto, String> {
     log::info!("COMMAND run_dcdc_mock_transient_preview");
-    let result = api.run_dcdc_mock_transient_preview(request).map_err(tauri_error);
+    let result = api
+        .run_dcdc_mock_transient_preview(request)
+        .map_err(tauri_error);
     log_command_result("run_dcdc_mock_transient_preview", &result);
     result
 }
@@ -931,6 +1090,15 @@ pub fn run() {
             delete_schematic_component,
             connect_schematic_pins,
             rename_schematic_net,
+            list_placeable_components,
+            place_schematic_component,
+            delete_schematic_wire,
+            update_schematic_quick_parameter,
+            get_schematic_selection_details,
+            undo_schematic_edit,
+            redo_schematic_edit,
+            get_schematic_undo_redo_state,
+            generate_current_schematic_netlist_preview,
             preview_selected_region,
             analyze_selected_region,
             validate_selected_region,

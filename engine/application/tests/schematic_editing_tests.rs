@@ -1,7 +1,7 @@
 use hotsas_application::SchematicEditingService;
 use hotsas_core::{
     AddComponentRequest, CircuitProject, ConnectPinsRequest, DeleteComponentRequest,
-    MoveComponentRequest, Point, RenameNetRequest,
+    DeleteWireRequest, MoveComponentRequest, Point, RenameNetRequest, UpdateQuickParameterRequest,
 };
 
 fn empty_project() -> CircuitProject {
@@ -554,4 +554,134 @@ fn delete_connected_component_returns_floating_net_warning() {
         .validation_warnings
         .iter()
         .any(|w| w.code == "floating_net"));
+}
+
+#[test]
+fn delete_wire_removes_wire_and_cleans_up_net() {
+    let svc = SchematicEditingService::new();
+    let mut project = empty_project();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "resistor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("R1".to_string()),
+            position: Point::new(100.0, 100.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "capacitor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("C1".to_string()),
+            position: Point::new(200.0, 200.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+    svc.connect_pins(
+        &mut project,
+        ConnectPinsRequest {
+            from_component_id: "R1".to_string(),
+            from_pin_id: "1".to_string(),
+            to_component_id: "C1".to_string(),
+            to_pin_id: "1".to_string(),
+            net_name: Some("net_rc".to_string()),
+        },
+    )
+    .unwrap();
+
+    let wire_id = project.schematic.wires[0].id.clone();
+    let result = svc.delete_wire(
+        &mut project,
+        DeleteWireRequest {
+            wire_id: wire_id.clone(),
+        },
+    );
+    assert!(result.is_ok());
+    let edit = result.unwrap();
+    assert_eq!(edit.project.schematic.wires.len(), 0);
+    let net = edit
+        .project
+        .schematic
+        .nets
+        .iter()
+        .find(|n| n.name == "net_rc")
+        .unwrap();
+    assert!(net.connected_pins.is_empty());
+    let r1 = edit
+        .project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.instance_id == "R1")
+        .unwrap();
+    assert!(r1.connected_nets.is_empty());
+}
+
+#[test]
+fn update_component_quick_parameter_updates_model() {
+    let svc = SchematicEditingService::new();
+    let mut project = empty_project();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "resistor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("R1".to_string()),
+            position: Point::new(100.0, 100.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+
+    let result = svc.update_component_quick_parameter(
+        &mut project,
+        UpdateQuickParameterRequest {
+            component_id: "R1".to_string(),
+            parameter_id: "resistance".to_string(),
+            value: "4.7k".to_string(),
+        },
+    );
+    assert!(result.is_ok());
+    let edit = result.unwrap();
+    let r1 = edit
+        .project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.instance_id == "R1")
+        .unwrap();
+    let resistance = r1.overridden_parameters.get("resistance").unwrap();
+    assert_eq!(resistance.original(), "4.7k");
+}
+
+#[test]
+fn update_component_quick_parameter_rejects_invalid_value() {
+    let svc = SchematicEditingService::new();
+    let mut project = empty_project();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "resistor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("R1".to_string()),
+            position: Point::new(100.0, 100.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+
+    let result = svc.update_component_quick_parameter(
+        &mut project,
+        UpdateQuickParameterRequest {
+            component_id: "R1".to_string(),
+            parameter_id: "resistance".to_string(),
+            value: "invalid".to_string(),
+        },
+    );
+    assert!(result.is_err());
 }

@@ -12,15 +12,19 @@ import type {
   FormulaResultDto,
   ImportedModelDetailsDto,
   ImportedModelSummaryDto,
+  NetlistPreviewDto,
   NgspiceAvailabilityDto,
   NotebookEvaluationResultDto,
   NotebookStateDto,
+  PlaceableComponentDto,
   PreferredValueDto,
   ProductWorkflowStatusDto,
   ProjectDto,
   ReportSectionCapabilityDto,
   SchematicEditResultDto,
+  SchematicSelectionDetailsDto,
   SchematicToolCapabilityDto,
+  UndoRedoStateDto,
   ProjectOpenResultDto,
   ProjectSaveResultDto,
   ProjectSessionStateDto,
@@ -88,6 +92,17 @@ type HotSasState = {
   schematicEditLoading: boolean;
   schematicEditError: string | null;
   pendingConnectionStart: { componentId: string; pinId: string } | null;
+  // v2.8 interactive schematic editing
+  schematicToolMode: "select" | "place" | "wire" | "delete";
+  placeableComponents: PlaceableComponentDto[];
+  pendingPlaceComponent: PlaceableComponentDto | null;
+  pendingWireStart: { componentId: string; pinId: string } | null;
+  selectedSchematicEntity: { kind: "component" | "wire" | "net"; id: string } | null;
+  schematicSelectionDetails: SchematicSelectionDetailsDto | null;
+  undoRedoState: UndoRedoStateDto | null;
+  netlistPreview: NetlistPreviewDto | null;
+  schematicInteractionLoading: boolean;
+  schematicInteractionError: string | null;
   // v2.6 project persistence
   projectSessionState: ProjectSessionStateDto | null;
   recentProjects: RecentProjectEntryDto[];
@@ -149,6 +164,18 @@ type HotSasState = {
   setSchematicEditLoading: (loading: boolean) => void;
   setSchematicEditError: (error: string | null) => void;
   setPendingConnectionStart: (start: { componentId: string; pinId: string } | null) => void;
+  setSchematicToolMode: (mode: "select" | "place" | "wire" | "delete") => void;
+  setPlaceableComponents: (components: PlaceableComponentDto[]) => void;
+  setPendingPlaceComponent: (component: PlaceableComponentDto | null) => void;
+  setPendingWireStart: (start: { componentId: string; pinId: string } | null) => void;
+  setSelectedSchematicEntity: (
+    entity: { kind: "component" | "wire" | "net"; id: string } | null,
+  ) => void;
+  setSchematicSelectionDetails: (details: SchematicSelectionDetailsDto | null) => void;
+  setUndoRedoState: (state: UndoRedoStateDto | null) => void;
+  setNetlistPreview: (preview: NetlistPreviewDto | null) => void;
+  setSchematicInteractionLoading: (loading: boolean) => void;
+  setSchematicInteractionError: (error: string | null) => void;
   setProjectSessionState: (
     state:
       | ProjectSessionStateDto
@@ -216,6 +243,17 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   schematicEditLoading: false,
   schematicEditError: null,
   pendingConnectionStart: null,
+  // v2.8 interactive schematic editing
+  schematicToolMode: "select",
+  placeableComponents: [],
+  pendingPlaceComponent: null,
+  pendingWireStart: null,
+  selectedSchematicEntity: null,
+  schematicSelectionDetails: null,
+  undoRedoState: null,
+  netlistPreview: null,
+  schematicInteractionLoading: false,
+  schematicInteractionError: null,
   projectSessionState: null,
   recentProjects: [],
   projectPersistenceLoading: false,
@@ -283,6 +321,17 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setPendingConnectionStart: (
     pendingConnectionStart: { componentId: string; pinId: string } | null,
   ) => set({ pendingConnectionStart }),
+  setSchematicToolMode: (schematicToolMode) => set({ schematicToolMode }),
+  setPlaceableComponents: (placeableComponents) => set({ placeableComponents }),
+  setPendingPlaceComponent: (pendingPlaceComponent) => set({ pendingPlaceComponent }),
+  setPendingWireStart: (pendingWireStart) => set({ pendingWireStart }),
+  setSelectedSchematicEntity: (selectedSchematicEntity) => set({ selectedSchematicEntity }),
+  setSchematicSelectionDetails: (schematicSelectionDetails) => set({ schematicSelectionDetails }),
+  setUndoRedoState: (undoRedoState) => set({ undoRedoState }),
+  setNetlistPreview: (netlistPreview) => set({ netlistPreview }),
+  setSchematicInteractionLoading: (schematicInteractionLoading) =>
+    set({ schematicInteractionLoading }),
+  setSchematicInteractionError: (schematicInteractionError) => set({ schematicInteractionError }),
   setProjectSessionState: (projectSessionState) =>
     set((state) => ({
       projectSessionState:

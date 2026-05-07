@@ -3,18 +3,20 @@ use crate::{
     AssignComponentRequestDto, CircuitValidationIssueDto, CircuitValidationReportDto,
     ComponentDetailsDto, ComponentLibraryDto, ComponentParameterDto, ComponentSearchRequestDto,
     ComponentSearchResultDto, ComponentSummaryDto, ConnectPinsRequestDto,
-    DeleteComponentRequestDto, ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto,
-    ExportResultDto, FootprintDto, FormulaCalculationRequestDto, FormulaDetailsDto,
-    FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto, FormulaResultDto,
-    FormulaSummaryDto, KeyValueDto, MoveComponentRequestDto, NgspiceAvailabilityDto,
-    NotebookEvaluationRequestDto, NotebookEvaluationResultDto, NotebookStateDto, PreferredValueDto,
+    DeleteComponentRequestDto, DeleteWireRequestDto, ExportCapabilityDto, ExportHistoryEntryDto,
+    ExportRequestDto, ExportResultDto, FootprintDto, FormulaCalculationRequestDto,
+    FormulaDetailsDto, FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto,
+    FormulaResultDto, FormulaSummaryDto, KeyValueDto, MoveComponentRequestDto, NetlistPreviewDto,
+    NgspiceAvailabilityDto, NotebookEvaluationRequestDto, NotebookEvaluationResultDto,
+    NotebookStateDto, PlaceComponentRequestDto, PlaceableComponentDto, PreferredValueDto,
     ProductWorkflowStatusDto, ProjectDto, ProjectOpenRequestDto, ProjectOpenResultDto,
     ProjectPackageManifestDto, ProjectPackageValidationReportDto, ProjectPersistenceWarningDto,
     ProjectSaveResultDto, ProjectSessionStateDto, RecentProjectEntryDto, RenameNetRequestDto,
-    SaveProjectDto, SchematicEditResultDto, SchematicToolCapabilityDto, SelectedComponentDto,
-    SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionPreviewDto,
-    SimulationModelDto, SimulationResultDto, SimulationRunRequestDto, SymbolDto, ValueDto,
-    VerticalSliceDto,
+    SaveProjectDto, SchematicEditResultDto, SchematicEditableFieldDto,
+    SchematicSelectionDetailsDto, SchematicSelectionRequestDto, SchematicToolCapabilityDto,
+    SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
+    SelectedRegionPreviewDto, SimulationModelDto, SimulationResultDto, SimulationRunRequestDto,
+    SymbolDto, UndoRedoStateDto, UpdateQuickParameterRequestDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{
     AppDiagnosticsService, AppServices, FormulaRegistryService, ProductWorkflowService,
@@ -38,6 +40,9 @@ pub struct HotSasApi {
     product_workflow: ProductWorkflowService,
     last_advanced_report: Mutex<Option<hotsas_core::advanced_report::AdvancedReportModel>>,
     last_advanced_report_project_id: Mutex<Option<String>>,
+    // v2.8 undo/redo foundation
+    undo_stack: Mutex<Vec<(CircuitProject, String)>>,
+    redo_stack: Mutex<Vec<(CircuitProject, String)>>,
 }
 
 impl HotSasApi {
@@ -69,6 +74,8 @@ impl HotSasApi {
             product_workflow: ProductWorkflowService::new(),
             last_advanced_report: Mutex::new(None),
             last_advanced_report_project_id: Mutex::new(None),
+            undo_stack: Mutex::new(Vec::new()),
+            redo_stack: Mutex::new(Vec::new()),
         }
     }
 
@@ -833,6 +840,10 @@ impl HotSasApi {
                 .mark_dirty("project mutated");
         }
         Ok(())
+    }
+
+    pub fn get_current_project(&self) -> Result<ProjectDto, ApiError> {
+        self.current_project().map(|p| ProjectDto::from(&p))
     }
 
     fn current_project(&self) -> Result<CircuitProject, ApiError> {
@@ -1713,6 +1724,77 @@ impl HotSasApi {
     // v2.5 Schematic Editor Hardening
     // ------------------------------------------------------------------
 
+    // v2.8 undo/redo helpers
+
+    fn push_undo_snapshot(&self, project: CircuitProject, label: String) -> Result<(), ApiError> {
+        let mut stack = self
+            .undo_stack
+            .lock()
+            .map_err(|_| ApiError::State("undo stack lock poisoned".to_string()))?;
+        if stack.len() >= 50 {
+            stack.remove(0);
+        }
+        stack.push((project, label));
+        Ok(())
+    }
+
+    fn clear_redo_stack(&self) -> Result<(), ApiError> {
+        let mut stack = self
+            .redo_stack
+            .lock()
+            .map_err(|_| ApiError::State("redo stack lock poisoned".to_string()))?;
+        stack.clear();
+        Ok(())
+    }
+
+    fn pop_undo_snapshot(&self) -> Result<Option<(CircuitProject, String)>, ApiError> {
+        let mut stack = self
+            .undo_stack
+            .lock()
+            .map_err(|_| ApiError::State("undo stack lock poisoned".to_string()))?;
+        Ok(stack.pop())
+    }
+
+    fn push_redo_snapshot(&self, project: CircuitProject, label: String) -> Result<(), ApiError> {
+        let mut stack = self
+            .redo_stack
+            .lock()
+            .map_err(|_| ApiError::State("redo stack lock poisoned".to_string()))?;
+        if stack.len() >= 50 {
+            stack.remove(0);
+        }
+        stack.push((project, label));
+        Ok(())
+    }
+
+    fn pop_redo_snapshot(&self) -> Result<Option<(CircuitProject, String)>, ApiError> {
+        let mut stack = self
+            .redo_stack
+            .lock()
+            .map_err(|_| ApiError::State("redo stack lock poisoned".to_string()))?;
+        Ok(stack.pop())
+    }
+
+    fn make_schematic_edit_result(
+        &self,
+        result: hotsas_core::SchematicEditResult,
+    ) -> SchematicEditResultDto {
+        SchematicEditResultDto {
+            project: ProjectDto::from(&result.project),
+            validation_warnings: result
+                .validation_warnings
+                .iter()
+                .map(CircuitValidationIssueDto::from)
+                .collect(),
+            validation_errors: result
+                .validation_errors
+                .iter()
+                .map(CircuitValidationIssueDto::from)
+                .collect(),
+            message: result.message,
+        }
+    }
+
     pub fn list_schematic_editor_capabilities(
         &self,
     ) -> Result<Vec<SchematicToolCapabilityDto>, ApiError> {
@@ -1755,6 +1837,7 @@ impl HotSasApi {
         request: AddComponentRequestDto,
     ) -> Result<SchematicEditResultDto, ApiError> {
         let mut project = self.current_project()?;
+        self.push_undo_snapshot(project.clone(), "Add component".to_string())?;
         let result = self
             .services
             .schematic_editing_service()
@@ -1770,15 +1853,8 @@ impl HotSasApi {
             )
             .map_err(|e| ApiError::InvalidInput(e))?;
         self.replace_current_project(project)?;
-        Ok(SchematicEditResultDto {
-            project: ProjectDto::from(&result.project),
-            validation_warnings: result
-                .validation_warnings
-                .iter()
-                .map(CircuitValidationIssueDto::from)
-                .collect(),
-            message: result.message,
-        })
+        self.clear_redo_stack()?;
+        Ok(self.make_schematic_edit_result(result))
     }
 
     pub fn move_schematic_component(
@@ -1786,6 +1862,7 @@ impl HotSasApi {
         request: MoveComponentRequestDto,
     ) -> Result<SchematicEditResultDto, ApiError> {
         let mut project = self.current_project()?;
+        self.push_undo_snapshot(project.clone(), "Move component".to_string())?;
         let result = self
             .services
             .schematic_editing_service()
@@ -1798,15 +1875,8 @@ impl HotSasApi {
             )
             .map_err(|e| ApiError::InvalidInput(e))?;
         self.replace_current_project(project)?;
-        Ok(SchematicEditResultDto {
-            project: ProjectDto::from(&result.project),
-            validation_warnings: result
-                .validation_warnings
-                .iter()
-                .map(CircuitValidationIssueDto::from)
-                .collect(),
-            message: result.message,
-        })
+        self.clear_redo_stack()?;
+        Ok(self.make_schematic_edit_result(result))
     }
 
     pub fn delete_schematic_component(
@@ -1814,6 +1884,7 @@ impl HotSasApi {
         request: DeleteComponentRequestDto,
     ) -> Result<SchematicEditResultDto, ApiError> {
         let mut project = self.current_project()?;
+        self.push_undo_snapshot(project.clone(), "Delete component".to_string())?;
         let result = self
             .services
             .schematic_editing_service()
@@ -1825,15 +1896,8 @@ impl HotSasApi {
             )
             .map_err(|e| ApiError::InvalidInput(e))?;
         self.replace_current_project(project)?;
-        Ok(SchematicEditResultDto {
-            project: ProjectDto::from(&result.project),
-            validation_warnings: result
-                .validation_warnings
-                .iter()
-                .map(CircuitValidationIssueDto::from)
-                .collect(),
-            message: result.message,
-        })
+        self.clear_redo_stack()?;
+        Ok(self.make_schematic_edit_result(result))
     }
 
     pub fn connect_schematic_pins(
@@ -1841,6 +1905,7 @@ impl HotSasApi {
         request: ConnectPinsRequestDto,
     ) -> Result<SchematicEditResultDto, ApiError> {
         let mut project = self.current_project()?;
+        self.push_undo_snapshot(project.clone(), "Connect pins".to_string())?;
         let result = self
             .services
             .schematic_editing_service()
@@ -1856,15 +1921,8 @@ impl HotSasApi {
             )
             .map_err(|e| ApiError::InvalidInput(e))?;
         self.replace_current_project(project)?;
-        Ok(SchematicEditResultDto {
-            project: ProjectDto::from(&result.project),
-            validation_warnings: result
-                .validation_warnings
-                .iter()
-                .map(CircuitValidationIssueDto::from)
-                .collect(),
-            message: result.message,
-        })
+        self.clear_redo_stack()?;
+        Ok(self.make_schematic_edit_result(result))
     }
 
     pub fn rename_schematic_net(
@@ -1872,6 +1930,7 @@ impl HotSasApi {
         request: RenameNetRequestDto,
     ) -> Result<SchematicEditResultDto, ApiError> {
         let mut project = self.current_project()?;
+        self.push_undo_snapshot(project.clone(), "Rename net".to_string())?;
         let result = self
             .services
             .schematic_editing_service()
@@ -1884,14 +1943,235 @@ impl HotSasApi {
             )
             .map_err(|e| ApiError::InvalidInput(e))?;
         self.replace_current_project(project)?;
-        Ok(SchematicEditResultDto {
-            project: ProjectDto::from(&result.project),
-            validation_warnings: result
-                .validation_warnings
+        self.clear_redo_stack()?;
+        Ok(self.make_schematic_edit_result(result))
+    }
+
+    pub fn list_placeable_components(&self) -> Result<Vec<PlaceableComponentDto>, ApiError> {
+        let library = self.current_component_library()?;
+        let components: Vec<PlaceableComponentDto> = library
+            .components
+            .iter()
+            .map(|c| PlaceableComponentDto {
+                definition_id: c.id.clone(),
+                name: c.name.clone(),
+                category: c.category.clone(),
+                component_kind: c.id.clone(),
+                has_symbol: !c.symbol_ids.is_empty(),
+            })
+            .collect();
+        Ok(components)
+    }
+
+    pub fn place_schematic_component(
+        &self,
+        request: PlaceComponentRequestDto,
+    ) -> Result<SchematicEditResultDto, ApiError> {
+        let mut project = self.current_project()?;
+        self.push_undo_snapshot(project.clone(), "Place component".to_string())?;
+        let result = self
+            .services
+            .schematic_editing_service()
+            .add_component(
+                &mut project,
+                hotsas_core::AddComponentRequest {
+                    component_kind: request.component_definition_id.clone(),
+                    component_definition_id: Some(request.component_definition_id),
+                    instance_id: None,
+                    position: hotsas_core::Point::new(request.x, request.y),
+                    rotation_deg: request.rotation_deg,
+                },
+            )
+            .map_err(|e| ApiError::InvalidInput(e))?;
+        self.replace_current_project(project)?;
+        self.clear_redo_stack()?;
+        Ok(self.make_schematic_edit_result(result))
+    }
+
+    pub fn delete_schematic_wire(
+        &self,
+        request: DeleteWireRequestDto,
+    ) -> Result<SchematicEditResultDto, ApiError> {
+        let mut project = self.current_project()?;
+        self.push_undo_snapshot(project.clone(), "Delete wire".to_string())?;
+        let result = self
+            .services
+            .schematic_editing_service()
+            .delete_wire(
+                &mut project,
+                hotsas_core::DeleteWireRequest {
+                    wire_id: request.wire_id,
+                },
+            )
+            .map_err(|e| ApiError::InvalidInput(e))?;
+        self.replace_current_project(project)?;
+        self.clear_redo_stack()?;
+        Ok(self.make_schematic_edit_result(result))
+    }
+
+    pub fn update_schematic_quick_parameter(
+        &self,
+        request: UpdateQuickParameterRequestDto,
+    ) -> Result<SchematicEditResultDto, ApiError> {
+        let mut project = self.current_project()?;
+        self.push_undo_snapshot(project.clone(), "Update parameter".to_string())?;
+        let result = self
+            .services
+            .schematic_editing_service()
+            .update_component_quick_parameter(
+                &mut project,
+                hotsas_core::UpdateQuickParameterRequest {
+                    component_id: request.component_id,
+                    parameter_id: request.parameter_id,
+                    value: request.value,
+                },
+            )
+            .map_err(|e| ApiError::InvalidInput(e))?;
+        self.replace_current_project(project)?;
+        self.clear_redo_stack()?;
+        Ok(self.make_schematic_edit_result(result))
+    }
+
+    pub fn get_schematic_selection_details(
+        &self,
+        request: SchematicSelectionRequestDto,
+    ) -> Result<SchematicSelectionDetailsDto, ApiError> {
+        let project = self.current_project()?;
+        match request.kind.as_str() {
+            "component" => {
+                let comp = project
+                    .schematic
+                    .components
+                    .iter()
+                    .find(|c| c.instance_id == request.id)
+                    .ok_or_else(|| {
+                        ApiError::InvalidInput(format!("component '{}' not found", request.id))
+                    })?;
+                let mut fields = vec![SchematicEditableFieldDto {
+                    field_id: "instance_id".to_string(),
+                    label: "Instance ID".to_string(),
+                    current_value: comp.instance_id.clone(),
+                    editable: false,
+                }];
+                for (key, value) in &comp.overridden_parameters {
+                    fields.push(SchematicEditableFieldDto {
+                        field_id: key.clone(),
+                        label: key.clone(),
+                        current_value: format!("{}", value),
+                        editable: true,
+                    });
+                }
+                Ok(SchematicSelectionDetailsDto {
+                    kind: "component".to_string(),
+                    id: Some(comp.instance_id.clone()),
+                    display_name: Some(comp.instance_id.clone()),
+                    editable_fields: fields,
+                })
+            }
+            "wire" => {
+                let wire = project
+                    .schematic
+                    .wires
+                    .iter()
+                    .find(|w| w.id == request.id)
+                    .ok_or_else(|| {
+                        ApiError::InvalidInput(format!("wire '{}' not found", request.id))
+                    })?;
+                Ok(SchematicSelectionDetailsDto {
+                    kind: "wire".to_string(),
+                    id: Some(wire.id.clone()),
+                    display_name: Some(format!("Wire {}", wire.id)),
+                    editable_fields: vec![],
+                })
+            }
+            "net" => {
+                let net = project
+                    .schematic
+                    .nets
+                    .iter()
+                    .find(|n| n.id == request.id)
+                    .ok_or_else(|| {
+                        ApiError::InvalidInput(format!("net '{}' not found", request.id))
+                    })?;
+                Ok(SchematicSelectionDetailsDto {
+                    kind: "net".to_string(),
+                    id: Some(net.id.clone()),
+                    display_name: Some(net.name.clone()),
+                    editable_fields: vec![SchematicEditableFieldDto {
+                        field_id: "name".to_string(),
+                        label: "Net Name".to_string(),
+                        current_value: net.name.clone(),
+                        editable: true,
+                    }],
+                })
+            }
+            _ => Err(ApiError::InvalidInput(format!(
+                "unknown selection kind: {}",
+                request.kind
+            ))),
+        }
+    }
+
+    pub fn undo_schematic_edit(&self) -> Result<ProjectDto, ApiError> {
+        let current = self.current_project()?;
+        if let Some((previous_project, label)) = self.pop_undo_snapshot()? {
+            self.push_redo_snapshot(current, label)?;
+            self.replace_current_project(previous_project.clone())?;
+            Ok(ProjectDto::from(&previous_project))
+        } else {
+            Err(ApiError::State("nothing to undo".to_string()))
+        }
+    }
+
+    pub fn redo_schematic_edit(&self) -> Result<ProjectDto, ApiError> {
+        let current = self.current_project()?;
+        if let Some((next_project, label)) = self.pop_redo_snapshot()? {
+            self.push_undo_snapshot(current, label)?;
+            self.replace_current_project(next_project.clone())?;
+            Ok(ProjectDto::from(&next_project))
+        } else {
+            Err(ApiError::State("nothing to redo".to_string()))
+        }
+    }
+
+    pub fn get_schematic_undo_redo_state(&self) -> Result<UndoRedoStateDto, ApiError> {
+        let undo = self
+            .undo_stack
+            .lock()
+            .map_err(|_| ApiError::State("undo stack lock poisoned".to_string()))?;
+        let redo = self
+            .redo_stack
+            .lock()
+            .map_err(|_| ApiError::State("redo stack lock poisoned".to_string()))?;
+        Ok(UndoRedoStateDto {
+            can_undo: !undo.is_empty(),
+            can_redo: !redo.is_empty(),
+            last_action_label: undo.last().map(|(_, label)| label.clone()),
+            next_redo_label: redo.last().map(|(_, label)| label.clone()),
+        })
+    }
+
+    pub fn generate_current_schematic_netlist_preview(
+        &self,
+    ) -> Result<NetlistPreviewDto, ApiError> {
+        let project = self.current_project()?;
+        let netlist = self
+            .services
+            .generate_spice_netlist(&project)
+            .map_err(|e| ApiError::State(format!("netlist generation failed: {e}")))?;
+        let validation = self.services.validate_circuit(&project);
+        Ok(NetlistPreviewDto {
+            netlist,
+            warnings: validation
+                .warnings
                 .iter()
-                .map(CircuitValidationIssueDto::from)
+                .map(|w| w.message.clone())
                 .collect(),
-            message: result.message,
+            errors: validation
+                .errors
+                .iter()
+                .map(|e| e.message.clone())
+                .collect(),
         })
     }
 

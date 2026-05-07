@@ -778,6 +778,7 @@ cargo test -p hotsas_cli --test cli_integration
 ### v2.7-fix notes
 
 Applied in commit `398f8f6`:
+
 - Dirty git state resolved (committed `Cargo.toml`/`Cargo.lock` changes)
 - Removed dead `engine/cli/src/errors.rs`
 - Export JSON delegates to `AdvancedReportService` instead of manual `serde_json`
@@ -805,9 +806,60 @@ Applied in commit `398f8f6`:
 
 ---
 
+## v2.8 — Interactive Schematic Editing MVP
+
+### Rust tests
+
+- Schematic interaction API (`api/tests/schematic_editor_api_tests.rs`)
+  - `list_placeable_components_returns_real_library_items`
+  - `place_component_adds_instance_at_position`
+  - `place_component_marks_project_dirty`
+  - `delete_wire_removes_connection_and_updates_net`
+  - `undo_after_add_component_removes_component`
+  - `redo_after_undo_restores_component`
+  - `undo_after_connect_wire_removes_wire`
+  - `netlist_preview_uses_backend_netlist_service`
+
+- Schematic editing service (`application/tests/schematic_editing_tests.rs`)
+  - `delete_wire_removes_wire_and_cleans_up_net`
+  - `update_component_quick_parameter_updates_model`
+  - `update_component_quick_parameter_rejects_invalid_value`
+
+- Project package service (`application/tests/project_package_service_tests.rs`)
+  - `save_load_roundtrip_preserves_interactive_edits`
+
+### Frontend tests
+
+- `InteractiveSchematicToolbar.test.tsx` — tool mode switching
+- `PlaceableComponentPalette.test.tsx` — component list, select, deselect
+- `QuickParameterEditor.test.tsx` — field editing, update callback
+- `SchematicSelectionInspector.test.tsx` — empty state, component details, wire delete, parameter edit
+- `UndoRedoToolbar.test.tsx` — undo/redo buttons, disabled states
+- `NetlistPreviewPanel.test.tsx` — loading, empty, content, warnings/errors
+- `ErcIssuePanel.test.tsx` — no issues, errors, warnings
+
+### Manual v2.8 Schematic Editor Smoke Check
+
+1. Open the **Schematic Editor** screen.
+2. Verify **Interactive Schematic Toolbar** shows Select/Place/Wire/Delete modes.
+3. Click **Place** mode, select a component from palette.
+4. Click on canvas — verify component appears at clicked position.
+5. Drag a pin handle to another pin — verify wire appears.
+6. Select a wire — verify **Delete Wire** button appears in Selection panel.
+7. Click **Delete Wire** — verify wire disappears.
+8. Select a component — verify **Quick Parameter Editor** shows editable fields.
+9. Edit a value and click **Update** — verify value updates.
+10. Click **Undo** — verify last action is reverted.
+11. Click **Redo** — verify action is restored.
+12. Click **Netlist Preview** tab — verify SPICE-like netlist appears.
+13. Save project as `.circuit`.
+14. Reopen saved project — verify components, wires, and parameters persist.
+
+---
+
 ## Test Summary
 
-As of v2.7-fix, the Rust workspace runs **364 tests** across all crates with **zero failures**, and the frontend runs **103 UI tests** with **zero failures**.
+As of v2.8, the Rust workspace runs **376 tests** across all crates with **zero failures**, and the frontend runs **132 UI tests** with **zero failures**.
 
 ---
 

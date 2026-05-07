@@ -440,6 +440,7 @@ fn wire(
             point: Point::new(to_x, to_y),
         },
         net_id: net_id.to_string(),
+        geometry: None,
     }
 }
 

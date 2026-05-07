@@ -28,16 +28,16 @@ AppServices → existing storage / formula / netlist / export / simulation servi
 
 ## Commands
 
-| Command | Arguments | Exit codes |
-|---|---|---|
-| `validate <path>` | Path to `.circuit` package directory | 0 valid, 2 invalid |
-| `formula <id> [k=v...]` | Formula ID + variable assignments | 0 success, 2 input error |
-| `netlist <path> [--out <file>]` | Project path + optional output file | 0 success, 1/2 error |
-| `export <path> <format> [--out <file>]` | Project path + format (markdown/html/json/csv-summary) + optional output file | 0 success, 1/2/4 error |
-| `simulate <path> <profile> [--engine <engine>] [--out <file>]` | Project path + profile (ac_sweep/transient) + optional engine (mock/ngspice) + optional output file | 0 success, 1/2 error |
-| `library check` | — | 0 success |
-| `--version` | — | 0 |
-| `--help` | — | 0 |
+| Command                                                        | Arguments                                                                                           | Exit codes               |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------ |
+| `validate <path>`                                              | Path to `.circuit` package directory                                                                | 0 valid, 2 invalid       |
+| `formula <id> [k=v...]`                                        | Formula ID + variable assignments                                                                   | 0 success, 2 input error |
+| `netlist <path> [--out <file>]`                                | Project path + optional output file                                                                 | 0 success, 1/2 error     |
+| `export <path> <format> [--out <file>]`                        | Project path + format (markdown/html/json/csv-summary) + optional output file                       | 0 success, 1/2/4 error   |
+| `simulate <path> <profile> [--engine <engine>] [--out <file>]` | Project path + profile (ac_sweep/transient) + optional engine (mock/ngspice) + optional output file | 0 success, 1/2 error     |
+| `library check`                                                | —                                                                                                   | 0 success                |
+| `--version`                                                    | —                                                                                                   | 0                        |
+| `--help`                                                       | —                                                                                                   | 0                        |
 
 ## Global Flags
 
@@ -45,13 +45,13 @@ AppServices → existing storage / formula / netlist / export / simulation servi
 
 ## Exit Code Policy
 
-| Code | Meaning |
-|---|---|
-| 0 | Success |
-| 1 | Internal / IO / engine / export / simulation error |
-| 2 | Validation / invalid input / not found / missing state |
-| 3 | Usage error (e.g. malformed `key=value`) |
-| 4 | Unsupported feature (e.g. unknown export format) |
+| Code | Meaning                                                |
+| ---- | ------------------------------------------------------ |
+| 0    | Success                                                |
+| 1    | Internal / IO / engine / export / simulation error     |
+| 2    | Validation / invalid input / not found / missing state |
+| 3    | Usage error (e.g. malformed `key=value`)               |
+| 4    | Unsupported feature (e.g. unknown export format)       |
 
 ## Examples
 

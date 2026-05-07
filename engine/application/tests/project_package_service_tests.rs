@@ -1,7 +1,8 @@
-use hotsas_application::{AppServices, ProjectPackageService};
+use hotsas_application::{AppServices, ProjectPackageService, SchematicEditingService};
 use hotsas_core::{
-    rc_low_pass_project, CircuitProject, ProjectPackageManifest, ProjectPackageValidationReport,
-    ReportModel, SimulationProfile, SimulationResult, ValueWithUnit,
+    rc_low_pass_project, AddComponentRequest, CircuitProject, ConnectPinsRequest,
+    ProjectPackageManifest, ProjectPackageValidationReport, ReportModel, SimulationProfile,
+    SimulationResult, UpdateQuickParameterRequest, ValueWithUnit,
 };
 use hotsas_ports::{
     BomExporterPort, ComponentLibraryExporterPort, FormulaEnginePort, NetlistExporterPort,
@@ -291,4 +292,85 @@ impl hotsas_ports::TouchstoneParserPort for FakeTouchstoneParser {
             errors: vec![],
         })
     }
+}
+
+#[test]
+fn save_load_roundtrip_preserves_interactive_edits() {
+    let dir = temp_package_dir();
+    let storage =
+        Arc::new(FakeProjectPackageStorage::default()) as Arc<dyn ProjectPackageStoragePort>;
+    let service = ProjectPackageService::new(storage);
+    let mut project = rc_low_pass_project();
+    let edit_svc = SchematicEditingService::new();
+
+    // Interactive edits: place component
+    edit_svc
+        .add_component(
+            &mut project,
+            AddComponentRequest {
+                component_kind: "capacitor".to_string(),
+                component_definition_id: None,
+                instance_id: Some("C2".to_string()),
+                position: hotsas_core::Point::new(400.0, 400.0),
+                rotation_deg: 0.0,
+            },
+        )
+        .unwrap();
+
+    // Connect pins
+    edit_svc
+        .connect_pins(
+            &mut project,
+            ConnectPinsRequest {
+                from_component_id: "C1".to_string(),
+                from_pin_id: "2".to_string(),
+                to_component_id: "C2".to_string(),
+                to_pin_id: "1".to_string(),
+                net_name: Some("net_c1_c2".to_string()),
+            },
+        )
+        .unwrap();
+
+    // Update parameter
+    edit_svc
+        .update_component_quick_parameter(
+            &mut project,
+            UpdateQuickParameterRequest {
+                component_id: "R1".to_string(),
+                parameter_id: "resistance".to_string(),
+                value: "4.7k".to_string(),
+            },
+        )
+        .unwrap();
+
+    let manifest = service.save_project_package(&dir, &project).unwrap();
+    assert_eq!(manifest.project_id, project.id);
+
+    let loaded = service.load_project_package(&dir).unwrap();
+    assert_eq!(
+        loaded.schematic.components.len(),
+        project.schematic.components.len()
+    );
+    let loaded_r1 = loaded
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.instance_id == "R1")
+        .unwrap();
+    let resistance = loaded_r1.overridden_parameters.get("resistance").unwrap();
+    assert_eq!(resistance.original(), "4.7k");
+    let loaded_c2 = loaded
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.instance_id == "C2");
+    assert!(loaded_c2.is_some());
+    assert_eq!(loaded_c2.unwrap().position.x, 400.0);
+    let net = loaded.schematic.nets.iter().find(|n| n.name == "net_c1_c2");
+    assert!(net.is_some());
+    assert!(loaded
+        .schematic
+        .wires
+        .iter()
+        .any(|w| w.net_id == net.as_ref().unwrap().id));
 }

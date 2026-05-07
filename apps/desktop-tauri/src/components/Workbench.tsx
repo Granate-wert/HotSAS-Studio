@@ -110,10 +110,30 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
     schematicEditLoading,
     schematicEditError,
     pendingConnectionStart,
+    schematicToolMode,
+    placeableComponents,
+    pendingPlaceComponent,
+    pendingWireStart,
+    selectedSchematicEntity,
+    schematicSelectionDetails,
+    undoRedoState,
+    netlistPreview,
+    schematicInteractionLoading,
+    schematicInteractionError,
     setSchematicEditorCapabilities,
     setSchematicEditLoading,
     setSchematicEditError,
     setPendingConnectionStart,
+    setSchematicToolMode,
+    setPlaceableComponents,
+    setPendingPlaceComponent,
+    setPendingWireStart,
+    setSelectedSchematicEntity,
+    setSchematicSelectionDetails,
+    setUndoRedoState,
+    setNetlistPreview,
+    setSchematicInteractionLoading,
+    setSchematicInteractionError,
     projectSessionState,
     recentProjects,
     projectPersistenceLoading,
@@ -347,8 +367,144 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
       },
       setPendingConnectionStart: (start: { componentId: string; pinId: string } | null) =>
         setPendingConnectionStart(start),
+      setSchematicToolMode: (mode: "select" | "place" | "wire" | "delete") =>
+        setSchematicToolMode(mode),
+      setPendingPlaceComponent: (component: import("../types").PlaceableComponentDto | null) =>
+        setPendingPlaceComponent(component),
+      setPendingWireStart: (start: { componentId: string; pinId: string } | null) =>
+        setPendingWireStart(start),
+      setSelectedSchematicEntity: (
+        entity: { kind: "component" | "wire" | "net"; id: string } | null,
+      ) => setSelectedSchematicEntity(entity),
       loadSchematicCapabilities: () =>
         run(backend.listSchematicEditorCapabilities, setSchematicEditorCapabilities),
+      loadPlaceableComponents: () => run(backend.listPlaceableComponents, setPlaceableComponents),
+      placeSchematicComponent: (request: {
+        component_definition_id: string;
+        x: number;
+        y: number;
+        rotation_deg: number;
+      }) => {
+        setSchematicInteractionLoading(true);
+        setSchematicInteractionError(null);
+        backend
+          .placeSchematicComponent(request)
+          .then((result) => {
+            setProject(result.project);
+            setValidationReport({
+              valid:
+                result.validation_errors.length === 0 && result.validation_warnings.length === 0,
+              warnings: result.validation_warnings,
+              errors: result.validation_errors,
+            });
+          })
+          .catch((err) =>
+            setSchematicInteractionError(err instanceof Error ? err.message : String(err)),
+          )
+          .finally(() => setSchematicInteractionLoading(false));
+      },
+      deleteSchematicWire: (wireId: string) => {
+        setSchematicInteractionLoading(true);
+        setSchematicInteractionError(null);
+        backend
+          .deleteSchematicWire({ wire_id: wireId })
+          .then((result) => {
+            setProject(result.project);
+            setSelectedSchematicEntity(null);
+            setSchematicSelectionDetails(null);
+            setValidationReport({
+              valid:
+                result.validation_errors.length === 0 && result.validation_warnings.length === 0,
+              warnings: result.validation_warnings,
+              errors: result.validation_errors,
+            });
+          })
+          .catch((err) =>
+            setSchematicInteractionError(err instanceof Error ? err.message : String(err)),
+          )
+          .finally(() => setSchematicInteractionLoading(false));
+      },
+      updateSchematicQuickParameter: (componentId: string, parameterId: string, value: string) => {
+        setSchematicInteractionLoading(true);
+        setSchematicInteractionError(null);
+        backend
+          .updateSchematicQuickParameter({
+            component_id: componentId,
+            parameter_id: parameterId,
+            value,
+          })
+          .then((result) => {
+            setProject(result.project);
+            setValidationReport({
+              valid:
+                result.validation_errors.length === 0 && result.validation_warnings.length === 0,
+              warnings: result.validation_warnings,
+              errors: result.validation_errors,
+            });
+          })
+          .catch((err) =>
+            setSchematicInteractionError(err instanceof Error ? err.message : String(err)),
+          )
+          .finally(() => setSchematicInteractionLoading(false));
+      },
+      getSchematicSelectionDetails: (kind: "component" | "wire" | "net", id: string) => {
+        setSchematicInteractionLoading(true);
+        setSchematicInteractionError(null);
+        backend
+          .getSchematicSelectionDetails({ kind, id })
+          .then((details) => setSchematicSelectionDetails(details))
+          .catch((err) =>
+            setSchematicInteractionError(err instanceof Error ? err.message : String(err)),
+          )
+          .finally(() => setSchematicInteractionLoading(false));
+      },
+      undoSchematicEdit: () => {
+        setSchematicInteractionLoading(true);
+        setSchematicInteractionError(null);
+        backend
+          .undoSchematicEdit()
+          .then((project) => {
+            setProject(project);
+            setSelectedSchematicEntity(null);
+            setSchematicSelectionDetails(null);
+          })
+          .catch((err) =>
+            setSchematicInteractionError(err instanceof Error ? err.message : String(err)),
+          )
+          .finally(() => setSchematicInteractionLoading(false));
+      },
+      redoSchematicEdit: () => {
+        setSchematicInteractionLoading(true);
+        setSchematicInteractionError(null);
+        backend
+          .redoSchematicEdit()
+          .then((project) => {
+            setProject(project);
+            setSelectedSchematicEntity(null);
+            setSchematicSelectionDetails(null);
+          })
+          .catch((err) =>
+            setSchematicInteractionError(err instanceof Error ? err.message : String(err)),
+          )
+          .finally(() => setSchematicInteractionLoading(false));
+      },
+      getSchematicUndoRedoState: () => {
+        backend
+          .getSchematicUndoRedoState()
+          .then((state) => setUndoRedoState(state))
+          .catch(() => setUndoRedoState(null));
+      },
+      generateCurrentSchematicNetlistPreview: () => {
+        setSchematicInteractionLoading(true);
+        setSchematicInteractionError(null);
+        backend
+          .generateCurrentSchematicNetlistPreview()
+          .then((preview) => setNetlistPreview(preview))
+          .catch((err) =>
+            setSchematicInteractionError(err instanceof Error ? err.message : String(err)),
+          )
+          .finally(() => setSchematicInteractionLoading(false));
+      },
       addSchematicComponent: (kind: string) => {
         setSchematicEditLoading(true);
         setSchematicEditError(null);
@@ -647,6 +803,16 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         schematicEditLoading,
         schematicEditError,
         pendingConnectionStart,
+        schematicToolMode,
+        placeableComponents,
+        pendingPlaceComponent,
+        pendingWireStart,
+        selectedSchematicEntity,
+        schematicSelectionDetails,
+        undoRedoState,
+        netlistPreview,
+        schematicInteractionLoading,
+        schematicInteractionError,
         recentProjects,
         actions,
       })}
@@ -677,6 +843,22 @@ function renderScreen(
     schematicEditLoading: ReturnType<typeof useHotSasStore.getState>["schematicEditLoading"];
     schematicEditError: ReturnType<typeof useHotSasStore.getState>["schematicEditError"];
     pendingConnectionStart: ReturnType<typeof useHotSasStore.getState>["pendingConnectionStart"];
+    schematicToolMode: ReturnType<typeof useHotSasStore.getState>["schematicToolMode"];
+    placeableComponents: ReturnType<typeof useHotSasStore.getState>["placeableComponents"];
+    pendingPlaceComponent: ReturnType<typeof useHotSasStore.getState>["pendingPlaceComponent"];
+    pendingWireStart: ReturnType<typeof useHotSasStore.getState>["pendingWireStart"];
+    selectedSchematicEntity: ReturnType<typeof useHotSasStore.getState>["selectedSchematicEntity"];
+    schematicSelectionDetails: ReturnType<
+      typeof useHotSasStore.getState
+    >["schematicSelectionDetails"];
+    undoRedoState: ReturnType<typeof useHotSasStore.getState>["undoRedoState"];
+    netlistPreview: ReturnType<typeof useHotSasStore.getState>["netlistPreview"];
+    schematicInteractionLoading: ReturnType<
+      typeof useHotSasStore.getState
+    >["schematicInteractionLoading"];
+    schematicInteractionError: ReturnType<
+      typeof useHotSasStore.getState
+    >["schematicInteractionError"];
     recentProjects: ReturnType<typeof useHotSasStore.getState>["recentProjects"];
     appDiagnostics: ReturnType<typeof useHotSasStore.getState>["appDiagnostics"];
     readinessSelfCheckResult: ReturnType<
@@ -737,6 +919,14 @@ function renderScreen(
       ) => void;
       exportAdvancedReport: (reportId: string, format: string, outputPath: string | null) => void;
       setPendingConnectionStart: (start: { componentId: string; pinId: string } | null) => void;
+      setSchematicToolMode: (mode: "select" | "place" | "wire" | "delete") => void;
+      setPendingPlaceComponent: (
+        component: import("../types").PlaceableComponentDto | null,
+      ) => void;
+      setPendingWireStart: (start: { componentId: string; pinId: string } | null) => void;
+      setSelectedSchematicEntity: (
+        entity: { kind: "component" | "wire" | "net"; id: string } | null,
+      ) => void;
       loadSchematicCapabilities: () => void;
       addSchematicComponent: (kind: string) => void;
       moveSchematicComponent: (instanceId: string, x: number, y: number) => void;
@@ -749,6 +939,24 @@ function renderScreen(
         net_name?: string | null;
       }) => void;
       renameSchematicNet: (netId: string, newName: string) => void;
+      loadPlaceableComponents: () => void;
+      placeSchematicComponent: (request: {
+        component_definition_id: string;
+        x: number;
+        y: number;
+        rotation_deg: number;
+      }) => void;
+      deleteSchematicWire: (wireId: string) => void;
+      updateSchematicQuickParameter: (
+        componentId: string,
+        parameterId: string,
+        value: string,
+      ) => void;
+      getSchematicSelectionDetails: (kind: "component" | "wire" | "net", id: string) => void;
+      undoSchematicEdit: () => void;
+      redoSchematicEdit: () => void;
+      getSchematicUndoRedoState: () => void;
+      generateCurrentSchematicNetlistPreview: () => void;
       loadProjectSessionState: () => void;
       saveCurrentProject: () => void;
       saveProjectAs: (path: string) => void;
@@ -808,6 +1016,31 @@ function renderScreen(
         onConnectPins={context.actions.connectSchematicPins}
         onRenameNet={context.actions.renameSchematicNet}
         onSetPendingConnectionStart={context.actions.setPendingConnectionStart}
+        schematicToolMode={context.schematicToolMode}
+        placeableComponents={context.placeableComponents}
+        pendingPlaceComponent={context.pendingPlaceComponent}
+        pendingWireStart={context.pendingWireStart}
+        selectedSchematicEntity={context.selectedSchematicEntity}
+        schematicSelectionDetails={context.schematicSelectionDetails}
+        undoRedoState={context.undoRedoState}
+        netlistPreview={context.netlistPreview}
+        schematicInteractionLoading={context.schematicInteractionLoading}
+        schematicInteractionError={context.schematicInteractionError}
+        onLoadPlaceableComponents={context.actions.loadPlaceableComponents}
+        onPlaceSchematicComponent={context.actions.placeSchematicComponent}
+        onDeleteSchematicWire={context.actions.deleteSchematicWire}
+        onUpdateSchematicQuickParameter={context.actions.updateSchematicQuickParameter}
+        onGetSchematicSelectionDetails={context.actions.getSchematicSelectionDetails}
+        onUndoSchematicEdit={context.actions.undoSchematicEdit}
+        onRedoSchematicEdit={context.actions.redoSchematicEdit}
+        onGetSchematicUndoRedoState={context.actions.getSchematicUndoRedoState}
+        onGenerateCurrentSchematicNetlistPreview={
+          context.actions.generateCurrentSchematicNetlistPreview
+        }
+        onSetSchematicToolMode={context.actions.setSchematicToolMode}
+        onSetPendingPlaceComponent={context.actions.setPendingPlaceComponent}
+        onSetPendingWireStart={context.actions.setPendingWireStart}
+        onSetSelectedSchematicEntity={context.actions.setSelectedSchematicEntity}
       />
     );
   }

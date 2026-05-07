@@ -146,6 +146,8 @@ pub struct Wire {
     pub from: CircuitEndpoint,
     pub to: CircuitEndpoint,
     pub net_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub geometry: Option<WireGeometry>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -415,6 +417,38 @@ impl Point {
     pub fn new(x: f64, y: f64) -> Self {
         Self { x, y }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WireGeometry {
+    pub points: Vec<Point>,
+    pub routing_style: WireRoutingStyle,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum WireRoutingStyle {
+    Straight,
+    Orthogonal,
+    Manual,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SchematicEditAction {
+    pub id: String,
+    pub label: String,
+    pub timestamp: String,
+    pub kind: SchematicEditActionKind,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SchematicEditActionKind {
+    AddComponent,
+    MoveComponent,
+    DeleteComponent,
+    ConnectPins,
+    DeleteWire,
+    RenameNet,
+    UpdateParameter,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]

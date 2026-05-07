@@ -987,7 +987,67 @@ export type RenameNetRequestDto = {
 export type SchematicEditResultDto = {
   project: ProjectDto;
   validation_warnings: CircuitValidationIssueDto[];
+  validation_errors: CircuitValidationIssueDto[];
   message: string;
+};
+
+// v2.8 Interactive Schematic Editing Types
+
+export type PlaceableComponentDto = {
+  definition_id: string;
+  name: string;
+  category: string;
+  component_kind: string;
+  has_symbol: boolean;
+};
+
+export type PlaceComponentRequestDto = {
+  component_definition_id: string;
+  x: number;
+  y: number;
+  rotation_deg: number;
+};
+
+export type DeleteWireRequestDto = {
+  wire_id: string;
+};
+
+export type UpdateQuickParameterRequestDto = {
+  component_id: string;
+  parameter_id: string;
+  value: string;
+};
+
+export type SchematicSelectionRequestDto = {
+  kind: "component" | "wire" | "net";
+  id: string;
+};
+
+export type SchematicEditableFieldDto = {
+  field_id: string;
+  label: string;
+  current_value: string;
+  editable: boolean;
+};
+
+export type SchematicSelectionDetailsDto = {
+  kind: string;
+  id: string | null;
+  display_name: string | null;
+  editable_fields: SchematicEditableFieldDto[];
+};
+
+export type UndoRedoStateDto = {
+  can_undo: boolean;
+  can_redo: boolean;
+  last_action_label: string | null;
+  next_redo_label: string | null;
+};
+
+export type NetlistPreviewDto = {
+  netlist: string;
+  warnings: string[];
+  errors: string[];
 };
 
 export type SchematicToolCapabilityDto = {
