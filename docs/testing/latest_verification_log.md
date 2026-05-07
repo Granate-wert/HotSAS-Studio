@@ -10,7 +10,7 @@
 Version: v3.0 — Simulation UX, ngspice Hardening, Probes & Graph Workflow
 Backend/API/CLI commit: 47a946c
 Frontend/docs commit: 1af7cd6
-Fix/docs commit: <new hash>
+Fix/docs commit: ce67989
 Branch: main
 Push status: PASS / origin/main OK
 Verification log: docs/testing/verification_logs/v3.0_simulation_ux_ngspice_probes_graphs.md
