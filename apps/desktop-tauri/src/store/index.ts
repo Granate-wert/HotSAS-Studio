@@ -202,6 +202,16 @@ type HotSasState = {
   setProjectPersistenceError: (error: string | null) => void;
   setLastProjectSaveResult: (result: ProjectSaveResultDto | null) => void;
   setLastProjectOpenResult: (result: ProjectOpenResultDto | null) => void;
+  setSimulationProfiles: (profiles: UserCircuitSimulationProfileDto[]) => void;
+  setSimulationProbes: (probes: SimulationProbeDto[]) => void;
+  setSelectedSimulationProfile: (profile: UserCircuitSimulationProfileDto | null) => void;
+  setSelectedSimulationProbes: (probes: SimulationProbeDto[]) => void;
+  setSimulationPreflight: (preflight: SimulationPreflightResultDto | null) => void;
+  setCurrentSimulationRun: (run: UserCircuitSimulationRunDto | null) => void;
+  setLastSimulationRun: (run: UserCircuitSimulationRunDto | null) => void;
+  setSimulationWorkflowLoading: (loading: boolean) => void;
+  setSimulationWorkflowError: (error: string | null) => void;
+  setSimulationResultViewMode: (mode: "graph" | "table" | "netlist") => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -377,8 +387,9 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setSimulationProfiles: (simulationProfiles: UserCircuitSimulationProfileDto[]) =>
     set({ simulationProfiles }),
   setSimulationProbes: (simulationProbes: SimulationProbeDto[]) => set({ simulationProbes }),
-  setSelectedSimulationProfile: (selectedSimulationProfile: UserCircuitSimulationProfileDto | null) =>
-    set({ selectedSimulationProfile }),
+  setSelectedSimulationProfile: (
+    selectedSimulationProfile: UserCircuitSimulationProfileDto | null,
+  ) => set({ selectedSimulationProfile }),
   setSelectedSimulationProbes: (selectedSimulationProbes: SimulationProbeDto[]) =>
     set({ selectedSimulationProbes }),
   setSimulationPreflight: (simulationPreflight: SimulationPreflightResultDto | null) =>

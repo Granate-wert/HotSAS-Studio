@@ -1,9 +1,9 @@
 use hotsas_application::AppServices;
 use hotsas_core::{
-    CircuitProject, ComponentInstance, EngineeringUnit, OperatingPointSettings,
-    SimulationProbe, SimulationProbeKind, SimulationProbeTarget, SimulationStatus,
-    TransientSettings, UserCircuitAnalysisType, UserCircuitSimulationEngine,
-    UserCircuitSimulationProfile, ValueWithUnit,
+    CircuitProject, ComponentInstance, EngineeringUnit, OperatingPointSettings, SimulationProbe,
+    SimulationProbeKind, SimulationProbeTarget, SimulationStatus, TransientSettings,
+    UserCircuitAnalysisType, UserCircuitSimulationEngine, UserCircuitSimulationProfile,
+    ValueWithUnit,
 };
 use hotsas_ports::{
     BomExporterPort, ComponentLibraryExporterPort, ComponentLibraryPort, NetlistExporterPort,
@@ -26,10 +26,7 @@ impl StoragePort for FakeStorage {
     ) -> Result<(), PortError> {
         Ok(())
     }
-    fn load_project(
-        &self,
-        _path: &std::path::Path,
-    ) -> Result<CircuitProject, PortError> {
+    fn load_project(&self, _path: &std::path::Path) -> Result<CircuitProject, PortError> {
         Ok(rc_low_pass_project_with_ground())
     }
 }
@@ -85,13 +82,8 @@ impl hotsas_ports::FormulaEnginePort for FakeFormulaEngine {
 struct FakeNetlistExporter;
 
 impl NetlistExporterPort for FakeNetlistExporter {
-    fn export_spice_netlist(
-        &self,
-        _project: &CircuitProject,
-    ) -> Result<String, PortError> {
-        Ok(
-            "V1 net_in 0 AC 1\nR1 net_in net_out 10k\nC1 net_out 0 100n\n.end".to_string(),
-        )
+    fn export_spice_netlist(&self, _project: &CircuitProject) -> Result<String, PortError> {
+        Ok("V1 net_in 0 AC 1\nR1 net_in net_out 10k\nC1 net_out 0 100n\n.end".to_string())
     }
 }
 
@@ -134,9 +126,7 @@ impl SimulationEnginePort for FakeUnavailableNgspiceEngine {
         "ngspice"
     }
 
-    fn check_availability(
-        &self,
-    ) -> Result<hotsas_core::NgspiceAvailability, PortError> {
+    fn check_availability(&self) -> Result<hotsas_core::NgspiceAvailability, PortError> {
         Ok(hotsas_core::NgspiceAvailability {
             available: false,
             executable_path: None,
@@ -174,16 +164,10 @@ impl SimulationEnginePort for FakeUnavailableNgspiceEngine {
 struct FakeReportExporter;
 
 impl ReportExporterPort for FakeReportExporter {
-    fn export_markdown(
-        &self,
-        _report: &hotsas_core::ReportModel,
-    ) -> Result<String, PortError> {
+    fn export_markdown(&self, _report: &hotsas_core::ReportModel) -> Result<String, PortError> {
         Ok("# Report".to_string())
     }
-    fn export_html(
-        &self,
-        _report: &hotsas_core::ReportModel,
-    ) -> Result<String, PortError> {
+    fn export_html(&self, _report: &hotsas_core::ReportModel) -> Result<String, PortError> {
         Ok("<html></html>".to_string())
     }
 }
@@ -192,9 +176,7 @@ impl ReportExporterPort for FakeReportExporter {
 struct FakeComponentLibraryStorage;
 
 impl ComponentLibraryPort for FakeComponentLibraryStorage {
-    fn load_builtin_library(
-        &self,
-    ) -> Result<hotsas_core::ComponentLibrary, PortError> {
+    fn load_builtin_library(&self) -> Result<hotsas_core::ComponentLibrary, PortError> {
         Ok(hotsas_core::built_in_component_library())
     }
     fn load_library_from_path(
@@ -216,16 +198,10 @@ impl ComponentLibraryPort for FakeComponentLibraryStorage {
 struct FakeBomExporter;
 
 impl BomExporterPort for FakeBomExporter {
-    fn export_bom_csv(
-        &self,
-        _project: &CircuitProject,
-    ) -> Result<String, PortError> {
+    fn export_bom_csv(&self, _project: &CircuitProject) -> Result<String, PortError> {
         Ok("".to_string())
     }
-    fn export_bom_json(
-        &self,
-        _project: &CircuitProject,
-    ) -> Result<String, PortError> {
+    fn export_bom_json(&self, _project: &CircuitProject) -> Result<String, PortError> {
         Ok("".to_string())
     }
 }
@@ -258,10 +234,7 @@ impl ComponentLibraryExporterPort for FakeComponentLibraryExporter {
 struct FakeSchematicExporter;
 
 impl SchematicExporterPort for FakeSchematicExporter {
-    fn export_svg_schematic(
-        &self,
-        _project: &CircuitProject,
-    ) -> Result<String, PortError> {
+    fn export_svg_schematic(&self, _project: &CircuitProject) -> Result<String, PortError> {
         Ok("".to_string())
     }
 }
@@ -405,7 +378,9 @@ fn suggest_probes_returns_node_voltage_probes() {
         .suggest_simulation_probes(&project)
         .unwrap();
     assert!(!probes.is_empty());
-    assert!(probes.iter().all(|p| matches!(p.kind, SimulationProbeKind::NodeVoltage)));
+    assert!(probes
+        .iter()
+        .all(|p| matches!(p.kind, SimulationProbeKind::NodeVoltage)));
     assert!(probes.iter().any(|p| p.label.contains("Vin")));
     assert!(probes.iter().any(|p| p.label.contains("Vout")));
 }
@@ -432,7 +407,11 @@ fn validate_circuit_with_valid_project_returns_can_run() {
         .simulation_workflow_service()
         .validate_circuit_for_simulation(&project, &profile)
         .unwrap();
-    assert!(result.can_run, "Expected can_run=true, got errors: {:?}", result.blocking_errors);
+    assert!(
+        result.can_run,
+        "Expected can_run=true, got errors: {:?}",
+        result.blocking_errors
+    );
     assert!(result.generated_netlist_preview.is_some());
     assert!(result.blocking_errors.is_empty());
 }
@@ -457,7 +436,10 @@ fn validate_circuit_without_components_fails() {
         .validate_circuit_for_simulation(&project, &profile)
         .unwrap();
     assert!(!result.can_run);
-    assert!(result.blocking_errors.iter().any(|e| e.code == "NO_COMPONENTS"));
+    assert!(result
+        .blocking_errors
+        .iter()
+        .any(|e| e.code == "NO_COMPONENTS"));
 }
 
 #[test]
@@ -487,7 +469,10 @@ fn validate_circuit_invalid_probe_net_fails() {
         .validate_circuit_for_simulation(&project, &profile)
         .unwrap();
     assert!(!result.can_run);
-    assert!(result.blocking_errors.iter().any(|e| e.code == "INVALID_PROBE_NET"));
+    assert!(result
+        .blocking_errors
+        .iter()
+        .any(|e| e.code == "INVALID_PROBE_NET"));
 }
 
 #[test]
@@ -512,7 +497,10 @@ fn run_user_circuit_simulation_mock_ac_succeeds() {
         .simulation_workflow_service()
         .run_user_circuit_simulation(&project, profile)
         .unwrap();
-    assert_eq!(run.status, hotsas_core::UserCircuitSimulationStatus::Succeeded);
+    assert_eq!(
+        run.status,
+        hotsas_core::UserCircuitSimulationStatus::Succeeded
+    );
     assert_eq!(run.engine_used, "mock");
     assert!(!run.generated_netlist.is_empty());
     assert!(run.result.is_some());
@@ -541,7 +529,10 @@ fn run_user_circuit_simulation_mock_op_succeeds() {
         .simulation_workflow_service()
         .run_user_circuit_simulation(&project, profile)
         .unwrap();
-    assert_eq!(run.status, hotsas_core::UserCircuitSimulationStatus::Succeeded);
+    assert_eq!(
+        run.status,
+        hotsas_core::UserCircuitSimulationStatus::Succeeded
+    );
     assert_eq!(run.engine_used, "mock");
     assert!(run.result.is_some());
 }
@@ -567,7 +558,10 @@ fn run_user_circuit_simulation_mock_transient_succeeds() {
         .simulation_workflow_service()
         .run_user_circuit_simulation(&project, profile)
         .unwrap();
-    assert_eq!(run.status, hotsas_core::UserCircuitSimulationStatus::Succeeded);
+    assert_eq!(
+        run.status,
+        hotsas_core::UserCircuitSimulationStatus::Succeeded
+    );
     assert_eq!(run.engine_used, "mock");
     assert!(run.result.is_some());
 }
@@ -594,10 +588,16 @@ fn run_user_circuit_simulation_auto_fallback_to_mock() {
         .simulation_workflow_service()
         .run_user_circuit_simulation(&project, profile)
         .unwrap();
-    assert_eq!(run.status, hotsas_core::UserCircuitSimulationStatus::Succeeded);
+    assert_eq!(
+        run.status,
+        hotsas_core::UserCircuitSimulationStatus::Succeeded
+    );
     // Auto mode with unavailable ngspice falls back to mock
     assert_eq!(run.engine_used, "mock");
-    assert!(run.warnings.iter().any(|w| w.message.contains("ngspice unavailable")));
+    assert!(run
+        .warnings
+        .iter()
+        .any(|w| w.message.contains("ngspice unavailable")));
 }
 
 #[test]

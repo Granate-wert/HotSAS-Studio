@@ -90,9 +90,7 @@ impl NetlistExporterPort for FakeNetlistExporter {
         &self,
         _project: &hotsas_core::CircuitProject,
     ) -> Result<String, PortError> {
-        Ok(
-            "V1 net_in 0 AC 1\nR1 net_in net_out 10k\nC1 net_out 0 100n\n.end".to_string(),
-        )
+        Ok("V1 net_in 0 AC 1\nR1 net_in net_out 10k\nC1 net_out 0 100n\n.end".to_string())
     }
 }
 
@@ -135,9 +133,7 @@ impl SimulationEnginePort for FakeUnavailableNgspiceEngine {
         "ngspice"
     }
 
-    fn check_availability(
-        &self,
-    ) -> Result<hotsas_core::NgspiceAvailability, PortError> {
+    fn check_availability(&self) -> Result<hotsas_core::NgspiceAvailability, PortError> {
         Ok(hotsas_core::NgspiceAvailability {
             available: false,
             executable_path: None,
@@ -175,16 +171,10 @@ impl SimulationEnginePort for FakeUnavailableNgspiceEngine {
 struct FakeReportExporter;
 
 impl ReportExporterPort for FakeReportExporter {
-    fn export_markdown(
-        &self,
-        _report: &hotsas_core::ReportModel,
-    ) -> Result<String, PortError> {
+    fn export_markdown(&self, _report: &hotsas_core::ReportModel) -> Result<String, PortError> {
         Ok("# Report".to_string())
     }
-    fn export_html(
-        &self,
-        _report: &hotsas_core::ReportModel,
-    ) -> Result<String, PortError> {
+    fn export_html(&self, _report: &hotsas_core::ReportModel) -> Result<String, PortError> {
         Ok("<html></html>".to_string())
     }
 }
@@ -193,9 +183,7 @@ impl ReportExporterPort for FakeReportExporter {
 struct FakeComponentLibraryStorage;
 
 impl ComponentLibraryPort for FakeComponentLibraryStorage {
-    fn load_builtin_library(
-        &self,
-    ) -> Result<hotsas_core::ComponentLibrary, PortError> {
+    fn load_builtin_library(&self) -> Result<hotsas_core::ComponentLibrary, PortError> {
         Ok(hotsas_core::built_in_component_library())
     }
     fn load_library_from_path(
@@ -217,16 +205,10 @@ impl ComponentLibraryPort for FakeComponentLibraryStorage {
 struct FakeBomExporter;
 
 impl BomExporterPort for FakeBomExporter {
-    fn export_bom_csv(
-        &self,
-        _project: &hotsas_core::CircuitProject,
-    ) -> Result<String, PortError> {
+    fn export_bom_csv(&self, _project: &hotsas_core::CircuitProject) -> Result<String, PortError> {
         Ok("".to_string())
     }
-    fn export_bom_json(
-        &self,
-        _project: &hotsas_core::CircuitProject,
-    ) -> Result<String, PortError> {
+    fn export_bom_json(&self, _project: &hotsas_core::CircuitProject) -> Result<String, PortError> {
         Ok("".to_string())
     }
 }
@@ -431,8 +413,14 @@ fn suggest_user_circuit_simulation_probes_returns_probes() {
 fn validate_current_circuit_for_simulation_returns_can_run() {
     let api = build_test_api();
     api.create_rc_low_pass_demo_project().unwrap();
-    let result = api.validate_current_circuit_for_simulation(mock_ac_profile()).unwrap();
-    assert!(result.can_run, "Expected can_run=true, got errors: {:?}", result.blocking_errors);
+    let result = api
+        .validate_current_circuit_for_simulation(mock_ac_profile())
+        .unwrap();
+    assert!(
+        result.can_run,
+        "Expected can_run=true, got errors: {:?}",
+        result.blocking_errors
+    );
     assert!(result.generated_netlist_preview.is_some());
 }
 
@@ -440,7 +428,9 @@ fn validate_current_circuit_for_simulation_returns_can_run() {
 fn run_current_circuit_simulation_mock_ac_returns_run_dto() {
     let api = build_test_api();
     api.create_rc_low_pass_demo_project().unwrap();
-    let run = api.run_current_circuit_simulation(mock_ac_profile()).unwrap();
+    let run = api
+        .run_current_circuit_simulation(mock_ac_profile())
+        .unwrap();
     assert_eq!(run.status, "Succeeded");
     assert_eq!(run.engine_used, "mock");
     assert!(!run.generated_netlist.is_empty());
@@ -451,7 +441,9 @@ fn run_current_circuit_simulation_mock_ac_returns_run_dto() {
 fn run_current_circuit_simulation_mock_op_returns_run_dto() {
     let api = build_test_api();
     api.create_rc_low_pass_demo_project().unwrap();
-    let run = api.run_current_circuit_simulation(mock_op_profile()).unwrap();
+    let run = api
+        .run_current_circuit_simulation(mock_op_profile())
+        .unwrap();
     assert_eq!(run.status, "Succeeded");
     assert_eq!(run.engine_used, "mock");
     assert!(run.result.is_some());
@@ -461,7 +453,9 @@ fn run_current_circuit_simulation_mock_op_returns_run_dto() {
 fn run_current_circuit_simulation_mock_transient_returns_run_dto() {
     let api = build_test_api();
     api.create_rc_low_pass_demo_project().unwrap();
-    let run = api.run_current_circuit_simulation(mock_transient_profile()).unwrap();
+    let run = api
+        .run_current_circuit_simulation(mock_transient_profile())
+        .unwrap();
     assert_eq!(run.status, "Succeeded");
     assert_eq!(run.engine_used, "mock");
     assert!(run.result.is_some());
@@ -475,7 +469,8 @@ fn get_last_user_circuit_simulation_after_run() {
     let before = api.get_last_user_circuit_simulation().unwrap();
     assert!(before.is_none());
 
-    api.run_current_circuit_simulation(mock_ac_profile()).unwrap();
+    api.run_current_circuit_simulation(mock_ac_profile())
+        .unwrap();
 
     let after = api.get_last_user_circuit_simulation().unwrap();
     assert!(after.is_some());
@@ -488,7 +483,8 @@ fn clear_last_user_circuit_simulation_works() {
     let api = build_test_api();
     api.create_rc_low_pass_demo_project().unwrap();
 
-    api.run_current_circuit_simulation(mock_ac_profile()).unwrap();
+    api.run_current_circuit_simulation(mock_ac_profile())
+        .unwrap();
     assert!(api.get_last_user_circuit_simulation().unwrap().is_some());
 
     api.clear_last_user_circuit_simulation().unwrap();

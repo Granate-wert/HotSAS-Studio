@@ -334,10 +334,7 @@ fn cli_user_circuit_simulate_mock_ac_returns_series() {
     let api = hotsas_cli::build_headless_api();
     api.create_rc_low_pass_demo_project().unwrap();
 
-    let temp_dir = std::env::temp_dir().join(format!(
-        "hotsas_cli_ucs_test_{}",
-        std::process::id()
-    ));
+    let temp_dir = std::env::temp_dir().join(format!("hotsas_cli_ucs_test_{}", std::process::id()));
     std::fs::create_dir_all(&temp_dir).unwrap();
     let package_path = temp_dir.join("demo_project.circuit");
 
@@ -379,10 +376,8 @@ fn cli_user_circuit_simulate_json_contains_status_and_engine() {
     let api = hotsas_cli::build_headless_api();
     api.create_rc_low_pass_demo_project().unwrap();
 
-    let temp_dir = std::env::temp_dir().join(format!(
-        "hotsas_cli_ucs_json_test_{}",
-        std::process::id()
-    ));
+    let temp_dir =
+        std::env::temp_dir().join(format!("hotsas_cli_ucs_json_test_{}", std::process::id()));
     std::fs::create_dir_all(&temp_dir).unwrap();
     let package_path = temp_dir.join("demo_project.circuit");
 
@@ -424,10 +419,8 @@ fn cli_user_circuit_simulate_auto_fallback_contains_mock_warning() {
     let api = hotsas_cli::build_headless_api();
     api.create_rc_low_pass_demo_project().unwrap();
 
-    let temp_dir = std::env::temp_dir().join(format!(
-        "hotsas_cli_ucs_auto_test_{}",
-        std::process::id()
-    ));
+    let temp_dir =
+        std::env::temp_dir().join(format!("hotsas_cli_ucs_auto_test_{}", std::process::id()));
     std::fs::create_dir_all(&temp_dir).unwrap();
     let package_path = temp_dir.join("demo_project.circuit");
 
@@ -462,7 +455,10 @@ fn cli_user_circuit_simulate_auto_fallback_contains_mock_warning() {
             .as_array()
             .unwrap()
             .iter()
-            .any(|w| w["message"].as_str().unwrap_or("").contains("ngspice unavailable")),
+            .any(|w| w["message"]
+                .as_str()
+                .unwrap_or("")
+                .contains("ngspice unavailable")),
         "auto fallback should produce ngspice unavailable warning"
     );
 }

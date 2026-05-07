@@ -265,13 +265,14 @@ export const backend = {
   suggestUserCircuitSimulationProbes: () =>
     invokeCommand<SimulationProbeDto[]>("suggest_user_circuit_simulation_probes"),
   validateCurrentCircuitForSimulation: (profile: UserCircuitSimulationProfileDto) =>
-    invokeCommand<SimulationPreflightResultDto>("validate_current_circuit_for_simulation", { profile }),
+    invokeCommand<SimulationPreflightResultDto>("validate_current_circuit_for_simulation", {
+      profile,
+    }),
   runCurrentCircuitSimulation: (profile: UserCircuitSimulationProfileDto) =>
     invokeCommand<UserCircuitSimulationRunDto>("run_current_circuit_simulation", { profile }),
   getLastUserCircuitSimulation: () =>
     invokeCommand<UserCircuitSimulationRunDto | null>("get_last_user_circuit_simulation"),
-  clearLastUserCircuitSimulation: () =>
-    invokeCommand<void>("clear_last_user_circuit_simulation"),
+  clearLastUserCircuitSimulation: () => invokeCommand<void>("clear_last_user_circuit_simulation"),
   addLastSimulationToAdvancedReport: () =>
     invokeCommand<ProjectDto>("add_last_simulation_to_advanced_report"),
 };

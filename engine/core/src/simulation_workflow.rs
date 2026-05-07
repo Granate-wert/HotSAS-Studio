@@ -33,10 +33,20 @@ pub enum SimulationProbeKind {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SimulationProbeTarget {
-    Net { net_id: String },
-    ComponentPin { component_id: String, pin_id: String },
-    Component { component_id: String },
-    NetPair { positive_net_id: String, negative_net_id: String },
+    Net {
+        net_id: String,
+    },
+    ComponentPin {
+        component_id: String,
+        pin_id: String,
+    },
+    Component {
+        component_id: String,
+    },
+    NetPair {
+        positive_net_id: String,
+        negative_net_id: String,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

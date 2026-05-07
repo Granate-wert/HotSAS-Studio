@@ -15,7 +15,7 @@ export function SimulationMeasurementsTable({ measurements }: Props) {
   }
 
   return (
-    <Table size="xs" striped>
+    <Table striped>
       <Table.Thead>
         <Table.Tr>
           <Table.Th>Name</Table.Th>

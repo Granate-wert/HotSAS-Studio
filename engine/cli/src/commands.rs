@@ -1,8 +1,8 @@
 use hotsas_api::{
     AcSweepSettingsDto, AdvancedReportExportRequestDto, AdvancedReportRequestDto, ApiError,
     FormulaCalculationRequestDto, FormulaVariableInputDto, HotSasApi, OperatingPointSettingsDto,
-    ProjectOpenRequestDto, ReportExportOptionsDto, SimulationRunRequestDto,
-    TransientSettingsDto, UserCircuitSimulationProfileDto,
+    ProjectOpenRequestDto, ReportExportOptionsDto, SimulationRunRequestDto, TransientSettingsDto,
+    UserCircuitSimulationProfileDto,
 };
 
 use crate::output::{print_output, CliOutput, CliStatus};

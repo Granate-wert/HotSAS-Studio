@@ -857,9 +857,64 @@ Applied in commit `398f8f6`:
 
 ---
 
+## v2.9 — User-Circuit Netlist & Simulation End-to-End
+
+### Rust tests
+
+- **Simulation workflow** (`application/tests/user_circuit_simulation_workflow_tests.rs`)
+  - `list_default_profiles_returns_three_profiles` — 4 profiles returned
+  - `suggest_probes_returns_node_voltage_probes` — net voltage probes suggested
+  - `validate_circuit_with_valid_project_returns_can_run` — preflight passes
+  - `validate_circuit_without_components_fails` — empty circuit blocked
+  - `validate_circuit_invalid_probe_net_fails` — invalid probe rejected
+  - `run_user_circuit_simulation_mock_ac_succeeds` — AC sweep mock
+  - `run_user_circuit_simulation_mock_op_succeeds` — operating point mock
+  - `run_user_circuit_simulation_mock_transient_succeeds` — transient mock
+  - `run_user_circuit_simulation_auto_fallback_to_mock` — auto fallback with warning
+  - `get_and_clear_last_simulation` — session-local cache
+  - `simulation_result_to_report_section_builds_section` — report integration
+
+- **API facade** (`api/tests/user_circuit_simulation_api_tests.rs`)
+  - `list_user_circuit_simulation_profiles_returns_profiles`
+  - `suggest_user_circuit_simulation_probes_returns_probes`
+  - `validate_current_circuit_for_simulation_returns_can_run`
+  - `run_current_circuit_simulation_mock_*` — AC, OP, Transient
+  - `get_last_user_circuit_simulation_after_run`
+  - `clear_last_user_circuit_simulation_works`
+  - `add_last_simulation_to_advanced_report_without_run_fails`
+
+- **Netlist exporter** (`adapters/tests/user_circuit_netlist.rs`)
+  - `exports_simple_rc_netlist` — R, C, V, ground netlist generation
+
+- **CLI integration** (`cli/tests/cli_integration.rs`)
+  - `cli_user_circuit_simulate_mock_ac_returns_series`
+  - `cli_user_circuit_simulate_json_contains_status_and_engine`
+  - `cli_user_circuit_simulate_auto_fallback_contains_mock_warning`
+  - `cli_user_circuit_simulate_invalid_profile_returns_exit_code_2`
+
+### Frontend tests
+
+- 132 UI tests PASS (existing suites + simulation panel integration)
+
+### Manual v2.9 Simulation Smoke Check
+
+1. Open the **Schematic Editor** screen.
+2. Build an RC circuit (Vsource → R → C → GND).
+3. Set R=10k, C=100n via Quick Parameter Editor.
+4. Open the **Simulation** tab in the bottom panel.
+5. Select "AC Sweep (Mock)" profile.
+6. Click **Preflight** — verify validation passes.
+7. Click **Run Simulation** — verify status = Succeeded, engine = mock.
+8. Verify measurements table shows values.
+9. Verify graph series renders.
+10. Save project as `.circuit`.
+11. CLI: `hotsas-cli user-circuit-simulate project.circuit mock-ac --engine Mock --json`
+
+---
+
 ## Test Summary
 
-As of v2.8, the Rust workspace runs **376 tests** across all crates with **zero failures**, and the frontend runs **132 UI tests** with **zero failures**.
+As of v2.9, the Rust workspace runs **~400+ tests** across all crates with **zero failures**, and the frontend runs **132 UI tests** with **zero failures**.
 
 ---
 

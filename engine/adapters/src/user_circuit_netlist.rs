@@ -80,7 +80,10 @@ fn spice_element_for_component(
                     designator, component.definition_id
                 ));
             }
-            Ok(format!("{} {} {} {}", designator, ordered_nets[0], ordered_nets[1], value))
+            Ok(format!(
+                "{} {} {} {}",
+                designator, ordered_nets[0], ordered_nets[1], value
+            ))
         }
         'V' => {
             if ordered_nets.len() < 2 {
@@ -126,10 +129,10 @@ fn ordered_connected_nets(
         .connected_nets
         .iter()
         .map(|cn| {
-            let net = net_renames
-                .get(&cn.net_id)
-                .cloned()
-                .unwrap_or_else(|| cn.net_id.replace(|c: char| !c.is_alphanumeric() && c != '_', ""));
+            let net = net_renames.get(&cn.net_id).cloned().unwrap_or_else(|| {
+                cn.net_id
+                    .replace(|c: char| !c.is_alphanumeric() && c != '_', "")
+            });
             (cn.pin_id.clone(), net)
         })
         .collect();
@@ -188,7 +191,10 @@ fn default_parameter_value(
 ) -> Option<ValueWithUnit> {
     // Look up built-in library defaults for generic components
     let library = hotsas_core::built_in_component_library();
-    let def = library.components.iter().find(|c| c.id == component.definition_id)?;
+    let def = library
+        .components
+        .iter()
+        .find(|c| c.id == component.definition_id)?;
     def.parameters.get(param_name).cloned()
 }
 
@@ -198,9 +204,7 @@ fn format_value(value: &ValueWithUnit) -> String {
         format!("{v:.6e}")
     } else {
         let s = format!("{v:.6}");
-        s.trim_end_matches('0')
-            .trim_end_matches('.')
-            .to_string()
+        s.trim_end_matches('0').trim_end_matches('.').to_string()
     }
 }
 
@@ -297,7 +301,8 @@ mod tests {
             .overridden_parameters
             .insert(
                 "resistance".to_string(),
-                ValueWithUnit::parse_with_default("10k", hotsas_core::EngineeringUnit::Ohm).unwrap(),
+                ValueWithUnit::parse_with_default("10k", hotsas_core::EngineeringUnit::Ohm)
+                    .unwrap(),
             );
         project.schematic.components[1]
             .overridden_parameters

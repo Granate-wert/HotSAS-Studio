@@ -71,9 +71,7 @@ export function UserCircuitSimulationResults({
           </Alert>
         ))}
 
-      {viewMode === "graph" && hasSeries && (
-        <SimulationSeriesChart series={result!.series} />
-      )}
+      {viewMode === "graph" && hasSeries && <SimulationSeriesChart series={result!.series} />}
       {viewMode === "graph" && !hasSeries && (
         <Text size="xs" c="dimmed">
           No series data

@@ -1,27 +1,27 @@
 use crate::{
-    AddComponentRequestDto, ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto,
-    AssignComponentRequestDto, CircuitValidationIssueDto, CircuitValidationReportDto,
-    ComponentDetailsDto, ComponentLibraryDto, ComponentParameterDto, ComponentSearchRequestDto,
-    ComponentSearchResultDto, ComponentSummaryDto, ConnectPinsRequestDto,
-    DeleteComponentRequestDto, DeleteWireRequestDto, ExportCapabilityDto, ExportHistoryEntryDto,
-    ExportRequestDto, ExportResultDto, FootprintDto, FormulaCalculationRequestDto,
-    FormulaDetailsDto, FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto,
-    FormulaResultDto, FormulaSummaryDto, KeyValueDto, MoveComponentRequestDto, NetlistPreviewDto,
-    NgspiceAvailabilityDto, NotebookEvaluationRequestDto, NotebookEvaluationResultDto,
-    NotebookStateDto, PlaceComponentRequestDto, PlaceableComponentDto, PreferredValueDto,
+    AcSweepSettingsDto, AddComponentRequestDto, ApiError, AppDiagnosticsReportDto,
+    ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitValidationIssueDto,
+    CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto, ComponentParameterDto,
+    ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto,
+    ConnectPinsRequestDto, DeleteComponentRequestDto, DeleteWireRequestDto, ExportCapabilityDto,
+    ExportHistoryEntryDto, ExportRequestDto, ExportResultDto, FootprintDto,
+    FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
+    FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, KeyValueDto,
+    MoveComponentRequestDto, NetlistPreviewDto, NgspiceAvailabilityDto,
+    NotebookEvaluationRequestDto, NotebookEvaluationResultDto, NotebookStateDto,
+    OperatingPointSettingsDto, PlaceComponentRequestDto, PlaceableComponentDto, PreferredValueDto,
     ProductWorkflowStatusDto, ProjectDto, ProjectOpenRequestDto, ProjectOpenResultDto,
     ProjectPackageManifestDto, ProjectPackageValidationReportDto, ProjectPersistenceWarningDto,
     ProjectSaveResultDto, ProjectSessionStateDto, RecentProjectEntryDto, RenameNetRequestDto,
     SaveProjectDto, SchematicEditResultDto, SchematicEditableFieldDto,
     SchematicSelectionDetailsDto, SchematicSelectionRequestDto, SchematicToolCapabilityDto,
     SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
-    AcSweepSettingsDto, OperatingPointSettingsDto, SelectedRegionPreviewDto,
-    SimulationMeasurementDto, SimulationModelDto, SimulationPointDto,
+    SelectedRegionPreviewDto, SimulationMeasurementDto, SimulationModelDto, SimulationPointDto,
     SimulationPreflightResultDto, SimulationProbeDto, SimulationProbeTargetDto,
-    SimulationResultDto, SimulationRunRequestDto, SimulationSeriesDto, TransientSettingsDto,
-    SimulationWorkflowErrorDto, SimulationWorkflowWarningDto, SymbolDto, UndoRedoStateDto,
-    UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto, UserCircuitSimulationResultDto,
-    UserCircuitSimulationRunDto, ValueDto, VerticalSliceDto,
+    SimulationResultDto, SimulationRunRequestDto, SimulationSeriesDto, SimulationWorkflowErrorDto,
+    SimulationWorkflowWarningDto, SymbolDto, TransientSettingsDto, UndoRedoStateDto,
+    UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
+    UserCircuitSimulationResultDto, UserCircuitSimulationRunDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{
     AppDiagnosticsService, AppServices, FormulaRegistryService, ProductWorkflowService,
@@ -2346,9 +2346,7 @@ impl HotSasApi {
             .map_err(ApiError::Application)
     }
 
-    pub fn add_last_simulation_to_advanced_report(
-        &self,
-    ) -> Result<ProjectDto, ApiError> {
+    pub fn add_last_simulation_to_advanced_report(&self) -> Result<ProjectDto, ApiError> {
         let project = self.current_project()?;
         let run = self
             .services
@@ -2410,13 +2408,15 @@ fn into_probe_dto(probe: hotsas_core::SimulationProbe) -> SimulationProbeDto {
                 positive_net_id: None,
                 negative_net_id: None,
             },
-            hotsas_core::SimulationProbeTarget::Component { component_id } => SimulationProbeTargetDto {
-                net_id: None,
-                component_id: Some(component_id),
-                pin_id: None,
-                positive_net_id: None,
-                negative_net_id: None,
-            },
+            hotsas_core::SimulationProbeTarget::Component { component_id } => {
+                SimulationProbeTargetDto {
+                    net_id: None,
+                    component_id: Some(component_id),
+                    pin_id: None,
+                    positive_net_id: None,
+                    negative_net_id: None,
+                }
+            }
             hotsas_core::SimulationProbeTarget::NetPair {
                 positive_net_id,
                 negative_net_id,
@@ -2432,7 +2432,9 @@ fn into_probe_dto(probe: hotsas_core::SimulationProbe) -> SimulationProbeDto {
     }
 }
 
-fn into_profile_dto(profile: hotsas_core::UserCircuitSimulationProfile) -> UserCircuitSimulationProfileDto {
+fn into_profile_dto(
+    profile: hotsas_core::UserCircuitSimulationProfile,
+) -> UserCircuitSimulationProfileDto {
     UserCircuitSimulationProfileDto {
         id: profile.id,
         name: profile.name,
@@ -2475,11 +2477,7 @@ fn from_profile_dto(
             "Mock" => hotsas_core::UserCircuitSimulationEngine::Mock,
             "Ngspice" => hotsas_core::UserCircuitSimulationEngine::Ngspice,
             "Auto" => hotsas_core::UserCircuitSimulationEngine::Auto,
-            other => {
-                return Err(ApiError::InvalidInput(format!(
-                    "unknown engine: {other}"
-                )))
-            }
+            other => return Err(ApiError::InvalidInput(format!("unknown engine: {other}"))),
         },
         probes: dto
             .probes
@@ -2501,12 +2499,11 @@ fn from_profile_dto(
                         pin_id: pid,
                     }
                 } else if let Some(cid) = p.target.component_id.clone() {
-                    hotsas_core::SimulationProbeTarget::Component {
-                        component_id: cid,
-                    }
-                } else if let (Some(pos), Some(neg)) =
-                    (p.target.positive_net_id.clone(), p.target.negative_net_id.clone())
-                {
+                    hotsas_core::SimulationProbeTarget::Component { component_id: cid }
+                } else if let (Some(pos), Some(neg)) = (
+                    p.target.positive_net_id.clone(),
+                    p.target.negative_net_id.clone(),
+                ) {
                     hotsas_core::SimulationProbeTarget::NetPair {
                         positive_net_id: pos,
                         negative_net_id: neg,
@@ -2521,7 +2518,9 @@ fn from_profile_dto(
                     label: p.label,
                     kind,
                     target,
-                    unit: p.unit.and_then(|u| hotsas_core::EngineeringUnit::parse(&u).ok()),
+                    unit: p
+                        .unit
+                        .and_then(|u| hotsas_core::EngineeringUnit::parse(&u).ok()),
                 }
             })
             .collect(),

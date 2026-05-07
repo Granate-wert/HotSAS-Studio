@@ -2,8 +2,8 @@ use crate::{ApplicationError, NgspiceSimulationService, SimulationEngineChoice};
 use hotsas_core::{
     AcSweepSettings, CircuitProject, EngineeringUnit, OperatingPointSettings,
     SimulationMeasurement, SimulationPoint, SimulationPreflightResult, SimulationProbe,
-    SimulationProbeKind, SimulationProbeTarget, SimulationSeries,
-    SimulationWorkflowError, SimulationWorkflowWarning, TransientSettings, UserCircuitAnalysisType,
+    SimulationProbeKind, SimulationProbeTarget, SimulationSeries, SimulationWorkflowError,
+    SimulationWorkflowWarning, TransientSettings, UserCircuitAnalysisType,
     UserCircuitSimulationEngine, UserCircuitSimulationProfile, UserCircuitSimulationResult,
     UserCircuitSimulationRun, UserCircuitSimulationStatus, ValueWithUnit,
 };
@@ -231,17 +231,20 @@ impl SimulationWorkflowService {
         let sim_profile = to_simulation_profile(&profile);
         let choice = to_engine_choice(&profile.engine);
 
-        let sim_result = match profile.analysis_type {
-            UserCircuitAnalysisType::AcSweep => self
-                .ngspice_service
-                .run_ac_sweep_with_profile(project, &sim_profile, choice.clone()),
-            UserCircuitAnalysisType::OperatingPoint => self
-                .ngspice_service
-                .run_operating_point_with_profile(project, &sim_profile, choice.clone()),
-            UserCircuitAnalysisType::Transient => self
-                .ngspice_service
-                .run_transient_with_profile(project, &sim_profile, choice.clone()),
-        };
+        let sim_result =
+            match profile.analysis_type {
+                UserCircuitAnalysisType::AcSweep => self.ngspice_service.run_ac_sweep_with_profile(
+                    project,
+                    &sim_profile,
+                    choice.clone(),
+                ),
+                UserCircuitAnalysisType::OperatingPoint => self
+                    .ngspice_service
+                    .run_operating_point_with_profile(project, &sim_profile, choice.clone()),
+                UserCircuitAnalysisType::Transient => self
+                    .ngspice_service
+                    .run_transient_with_profile(project, &sim_profile, choice.clone()),
+            };
 
         let (status, engine_used, result, warnings, errors) = match sim_result {
             Ok(sr) => {
@@ -279,9 +282,7 @@ impl SimulationWorkflowService {
             && status == UserCircuitSimulationStatus::Succeeded
         {
             let mut w = warnings;
-            w.push(
-                "ngspice unavailable in auto mode; fallback to mock engine".to_string(),
-            );
+            w.push("ngspice unavailable in auto mode; fallback to mock engine".to_string());
             w
         } else {
             warnings
@@ -346,14 +347,20 @@ impl SimulationWorkflowService {
         use hotsas_core::advanced_report::{ReportContentBlock, ReportSection};
 
         let mut blocks = vec![ReportContentBlock::Paragraph {
-            text: format!("Simulation profile: {} ({})", run.profile.name, run.engine_used),
+            text: format!(
+                "Simulation profile: {} ({})",
+                run.profile.name, run.engine_used
+            ),
         }];
 
         if let Some(result) = &run.result {
             if !result.summary.is_empty() {
                 let mut rows: Vec<Vec<String>> = vec![];
                 for m in &result.summary {
-                    rows.push(vec![m.name.clone(), format!("{:.6} {}", m.value.si_value(), m.unit_symbol)]);
+                    rows.push(vec![
+                        m.name.clone(),
+                        format!("{:.6} {}", m.value.si_value(), m.unit_symbol),
+                    ]);
                 }
                 blocks.push(ReportContentBlock::DataTable {
                     title: "Measurements".to_string(),
@@ -375,7 +382,9 @@ impl SimulationWorkflowService {
                 severity: hotsas_core::advanced_report::ReportWarningSeverity::Warning,
                 code: w.code.clone(),
                 message: w.message.clone(),
-                section_kind: Some(hotsas_core::advanced_report::ReportSectionKind::SimulationResults),
+                section_kind: Some(
+                    hotsas_core::advanced_report::ReportSectionKind::SimulationResults,
+                ),
             })
             .collect();
 
@@ -523,9 +532,7 @@ fn format_hz(value: f64) -> String {
         format!("{value:.6e}")
     } else {
         let s = format!("{value:.6}");
-        s.trim_end_matches('0')
-            .trim_end_matches('.')
-            .to_string()
+        s.trim_end_matches('0').trim_end_matches('.').to_string()
     }
 }
 
@@ -534,8 +541,6 @@ fn format_time(value: f64) -> String {
         format!("{value:.6e}")
     } else {
         let s = format!("{value:.6}");
-        s.trim_end_matches('0')
-            .trim_end_matches('.')
-            .to_string()
+        s.trim_end_matches('0').trim_end_matches('.').to_string()
     }
 }

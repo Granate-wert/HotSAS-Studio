@@ -22,14 +22,14 @@ export function SimulationSeriesChart({ series }: Props) {
       grid: { left: 58, right: 24, top: 36, bottom: 42 },
       xAxis: {
         type: series.length > 0 && series[0].x_unit === "Hz" ? "log" : "value",
-        name: series.length > 0 ? series[0].x_unit ?? "" : "",
+        name: series.length > 0 ? (series[0].x_unit ?? "") : "",
         axisLabel: { color: "#9aa8ba" },
         nameTextStyle: { color: "#9aa8ba" },
         splitLine: { lineStyle: { color: "#263244" } },
       },
       yAxis: {
         type: "value",
-        name: series.length > 0 ? series[0].y_unit ?? "" : "",
+        name: series.length > 0 ? (series[0].y_unit ?? "") : "",
         axisLabel: { color: "#9aa8ba" },
         nameTextStyle: { color: "#9aa8ba" },
         splitLine: { lineStyle: { color: "#263244" } },

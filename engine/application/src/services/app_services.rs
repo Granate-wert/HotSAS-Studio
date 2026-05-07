@@ -1,3 +1,4 @@
+use crate::services::SimulationWorkflowService;
 use crate::services::{AdvancedReportService, DcdcCalculatorService, ProjectSessionService};
 use crate::{
     ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
@@ -6,7 +7,6 @@ use crate::{
     PreferredValuesService, ProjectPackageService, ProjectService, SchematicEditingService,
     SelectedRegionAnalysisService, SimulationEngineChoice, SimulationService,
 };
-use crate::services::SimulationWorkflowService;
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
     ReportModel, SimulationResult, ValueWithUnit,
@@ -72,7 +72,10 @@ impl AppServices {
             engineering_notebook_service: EngineeringNotebookService::new(),
             netlist_generation_service: NetlistGenerationService::new(netlist_exporter.clone()),
             simulation_service: SimulationService::new(mock_engine.clone()),
-            ngspice_simulation_service: NgspiceSimulationService::new(mock_engine.clone(), ngspice_engine.clone()),
+            ngspice_simulation_service: NgspiceSimulationService::new(
+                mock_engine.clone(),
+                ngspice_engine.clone(),
+            ),
             simulation_workflow_service: SimulationWorkflowService::new(
                 netlist_exporter.clone(),
                 NgspiceSimulationService::new(mock_engine, ngspice_engine),

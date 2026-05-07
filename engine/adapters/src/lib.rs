@@ -663,15 +663,17 @@ impl SimulationEnginePort for MockSimulationEngine {
             c.definition_id.contains("voltage_source") || c.definition_id.contains("vsource")
         }) {
             if let Some(v) = vsource.overridden_parameters.get("voltage") {
-                measurements.insert(
-                    "V_source".to_string(),
-                    v.clone(),
-                );
+                measurements.insert("V_source".to_string(), v.clone());
             }
         }
 
         // Find first resistor
-        if let Some(r) = project.schematic.components.iter().find(|c| c.definition_id.contains("resistor")) {
+        if let Some(r) = project
+            .schematic
+            .components
+            .iter()
+            .find(|c| c.definition_id.contains("resistor"))
+        {
             if let Some(rv) = r.overridden_parameters.get("resistance") {
                 measurements.insert("R_value".to_string(), rv.clone());
             }
@@ -705,7 +707,10 @@ impl SimulationEnginePort for MockSimulationEngine {
         let mut points = Vec::new();
         for i in 0..50 {
             let t = i as f64 / 49.0 * stop;
-            points.push(GraphPoint { x: t, y: t * 1000.0 });
+            points.push(GraphPoint {
+                x: t,
+                y: t * 1000.0,
+            });
         }
 
         Ok(SimulationResult {
@@ -741,7 +746,9 @@ fn find_first_rc(project: &CircuitProject) -> Result<(ValueWithUnit, ValueWithUn
                 .cloned()
                 .or_else(|| default_component_parameter(c, "resistance"))
         })
-        .ok_or_else(|| PortError::Simulation("no resistor with resistance value found".to_string()))?;
+        .ok_or_else(|| {
+            PortError::Simulation("no resistor with resistance value found".to_string())
+        })?;
 
     let capacitor = project
         .schematic
@@ -754,14 +761,22 @@ fn find_first_rc(project: &CircuitProject) -> Result<(ValueWithUnit, ValueWithUn
                 .cloned()
                 .or_else(|| default_component_parameter(c, "capacitance"))
         })
-        .ok_or_else(|| PortError::Simulation("no capacitor with capacitance value found".to_string()))?;
+        .ok_or_else(|| {
+            PortError::Simulation("no capacitor with capacitance value found".to_string())
+        })?;
 
     Ok((resistor, capacitor))
 }
 
-fn default_component_parameter(component: &hotsas_core::ComponentInstance, param: &str) -> Option<ValueWithUnit> {
+fn default_component_parameter(
+    component: &hotsas_core::ComponentInstance,
+    param: &str,
+) -> Option<ValueWithUnit> {
     let library = hotsas_core::built_in_component_library();
-    let def = library.components.iter().find(|c| c.id == component.definition_id)?;
+    let def = library
+        .components
+        .iter()
+        .find(|c| c.id == component.definition_id)?;
     def.parameters.get(param).cloned()
 }
 
