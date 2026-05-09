@@ -1035,6 +1035,8 @@ export type SchematicSelectionDetailsDto = {
   id: string | null;
   display_name: string | null;
   editable_fields: SchematicEditableFieldDto[];
+  model_assignment?: ComponentModelAssignmentDto | null;
+  model_assignment_origin?: "inherited" | "override" | string | null;
 };
 
 export type UndoRedoStateDto = {
@@ -1272,4 +1274,79 @@ export type SimulationGraphSeriesDto = {
   label: string;
   visible_by_default: boolean;
   points_count: number;
+};
+
+// v3.1 Component Model Mapping & Simulation Readiness Types
+
+export type SpiceModelReferenceDto = {
+  id: string;
+  display_name: string;
+  model_kind: string;
+  source: string;
+  status: string;
+  limitations: string[];
+  warnings: string[];
+};
+
+export type ComponentPinMappingDto = {
+  component_pin_id: string;
+  model_pin_name: string;
+  model_pin_index: number | null;
+  role: string | null;
+  required: boolean;
+};
+
+export type ModelParameterBindingDto = {
+  model_parameter_name: string;
+  component_parameter_id: string;
+  value_expression: string | null;
+  required: boolean;
+};
+
+export type SimulationReadinessDto = {
+  can_simulate: boolean;
+  can_export_netlist: boolean;
+  uses_placeholder: boolean;
+  blocking_count: number;
+  warning_count: number;
+  status_label: string;
+};
+
+export type ModelMappingDiagnosticDto = {
+  code: string;
+  severity: string;
+  title: string;
+  message: string;
+  suggested_fix: string | null;
+  related_component_id: string | null;
+  related_model_id: string | null;
+};
+
+export type ComponentModelAssignmentDto = {
+  component_definition_id: string;
+  component_instance_id: string | null;
+  model_ref: SpiceModelReferenceDto | null;
+  pin_mappings: ComponentPinMappingDto[];
+  parameter_bindings: ModelParameterBindingDto[];
+  status: string;
+  readiness: SimulationReadinessDto;
+  diagnostics: ModelMappingDiagnosticDto[];
+};
+
+export type ProjectSimulationReadinessDto = {
+  project_id: string;
+  can_simulate: boolean;
+  component_count: number;
+  ready_count: number;
+  placeholder_count: number;
+  missing_count: number;
+  invalid_count: number;
+  blocking_count: number;
+  warning_count: number;
+  components: ComponentModelAssignmentDto[];
+};
+
+export type AssignModelRequestDto = {
+  instance_id: string;
+  model_id: string;
 };

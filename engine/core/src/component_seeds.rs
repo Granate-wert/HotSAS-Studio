@@ -1,6 +1,6 @@
 use crate::{
     ComponentCategory, ComponentDefinition, ComponentLibrary, EngineeringUnit, FootprintDefinition,
-    Pad, SimulationModel, Size2d, ValueWithUnit,
+    Pad, SimulationModel, SimulationModelKind, Size2d, ValueWithUnit,
 };
 use std::collections::BTreeMap;
 
@@ -134,7 +134,15 @@ fn generic_resistor() -> ComponentDefinition {
         ratings,
         symbol_ids: vec!["resistor".to_string()],
         footprint_ids: vec!["axial_resistor_placeholder".to_string()],
-        simulation_models: vec![],
+        simulation_models: vec![SimulationModel {
+            id: "builtin_resistor_primitive".to_string(),
+            model_type: "spice".to_string(),
+            source_path: None,
+            raw_model: None,
+            raw_model_id: None,
+            pin_mapping: BTreeMap::new(),
+            kind: SimulationModelKind::Primitive,
+        }],
         datasheets: vec![],
         tags: vec![
             "passive".to_string(),
@@ -171,7 +179,15 @@ fn generic_capacitor() -> ComponentDefinition {
         ratings,
         symbol_ids: vec!["capacitor".to_string()],
         footprint_ids: vec!["radial_capacitor_placeholder".to_string()],
-        simulation_models: vec![],
+        simulation_models: vec![SimulationModel {
+            id: "builtin_capacitor_primitive".to_string(),
+            model_type: "spice".to_string(),
+            source_path: None,
+            raw_model: None,
+            raw_model_id: None,
+            pin_mapping: BTreeMap::new(),
+            kind: SimulationModelKind::Primitive,
+        }],
         datasheets: vec![],
         tags: vec![
             "passive".to_string(),
@@ -208,7 +224,15 @@ fn generic_inductor() -> ComponentDefinition {
         ratings,
         symbol_ids: vec!["inductor".to_string()],
         footprint_ids: vec!["inductor_placeholder".to_string()],
-        simulation_models: vec![],
+        simulation_models: vec![SimulationModel {
+            id: "builtin_inductor_primitive".to_string(),
+            model_type: "spice".to_string(),
+            source_path: None,
+            raw_model: None,
+            raw_model_id: None,
+            pin_mapping: BTreeMap::new(),
+            kind: SimulationModelKind::Primitive,
+        }],
         datasheets: vec![],
         tags: vec![
             "passive".to_string(),
@@ -512,6 +536,7 @@ fn generic_op_amp() -> ComponentDefinition {
             raw_model: None,
             raw_model_id: None,
             pin_mapping: BTreeMap::new(),
+            kind: SimulationModelKind::Placeholder,
         }],
         datasheets: vec![],
         tags: vec![
@@ -540,7 +565,15 @@ fn generic_voltage_source() -> ComponentDefinition {
         ratings: BTreeMap::new(),
         symbol_ids: vec!["voltage_source".to_string()],
         footprint_ids: vec![],
-        simulation_models: vec![],
+        simulation_models: vec![SimulationModel {
+            id: "builtin_voltage_source_primitive".to_string(),
+            model_type: "spice".to_string(),
+            source_path: None,
+            raw_model: None,
+            raw_model_id: None,
+            pin_mapping: BTreeMap::new(),
+            kind: SimulationModelKind::Primitive,
+        }],
         datasheets: vec![],
         tags: vec![
             "source".to_string(),
@@ -563,7 +596,15 @@ fn ground_reference() -> ComponentDefinition {
         ratings: BTreeMap::new(),
         symbol_ids: vec!["ground".to_string()],
         footprint_ids: vec!["ground_virtual_placeholder".to_string()],
-        simulation_models: vec![],
+        simulation_models: vec![SimulationModel {
+            id: "builtin_ground_primitive".to_string(),
+            model_type: "spice".to_string(),
+            source_path: None,
+            raw_model: None,
+            raw_model_id: None,
+            pin_mapping: BTreeMap::new(),
+            kind: SimulationModelKind::Primitive,
+        }],
         datasheets: vec![],
         tags: vec!["reference".to_string(), "ground".to_string()],
         metadata: BTreeMap::new(),
@@ -1124,6 +1165,7 @@ fn op_amp_lm358() -> ComponentDefinition {
             raw_model: None,
             raw_model_id: None,
             pin_mapping: BTreeMap::new(),
+            kind: SimulationModelKind::Placeholder,
         }],
         datasheets: vec![],
         tags: vec![

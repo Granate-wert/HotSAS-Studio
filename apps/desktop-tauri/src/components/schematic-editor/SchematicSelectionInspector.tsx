@@ -1,6 +1,7 @@
-import { Button, Group, Stack, Text } from "@mantine/core";
+import { Badge, Button, Group, Stack, Text } from "@mantine/core";
 import { Trash2 } from "lucide-react";
 import type { SchematicSelectionDetailsDto } from "../../types";
+import { SimulationReadinessBadge } from "../component-library/SimulationReadinessBadge";
 import { QuickParameterEditor } from "./QuickParameterEditor";
 
 type Props = {
@@ -56,6 +57,29 @@ export function SchematicSelectionInspector({
           onUpdate={onUpdateParameter}
           loading={loading}
         />
+      )}
+
+      {entity.kind === "component" && details?.model_assignment && (
+        <Stack gap={4}>
+          <Group justify="space-between">
+            <Text size="sm" fw={600}>
+              Model assignment
+            </Text>
+            <Badge variant="light">{details.model_assignment_origin ?? "inherited"}</Badge>
+          </Group>
+          <Text size="xs" c="dimmed">
+            {details.model_assignment.model_ref?.display_name ?? "No model assigned"}
+          </Text>
+          <Group gap="xs">
+            <Badge variant="outline">{details.model_assignment.status.replace(/_/g, " ")}</Badge>
+            <SimulationReadinessBadge readiness={details.model_assignment.readiness} />
+          </Group>
+          {details.model_assignment.diagnostics.length > 0 && (
+            <Text size="xs" c="dimmed">
+              {details.model_assignment.diagnostics.map((diagnostic) => diagnostic.code).join(", ")}
+            </Text>
+          )}
+        </Stack>
       )}
     </Stack>
   );

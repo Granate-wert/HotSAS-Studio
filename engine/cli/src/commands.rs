@@ -173,7 +173,10 @@ fn generate_and_export_report(
         report_id: report_id.clone(),
         title: "Project Summary".to_string(),
         report_type: "ProjectSummary".to_string(),
-        included_sections: vec!["ProjectInfo".to_string()],
+        included_sections: vec![
+            "ProjectInfo".to_string(),
+            "ModelMappingReadiness".to_string(),
+        ],
         export_options: ReportExportOptionsDto {
             include_source_references: false,
             include_graph_references: false,
@@ -755,6 +758,103 @@ pub fn handle_simulate_diagnostics(
         1
     } else {
         0
+    }
+}
+
+pub fn handle_model_check(api: &HotSasApi, path: String, json: bool) -> i32 {
+    match load_project(api, &path, json) {
+        Ok(_) => {}
+        Err(code) => return code,
+    }
+
+    match api.evaluate_project_simulation_readiness() {
+        Ok(readiness) => {
+            let mut warnings = Vec::new();
+            let mut errors = Vec::new();
+
+            for component in &readiness.components {
+                for diagnostic in &component.diagnostics {
+                    let line = format!(
+                        "[{}] {}: {}",
+                        diagnostic.code, diagnostic.title, diagnostic.message
+                    );
+                    match diagnostic.severity.as_str() {
+                        "blocking" | "error" | "Blocking" | "Error" => errors.push(line),
+                        "warning" | "Warning" => warnings.push(line),
+                        _ => {}
+                    }
+                }
+            }
+
+            let components = readiness
+                .components
+                .iter()
+                .map(|component| {
+                    serde_json::json!({
+                        "component_instance_id": component.component_instance_id.clone(),
+                        "component_definition_id": component.component_definition_id.clone(),
+                        "model_id": component.model_ref.as_ref().map(|model| model.id.clone()),
+                        "model_status": component.status.clone(),
+                        "model_source": component.model_ref.as_ref().map(|model| model.source.clone()),
+                        "readiness": component.readiness.clone(),
+                        "pin_mappings": component.pin_mappings.clone(),
+                        "parameter_bindings": component.parameter_bindings.clone(),
+                        "diagnostics": component.diagnostics.clone(),
+                    })
+                })
+                .collect::<Vec<_>>();
+
+            let data = serde_json::json!({
+                "project_id": readiness.project_id,
+                "can_simulate": readiness.can_simulate,
+                "components": components,
+                "summary": {
+                    "component_count": readiness.component_count,
+                    "ready": readiness.ready_count,
+                    "placeholder": readiness.placeholder_count,
+                    "missing": readiness.missing_count,
+                    "invalid": readiness.invalid_count,
+                    "blocking": readiness.blocking_count,
+                    "warning": readiness.warning_count,
+                }
+            });
+
+            let status = if readiness.blocking_count > 0 || !errors.is_empty() {
+                CliStatus::ValidationError
+            } else if readiness.warning_count > 0 || !warnings.is_empty() {
+                CliStatus::Warning
+            } else {
+                CliStatus::Success
+            };
+
+            let output = CliOutput {
+                status,
+                command: "model-check".to_string(),
+                warnings,
+                errors,
+                data: Some(data),
+            };
+            print_output(&output, json);
+
+            if readiness.blocking_count > 0 {
+                2
+            } else {
+                0
+            }
+        }
+        Err(e) => {
+            let msg = format_error(&e);
+            let output = CliOutput::<()> {
+                status: CliStatus::Error,
+                command: "model-check".to_string(),
+                warnings: vec![],
+                errors: vec![msg.clone()],
+                data: None,
+            };
+            print_output(&output, json);
+            eprintln!("{}", msg);
+            exit_code(&e)
+        }
     }
 }
 

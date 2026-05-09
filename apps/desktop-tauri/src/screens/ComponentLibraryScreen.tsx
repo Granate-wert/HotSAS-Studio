@@ -22,11 +22,19 @@ export function ComponentLibraryScreen() {
   const selectedLibraryComponent = useHotSasStore((s) => s.selectedLibraryComponent);
   const componentSearchResult = useHotSasStore((s) => s.componentSearchResult);
   const selectedSchematicComponent = useHotSasStore((s) => s.selectedComponent);
+  const availableSpiceModels = useHotSasStore((s) => s.availableSpiceModels);
+  const selectedModelAssignment = useHotSasStore((s) => s.selectedModelAssignment);
+  const modelMappingLoading = useHotSasStore((s) => s.modelMappingLoading);
+  const modelMappingError = useHotSasStore((s) => s.modelMappingError);
 
   const setSelectedLibraryComponentId = useHotSasStore((s) => s.setSelectedLibraryComponentId);
   const setSelectedLibraryComponent = useHotSasStore((s) => s.setSelectedLibraryComponent);
   const setComponentSearchResult = useHotSasStore((s) => s.setComponentSearchResult);
   const setProject = useHotSasStore((s) => s.setProject);
+  const setAvailableSpiceModels = useHotSasStore((s) => s.setAvailableSpiceModels);
+  const setSelectedModelAssignment = useHotSasStore((s) => s.setSelectedModelAssignment);
+  const setModelMappingLoading = useHotSasStore((s) => s.setModelMappingLoading);
+  const setModelMappingError = useHotSasStore((s) => s.setModelMappingError);
 
   useEffect(() => {
     loadLibrary();
@@ -76,23 +84,56 @@ export function ComponentLibraryScreen() {
     }
     setSelectedLibraryComponentId(null);
     setSelectedLibraryComponent(null);
+    setAvailableSpiceModels([]);
+    setSelectedModelAssignment(null);
   }
 
   async function handleSelectComponent(id: string) {
     setSelectedLibraryComponentId(id);
     setTypedParams(null);
+    setAvailableSpiceModels([]);
+    setSelectedModelAssignment(null);
     setLoading(true);
+    setModelMappingLoading(true);
+    setModelMappingError(null);
     try {
-      const [details, typed] = await Promise.all([
+      const [details, typed, models, assignment] = await Promise.all([
         backend.getComponentDetails(id),
         backend.getTypedComponentParameters(id).catch(() => null),
+        backend.listAvailableModelsForComponent(id).catch(() => []),
+        selectedSchematicComponent
+          ? backend
+              .getComponentModelAssignment(selectedSchematicComponent.instance_id)
+              .catch(() => null)
+          : Promise.resolve(null),
       ]);
       setSelectedLibraryComponent(details);
       setTypedParams(typed);
+      setAvailableSpiceModels(models);
+      setSelectedModelAssignment(assignment);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+      setModelMappingError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
+      setModelMappingLoading(false);
+    }
+  }
+
+  async function handleAssignModel(modelId: string) {
+    if (!selectedSchematicComponent) return;
+    setModelMappingLoading(true);
+    setModelMappingError(null);
+    try {
+      const assignment = await backend.assignModelToInstance({
+        instance_id: selectedSchematicComponent.instance_id,
+        model_id: modelId,
+      });
+      setSelectedModelAssignment(assignment);
+    } catch (e) {
+      setModelMappingError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setModelMappingLoading(false);
     }
   }
 
@@ -133,6 +174,11 @@ export function ComponentLibraryScreen() {
               {error}
             </Alert>
           )}
+          {modelMappingError && (
+            <Alert color="yellow" onClose={() => setModelMappingError(null)} withCloseButton>
+              {modelMappingError}
+            </Alert>
+          )}
           <ComponentSearchPanel
             categories={library?.categories ?? []}
             onSearch={handleSearch}
@@ -152,6 +198,10 @@ export function ComponentLibraryScreen() {
                   <ComponentDetailsPanel
                     component={selectedLibraryComponent}
                     typedParams={typedParams}
+                    modelAssignment={selectedModelAssignment}
+                    availableModels={availableSpiceModels}
+                    modelMappingLoading={modelMappingLoading}
+                    onAssignModel={handleAssignModel}
                   />
                 )}
                 <AssignComponentPanel

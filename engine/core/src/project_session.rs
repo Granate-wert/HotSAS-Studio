@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProjectSessionState {
     pub current_project_id: Option<String>,
     pub current_project_name: Option<String>,
@@ -9,20 +9,6 @@ pub struct ProjectSessionState {
     pub last_saved_at: Option<String>,
     pub last_loaded_at: Option<String>,
     pub last_error: Option<String>,
-}
-
-impl Default for ProjectSessionState {
-    fn default() -> Self {
-        Self {
-            current_project_id: None,
-            current_project_name: None,
-            current_project_path: None,
-            dirty: false,
-            last_saved_at: None,
-            last_loaded_at: None,
-            last_error: None,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

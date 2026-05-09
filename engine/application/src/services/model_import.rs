@@ -112,6 +112,16 @@ impl ModelImportService {
             .collect())
     }
 
+    pub fn list_imported_model_details(
+        &self,
+    ) -> Result<Vec<ImportedModelDetails>, ApplicationError> {
+        let guard = self
+            .imported_models
+            .lock()
+            .map_err(|_| ApplicationError::State("imported models lock poisoned".to_string()))?;
+        Ok(guard.iter().cloned().collect())
+    }
+
     pub fn get_imported_model(
         &self,
         model_id: String,
@@ -201,6 +211,7 @@ impl ModelImportService {
                 raw_model: None,
                 raw_model_id: Some(request.model_id),
                 pin_mapping,
+                kind: hotsas_core::SimulationModelKind::Model,
             });
 
         Ok(())

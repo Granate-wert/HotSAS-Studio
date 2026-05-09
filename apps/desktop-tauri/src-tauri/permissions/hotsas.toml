@@ -73,4 +73,8 @@ commands.allow = [
   "build_simulation_graph_view",
   "export_run_series_csv",
   "export_run_series_json",
+  "list_available_models_for_component",
+  "get_component_model_assignment",
+  "assign_model_to_instance",
+  "evaluate_project_simulation_readiness",
 ]

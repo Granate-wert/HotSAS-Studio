@@ -12,6 +12,7 @@ This document lists the standard local verification commands and test coverage f
 cd "D:\Документы\vscode\HotSAS Studio\engine"
 cargo fmt --check
 cargo test
+cargo build -p hotsas_cli --release
 ```
 
 To format Rust code:
@@ -29,7 +30,9 @@ cd "D:\Документы\vscode\HotSAS Studio\apps\desktop-tauri"
 npm.cmd install
 npm.cmd run format:check
 npm.cmd run typecheck
+npm.cmd run test
 npm.cmd run build
+npm.cmd run tauri:build
 ```
 
 To format frontend code:
@@ -67,6 +70,37 @@ apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
 ## Why npm.cmd Is Used
 
 On this Windows PowerShell setup, `npm.ps1` can be blocked by Execution Policy. Use `npm.cmd` for project scripts.
+
+---
+
+## v3.1 Component Model Mapping Verification
+
+Targeted checks for Component Model Mapping & SPICE Assignment:
+
+```bash
+cd "D:\Р”РѕРєСѓРјРµРЅС‚С‹\vscode\HotSAS Studio\engine"
+cargo test -p hotsas_application --test component_model_mapping_service_tests
+cargo test -p hotsas_cli --test cli_integration cli_model_check
+cargo test -p hotsas_application --test advanced_report_service_tests model_mapping_readiness_section_renders_to_markdown_and_json
+cargo test -p hotsas_cli --test cli_integration cli_export
+cargo test -p hotsas_adapters --test user_circuit_netlist_model_assignment_tests subcircuit_assignment_exports_x_line_nodes_in_model_pin_index_order
+cargo test -p hotsas_application --test simulation_dashboard_integration_tests preflight_includes_model_mapping_diagnostics_with_component_and_model_ids
+```
+
+```bash
+cd "D:\Р”РѕРєСѓРјРµРЅС‚С‹\vscode\HotSAS Studio\apps\desktop-tauri"
+npm.cmd run test -- ModelAssignmentCard SimulationReadinessBadge SchematicSelectionInspector
+```
+
+Manual CLI smoke:
+
+```bash
+hotsas-cli model-check <project.circuit> --json
+```
+
+Expected JSON includes `project_id`, `can_simulate`, `components`, per-component `model_status`,
+`readiness`, `diagnostics`, and summary counts for `ready`, `placeholder`, `missing`, `blocking`,
+and `warning`.
 
 ---
 
@@ -972,6 +1006,31 @@ Applied in commit `398f8f6`:
 9. Switch to **Export** tab — verify CSV/JSON export buttons trigger download.
 10. CLI: `hotsas-cli simulate-diagnostics project.circuit --json`
 11. CLI: `hotsas-cli simulation-history project.circuit --json`
+
+---
+
+## v3.1 — Component Model Mapping & SPICE Assignment (Partial)
+
+### Rust tests
+
+- **API DTO contract** (`api/tests/component_model_mapping_api_tests.rs`)
+  - Stable snake_case model kind/source/status strings.
+  - Stable snake_case assignment status strings.
+
+- **Netlist model assignment** (`adapters/tests/user_circuit_netlist_model_assignment_tests.rs`)
+  - Placeholder op-amp model assignment exports a warning comment instead of failing on unknown
+    primitive component kind.
+
+### Frontend tests
+
+- **Model Assignment Card** (`src/components/component-library/__tests__/ModelAssignmentCard.test.tsx`)
+  - Shows assigned model status, readiness, pin mapping, and parameter bindings.
+  - Assign button calls callback with selected model id.
+  - Diagnostics are visible with suggested fixes.
+
+- **Simulation Readiness Badge** (`src/components/component-library/__tests__/SimulationReadinessBadge.test.tsx`)
+  - Shows ready state.
+  - Shows placeholder warning count.
 
 ---
 

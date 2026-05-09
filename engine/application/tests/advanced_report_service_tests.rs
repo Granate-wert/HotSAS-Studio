@@ -48,6 +48,7 @@ fn list_capabilities_returns_all_section_kinds() {
     let kinds: Vec<_> = caps.iter().map(|c| c.kind.clone()).collect();
     assert!(kinds.contains(&ReportSectionKind::ProjectInfo));
     assert!(kinds.contains(&ReportSectionKind::SchematicSummary));
+    assert!(kinds.contains(&ReportSectionKind::ModelMappingReadiness));
 }
 
 #[test]
@@ -83,6 +84,7 @@ fn generate_full_project_report_with_no_context_does_not_panic() {
             ReportSectionKind::SelectedRegionAnalysis,
             ReportSectionKind::ExportHistory,
             ReportSectionKind::ImportedModels,
+            ReportSectionKind::ModelMappingReadiness,
             ReportSectionKind::ComponentSummary,
             ReportSectionKind::SpiceNetlist,
             ReportSectionKind::Bom,
@@ -154,6 +156,46 @@ fn render_json_produces_valid_json() {
     assert!(!json.is_empty());
     let parsed: serde_json::Value = serde_json::from_str(&json).expect("JSON should be valid");
     assert!(parsed.get("id").is_some() || parsed.get("sections").is_some());
+}
+
+#[test]
+fn model_mapping_readiness_section_renders_to_markdown_and_json() {
+    let service = make_service();
+    let mut project = hotsas_core::rc_low_pass_project();
+    project.schematic.components[0].definition_id = "generic_op_amp".to_string();
+    let request = make_request(
+        AdvancedReportType::ProjectSummary,
+        vec![ReportSectionKind::ModelMappingReadiness],
+    );
+    let context = AdvancedReportContext {
+        project: Some(project),
+        ..empty_context()
+    };
+
+    let report = service.generate_report(request, &context).unwrap();
+    let section = report
+        .sections
+        .iter()
+        .find(|section| section.kind == ReportSectionKind::ModelMappingReadiness)
+        .expect("model mapping section should exist");
+
+    assert_eq!(section.status, ReportSectionStatus::Included);
+    assert!(section
+        .warnings
+        .iter()
+        .any(|warning| warning.code == "PLACEHOLDER_MODEL"));
+
+    let markdown = service.render_report_markdown(&report).unwrap();
+    assert!(markdown.contains("Model Mapping Readiness"));
+    assert!(markdown.contains("PLACEHOLDER_MODEL"));
+    assert!(markdown.contains("Pin Mapping"));
+
+    let json = service.render_report_json(&report).unwrap();
+    let parsed: serde_json::Value = serde_json::from_str(&json).expect("JSON should be valid");
+    assert_eq!(
+        parsed["sections"][0]["kind"],
+        serde_json::Value::String("ModelMappingReadiness".to_string())
+    );
 }
 
 #[test]

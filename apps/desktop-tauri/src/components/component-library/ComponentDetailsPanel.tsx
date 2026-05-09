@@ -1,14 +1,32 @@
 import { Card, Group, Stack, Table, Text, Title } from "@mantine/core";
-import type { ComponentDetailsDto, TypedComponentParametersDto, ValueDto } from "../../types";
+import type {
+  ComponentDetailsDto,
+  ComponentModelAssignmentDto,
+  SpiceModelReferenceDto,
+  TypedComponentParametersDto,
+  ValueDto,
+} from "../../types";
 import { ComponentFootprintPreview } from "./ComponentFootprintPreview";
 import { ComponentSymbolPreview } from "./ComponentSymbolPreview";
+import { ModelAssignmentCard } from "./ModelAssignmentCard";
 
 type Props = {
   component: ComponentDetailsDto;
   typedParams?: TypedComponentParametersDto | null;
+  modelAssignment?: ComponentModelAssignmentDto | null;
+  availableModels?: SpiceModelReferenceDto[];
+  modelMappingLoading?: boolean;
+  onAssignModel?: (modelId: string) => void;
 };
 
-export function ComponentDetailsPanel({ component, typedParams }: Props) {
+export function ComponentDetailsPanel({
+  component,
+  typedParams,
+  modelAssignment = null,
+  availableModels = [],
+  modelMappingLoading = false,
+  onAssignModel,
+}: Props) {
   return (
     <Stack gap="md">
       <Title order={4}>{component.name}</Title>
@@ -108,6 +126,13 @@ export function ComponentDetailsPanel({ component, typedParams }: Props) {
           <TypedParameterView bundle={typedParams.bundle} />
         </Card>
       )}
+
+      <ModelAssignmentCard
+        assignment={modelAssignment}
+        availableModels={availableModels}
+        loading={modelMappingLoading}
+        onAssignModel={onAssignModel ?? (() => undefined)}
+      />
 
       {component.tags.length > 0 && (
         <Group>

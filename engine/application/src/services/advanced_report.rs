@@ -509,6 +509,9 @@ impl AdvancedReportService {
             ReportSectionKind::ImportedModels => {
                 self.build_imported_models(context, report_warnings, source_refs)
             }
+            ReportSectionKind::ModelMappingReadiness => {
+                self.build_model_mapping_readiness(context, report_warnings, source_refs)
+            }
             ReportSectionKind::ExportHistory => {
                 self.build_export_history(context, report_warnings, source_refs)
             }
@@ -1163,6 +1166,181 @@ impl AdvancedReportService {
             },
             blocks,
             warnings,
+        }
+    }
+
+    fn build_model_mapping_readiness(
+        &self,
+        context: &AdvancedReportContext,
+        _report_warnings: &mut Vec<ReportWarning>,
+        source_refs: &mut Vec<ReportSourceReference>,
+    ) -> ReportSection {
+        let mut blocks: Vec<ReportContentBlock> = Vec::new();
+        let mut warnings: Vec<ReportWarning> = Vec::new();
+
+        if let Some(ref project) = context.project {
+            let readiness = super::ComponentModelMappingService::new()
+                .evaluate_project_simulation_readiness(
+                    project,
+                    &hotsas_core::built_in_component_library(),
+                );
+
+            blocks.push(ReportContentBlock::KeyValueTable {
+                title: "Readiness Summary".to_string(),
+                rows: vec![
+                    ReportKeyValueRow {
+                        key: "Can Simulate".to_string(),
+                        value: readiness.can_simulate.to_string(),
+                        unit: None,
+                    },
+                    ReportKeyValueRow {
+                        key: "Ready".to_string(),
+                        value: readiness.ready_count.to_string(),
+                        unit: None,
+                    },
+                    ReportKeyValueRow {
+                        key: "Placeholder".to_string(),
+                        value: readiness.placeholder_count.to_string(),
+                        unit: None,
+                    },
+                    ReportKeyValueRow {
+                        key: "Missing".to_string(),
+                        value: readiness.missing_count.to_string(),
+                        unit: None,
+                    },
+                    ReportKeyValueRow {
+                        key: "Blocking".to_string(),
+                        value: readiness.blocking_count.to_string(),
+                        unit: None,
+                    },
+                    ReportKeyValueRow {
+                        key: "Warnings".to_string(),
+                        value: readiness.warning_count.to_string(),
+                        unit: None,
+                    },
+                ],
+            });
+
+            let rows = readiness
+                .components
+                .iter()
+                .map(|assignment| {
+                    let model = assignment
+                        .model_ref
+                        .as_ref()
+                        .map(|model| model.id.clone())
+                        .unwrap_or_else(|| "None".to_string());
+                    let source = assignment
+                        .model_ref
+                        .as_ref()
+                        .map(|model| format!("{:?}", model.source))
+                        .unwrap_or_else(|| "None".to_string());
+                    let pins = if assignment.pin_mappings.is_empty() {
+                        "None".to_string()
+                    } else {
+                        assignment
+                            .pin_mappings
+                            .iter()
+                            .map(|mapping| {
+                                format!("{}->{}", mapping.component_pin_id, mapping.model_pin_name)
+                            })
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    };
+                    let diagnostics = if assignment.diagnostics.is_empty() {
+                        "None".to_string()
+                    } else {
+                        assignment
+                            .diagnostics
+                            .iter()
+                            .map(|diagnostic| diagnostic.code.clone())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    };
+
+                    for diagnostic in &assignment.diagnostics {
+                        if matches!(
+                            diagnostic.severity,
+                            hotsas_core::ModelMappingSeverity::Blocking
+                                | hotsas_core::ModelMappingSeverity::Error
+                                | hotsas_core::ModelMappingSeverity::Warning
+                        ) {
+                            warnings.push(ReportWarning {
+                                severity: match diagnostic.severity {
+                                    hotsas_core::ModelMappingSeverity::Blocking
+                                    | hotsas_core::ModelMappingSeverity::Error => {
+                                        ReportWarningSeverity::Error
+                                    }
+                                    _ => ReportWarningSeverity::Warning,
+                                },
+                                code: diagnostic.code.clone(),
+                                message: diagnostic.message.clone(),
+                                section_kind: Some(ReportSectionKind::ModelMappingReadiness),
+                            });
+                        }
+                    }
+
+                    vec![
+                        assignment
+                            .component_instance_id
+                            .clone()
+                            .unwrap_or_else(|| assignment.component_definition_id.clone()),
+                        assignment.component_definition_id.clone(),
+                        format!("{:?}", assignment.status),
+                        model,
+                        source,
+                        pins,
+                        assignment.readiness.status_label.clone(),
+                        diagnostics,
+                    ]
+                })
+                .collect::<Vec<_>>();
+
+            blocks.push(ReportContentBlock::DataTable {
+                title: "Component Model Assignments".to_string(),
+                columns: vec![
+                    "Component".to_string(),
+                    "Definition".to_string(),
+                    "Model Status".to_string(),
+                    "Model".to_string(),
+                    "Model Source".to_string(),
+                    "Pin Mapping".to_string(),
+                    "Readiness".to_string(),
+                    "Diagnostics".to_string(),
+                ],
+                rows,
+            });
+
+            source_refs.push(ReportSourceReference {
+                source_id: project.id.clone(),
+                source_type: "ProjectSimulationReadiness".to_string(),
+                description: "Component model mapping readiness summary".to_string(),
+            });
+
+            ReportSection {
+                kind: ReportSectionKind::ModelMappingReadiness,
+                title: "Model Mapping Readiness".to_string(),
+                status: ReportSectionStatus::Included,
+                blocks,
+                warnings,
+            }
+        } else {
+            warnings.push(ReportWarning {
+                severity: ReportWarningSeverity::Warning,
+                code: "MODEL_MAPPING_PROJECT_UNAVAILABLE".to_string(),
+                message: "No project loaded for model mapping readiness.".to_string(),
+                section_kind: Some(ReportSectionKind::ModelMappingReadiness),
+            });
+            blocks.push(ReportContentBlock::Paragraph {
+                text: "No model mapping readiness data available.".to_string(),
+            });
+            ReportSection {
+                kind: ReportSectionKind::ModelMappingReadiness,
+                title: "Model Mapping Readiness".to_string(),
+                status: ReportSectionStatus::Unavailable,
+                blocks,
+                warnings,
+            }
         }
     }
 

@@ -14,6 +14,36 @@ const mockDetails: SchematicSelectionDetailsDto = {
   ],
 };
 
+const mockDetailsWithModel: SchematicSelectionDetailsDto = {
+  ...mockDetails,
+  model_assignment_origin: "override",
+  model_assignment: {
+    component_definition_id: "generic_resistor",
+    component_instance_id: "R1",
+    model_ref: {
+      id: "builtin_resistor_primitive",
+      display_name: "Builtin resistor primitive",
+      model_kind: "primitive_model",
+      source: "builtin",
+      status: "assigned_builtin",
+      limitations: [],
+      warnings: [],
+    },
+    pin_mappings: [],
+    parameter_bindings: [],
+    status: "assigned_builtin",
+    readiness: {
+      can_simulate: true,
+      can_export_netlist: true,
+      uses_placeholder: false,
+      blocking_count: 0,
+      warning_count: 0,
+      status_label: "Simulation ready",
+    },
+    diagnostics: [],
+  },
+};
+
 describe("SchematicSelectionInspector", () => {
   it("shows empty state when no entity selected", () => {
     render(
@@ -39,6 +69,23 @@ describe("SchematicSelectionInspector", () => {
     expect(screen.getByText("Resistance")).toBeInTheDocument();
     expect(screen.getByDisplayValue("10k")).toBeInTheDocument();
     expect(screen.getByText("Instance ID")).toBeInTheDocument();
+  });
+
+  it("shows selected component model assignment and readiness", () => {
+    render(
+      <SchematicSelectionInspector
+        entity={{ kind: "component", id: "R1" }}
+        details={mockDetailsWithModel}
+        onDeleteWire={vi.fn()}
+        onUpdateParameter={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Model assignment")).toBeInTheDocument();
+    expect(screen.getByText("override")).toBeInTheDocument();
+    expect(screen.getByText("Builtin resistor primitive")).toBeInTheDocument();
+    expect(screen.getByText("assigned builtin")).toBeInTheDocument();
+    expect(screen.getByText("Simulation ready")).toBeInTheDocument();
   });
 
   it("shows delete wire button for wire entity", () => {

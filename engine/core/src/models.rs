@@ -69,6 +69,18 @@ pub struct ConnectedPin {
     pub net_id: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SimulationModelKind {
+    Primitive,
+    Model,
+    Subcircuit,
+    Placeholder,
+    Touchstone,
+    #[default]
+    Unknown,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SimulationModel {
     pub id: String,
@@ -77,6 +89,8 @@ pub struct SimulationModel {
     pub raw_model: Option<String>,
     pub raw_model_id: Option<String>,
     pub pin_mapping: BTreeMap<String, String>,
+    #[serde(default)]
+    pub kind: SimulationModelKind,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -5,10 +5,11 @@ use crate::services::{
 };
 use crate::{
     ApplicationError, CircuitTemplateService, CircuitValidationService, ComponentLibraryService,
-    ComponentParameterService, EngineeringNotebookService, ExportCenterService, ExportService,
-    FormulaService, ModelImportService, NetlistGenerationService, NgspiceSimulationService,
-    PreferredValuesService, ProjectPackageService, ProjectService, SchematicEditingService,
-    SelectedRegionAnalysisService, SimulationEngineChoice, SimulationService,
+    ComponentModelMappingService, ComponentParameterService, EngineeringNotebookService,
+    ExportCenterService, ExportService, FormulaService, ModelImportService,
+    NetlistGenerationService, NgspiceSimulationService, PreferredValuesService,
+    ProjectPackageService, ProjectService, SchematicEditingService, SelectedRegionAnalysisService,
+    SimulationEngineChoice, SimulationService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
@@ -49,6 +50,7 @@ pub struct AppServices {
     simulation_diagnostics_service: SimulationDiagnosticsService,
     simulation_history_service: SimulationHistoryService,
     simulation_graph_service: SimulationGraphService,
+    component_model_mapping_service: ComponentModelMappingService,
 }
 
 impl AppServices {
@@ -89,6 +91,7 @@ impl AppServices {
             simulation_diagnostics_service: SimulationDiagnosticsService::new(ngspice_engine),
             simulation_history_service: SimulationHistoryService::new(),
             simulation_graph_service: SimulationGraphService::new(),
+            component_model_mapping_service: ComponentModelMappingService::new(),
             export_service: ExportService::new(report_exporter.clone()),
             export_center_service: ExportCenterService::new(
                 report_exporter,
@@ -211,6 +214,10 @@ impl AppServices {
 
     pub fn simulation_graph_service(&self) -> &SimulationGraphService {
         &self.simulation_graph_service
+    }
+
+    pub fn component_model_mapping_service(&self) -> &ComponentModelMappingService {
+        &self.component_model_mapping_service
     }
 
     pub fn create_rc_low_pass_demo_project(&self) -> CircuitProject {

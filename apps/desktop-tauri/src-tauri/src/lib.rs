@@ -7,10 +7,11 @@ use hotsas_adapters::{
 };
 use hotsas_api::{
     AddComponentRequestDto, ApiError, AppDiagnosticsReportDto, ApplyNotebookValueRequestDto,
-    AssignComponentRequestDto, CircuitValidationReportDto, ComponentDetailsDto,
-    ComponentLibraryDto, ComponentParameterIssueDto, ComponentParameterSchemaDto,
-    ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto,
-    ConnectPinsRequestDto, DcdcCalculationResultDto, DcdcInputDto, DcdcMockTransientRequestDto,
+    AssignComponentRequestDto, AssignModelRequestDto, CircuitValidationReportDto,
+    ComponentDetailsDto, ComponentLibraryDto, ComponentModelAssignmentDto,
+    ComponentParameterIssueDto, ComponentParameterSchemaDto, ComponentSearchRequestDto,
+    ComponentSearchResultDto, ComponentSummaryDto, ConnectPinsRequestDto,
+    DcdcCalculationResultDto, DcdcInputDto, DcdcMockTransientRequestDto,
     DcdcNetlistPreviewRequestDto, DcdcTemplateDto, DeleteComponentRequestDto, DeleteWireRequestDto,
     ExportCapabilityDto, ExportHistoryEntryDto, ExportRequestDto, ExportResultDto,
     FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto, FormulaPackDto,
@@ -25,9 +26,9 @@ use hotsas_api::{
     SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionIssueDto,
     SelectedRegionPreviewDto, SimulationDiagnosticMessageDto, SimulationGraphViewDto,
     SimulationPreflightResultDto, SimulationProbeDto, SimulationResultDto,
-    SimulationRunHistoryEntryDto, SimulationRunRequestDto, TypedComponentParametersDto,
-    UndoRedoStateDto, UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
-    UserCircuitSimulationRunDto, VerticalSliceDto,
+    SimulationRunHistoryEntryDto, SimulationRunRequestDto, SpiceModelReferenceDto,
+    TypedComponentParametersDto, UndoRedoStateDto, UpdateQuickParameterRequestDto,
+    UserCircuitSimulationProfileDto, UserCircuitSimulationRunDto, VerticalSliceDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -1157,6 +1158,55 @@ fn export_run_series_json(api: State<'_, HotSasApi>) -> Result<String, String> {
     result
 }
 
+// ─── v3.1 Component Model Mapping Commands ───
+
+#[tauri::command]
+fn list_available_models_for_component(
+    api: State<'_, HotSasApi>,
+    definition_id: String,
+) -> Result<Vec<SpiceModelReferenceDto>, String> {
+    log::info!("COMMAND list_available_models_for_component: {definition_id}");
+    let result = api
+        .list_available_models_for_component(definition_id)
+        .map_err(tauri_error);
+    log_command_result("list_available_models_for_component", &result);
+    result
+}
+
+#[tauri::command]
+fn get_component_model_assignment(
+    api: State<'_, HotSasApi>,
+    instance_id: String,
+) -> Result<ComponentModelAssignmentDto, String> {
+    log::info!("COMMAND get_component_model_assignment: {instance_id}");
+    let result = api
+        .get_component_model_assignment(instance_id)
+        .map_err(tauri_error);
+    log_command_result("get_component_model_assignment", &result);
+    result
+}
+
+#[tauri::command]
+fn assign_model_to_instance(
+    api: State<'_, HotSasApi>,
+    request: AssignModelRequestDto,
+) -> Result<ComponentModelAssignmentDto, String> {
+    log::info!("COMMAND assign_model_to_instance: {} -> {}", request.instance_id, request.model_id);
+    let result = api.assign_model_to_instance(request).map_err(tauri_error);
+    log_command_result("assign_model_to_instance", &result);
+    result
+}
+
+#[tauri::command]
+fn evaluate_project_simulation_readiness(
+    api: State<'_, HotSasApi>,
+) -> Result<hotsas_api::ProjectSimulationReadinessDto, String> {
+    log::info!("COMMAND evaluate_project_simulation_readiness");
+    let result = api.evaluate_project_simulation_readiness().map_err(tauri_error);
+    log_command_result("evaluate_project_simulation_readiness", &result);
+    result
+}
+
 fn build_api() -> HotSasApi {
     HotSasApi::new(AppServices::new(
         Arc::new(JsonProjectStorage),
@@ -1298,6 +1348,10 @@ pub fn run() {
             build_simulation_graph_view,
             export_run_series_csv,
             export_run_series_json,
+            list_available_models_for_component,
+            get_component_model_assignment,
+            assign_model_to_instance,
+            evaluate_project_simulation_readiness,
             write_log
         ])
         .run(tauri::generate_context!())

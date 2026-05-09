@@ -1,6 +1,7 @@
 use hotsas_application::AppServices;
 use hotsas_core::{
-    CircuitProject, ComponentInstance, EngineeringUnit, NgspiceAvailability, SimulationProbe,
+    CircuitProject, ComponentDefinition, ComponentInstance, ComponentLibrary, EngineeringUnit,
+    NgspiceAvailability, SimulationModel, SimulationModelKind, SimulationProbe,
     SimulationProbeKind, SimulationProbeTarget, SimulationStatus, ValueWithUnit,
 };
 use hotsas_ports::{
@@ -497,6 +498,63 @@ fn diagnose_invalid_probe_returns_blocking_message() {
 }
 
 #[test]
+fn preflight_includes_model_mapping_diagnostics_with_component_and_model_ids() {
+    let services = build_services();
+    let mut project = rc_low_pass_project_with_ground();
+    project.schematic.components = vec![
+        component_instance("X1", "custom_unknown"),
+        component_instance("U1", "generic_op_amp"),
+        component_instance("Rmissing", "generic_resistor"),
+        component_instance("Ubad", "bad_subckt"),
+    ];
+    let mut library = ComponentLibrary {
+        components: vec![
+            generic_op_amp_definition(),
+            resistor_without_required_parameter(),
+            bad_subckt_definition(),
+        ],
+        ..hotsas_core::built_in_component_library()
+    };
+    library
+        .components
+        .retain(|component| component.id != "generic_resistor" || component.parameters.is_empty());
+
+    let diagnostics = services
+        .simulation_diagnostics_service()
+        .diagnose_simulation_preflight_with_library(&project, &mock_profile(), &library)
+        .unwrap();
+
+    assert_model_diagnostic(
+        &diagnostics,
+        "MISSING_MODEL",
+        hotsas_core::SimulationDiagnosticSeverity::Blocking,
+        "X1",
+        None,
+    );
+    assert_model_diagnostic(
+        &diagnostics,
+        "PLACEHOLDER_MODEL",
+        hotsas_core::SimulationDiagnosticSeverity::Warning,
+        "U1",
+        Some("generic_op_amp_model"),
+    );
+    assert_model_diagnostic(
+        &diagnostics,
+        "MISSING_MODEL_PARAMETER",
+        hotsas_core::SimulationDiagnosticSeverity::Blocking,
+        "Rmissing",
+        Some("builtin_resistor_primitive"),
+    );
+    assert_model_diagnostic(
+        &diagnostics,
+        "INVALID_PIN_MAPPING",
+        hotsas_core::SimulationDiagnosticSeverity::Blocking,
+        "Ubad",
+        Some("bad_subckt_model"),
+    );
+}
+
+#[test]
 fn run_history_adds_and_lists_runs() {
     let services = build_services();
     let project = rc_low_pass_project_with_ground();
@@ -717,4 +775,86 @@ fn full_workflow_preflight_run_history_graph_export() {
         .export_run_series_json(&run)
         .unwrap();
     assert!(json.contains("run_id"));
+}
+
+fn component_instance(instance_id: &str, definition_id: &str) -> ComponentInstance {
+    ComponentInstance {
+        instance_id: instance_id.to_string(),
+        definition_id: definition_id.to_string(),
+        selected_symbol_id: None,
+        selected_footprint_id: None,
+        selected_simulation_model_id: None,
+        position: hotsas_core::Point::new(0.0, 0.0),
+        rotation_degrees: 0.0,
+        connected_nets: vec![],
+        overridden_parameters: BTreeMap::new(),
+        notes: None,
+    }
+}
+
+fn generic_op_amp_definition() -> ComponentDefinition {
+    hotsas_core::built_in_component_library()
+        .components
+        .into_iter()
+        .find(|component| component.id == "generic_op_amp")
+        .unwrap()
+}
+
+fn resistor_without_required_parameter() -> ComponentDefinition {
+    let mut definition = hotsas_core::built_in_component_library()
+        .components
+        .into_iter()
+        .find(|component| component.id == "generic_resistor")
+        .unwrap();
+    definition.parameters.clear();
+    definition
+}
+
+fn bad_subckt_definition() -> ComponentDefinition {
+    ComponentDefinition {
+        id: "bad_subckt".to_string(),
+        name: "Bad Subckt".to_string(),
+        category: "op_amp".to_string(),
+        manufacturer: None,
+        part_number: None,
+        description: None,
+        parameters: BTreeMap::new(),
+        ratings: BTreeMap::new(),
+        symbol_ids: vec!["op_amp".to_string()],
+        footprint_ids: vec![],
+        simulation_models: vec![SimulationModel {
+            id: "bad_subckt_model".to_string(),
+            model_type: "spice".to_string(),
+            source_path: Some("bad.lib".to_string()),
+            raw_model: Some(".subckt BAD IN OUT VCC VEE".to_string()),
+            raw_model_id: Some("BAD".to_string()),
+            pin_mapping: BTreeMap::from([("IN".to_string(), "missing_pin".to_string())]),
+            kind: SimulationModelKind::Subcircuit,
+        }],
+        datasheets: vec![],
+        tags: vec!["test".to_string()],
+        metadata: BTreeMap::new(),
+    }
+}
+
+fn assert_model_diagnostic(
+    diagnostics: &[hotsas_core::SimulationDiagnosticMessage],
+    code: &str,
+    severity: hotsas_core::SimulationDiagnosticSeverity,
+    component_id: &str,
+    model_id: Option<&str>,
+) {
+    let diagnostic = diagnostics
+        .iter()
+        .find(|diagnostic| {
+            diagnostic.code == code
+                && diagnostic
+                    .related_entity
+                    .as_ref()
+                    .map(|entity| entity.id.as_str())
+                    == Some(component_id)
+        })
+        .unwrap_or_else(|| panic!("expected {code} for component {component_id}"));
+    assert_eq!(diagnostic.severity, severity);
+    assert_eq!(diagnostic.related_model_id.as_deref(), model_id);
 }

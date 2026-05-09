@@ -4,6 +4,33 @@
 
 [v3.0 — Simulation UX, ngspice Hardening, Probes & Graph Workflow](./verification_logs/v3.0_simulation_ux_ngspice_probes_graphs.md)
 
+## In-Progress Development Log
+
+[v3.1 - Component Model Mapping & SPICE Model Assignment (partial/completion pass)](./verification_logs/v3.1_component_model_mapping_spice_assignment.md)
+
+```text
+Current v3.1 status: PARTIAL; code/build verification PASS.
+Latest evidence:
+- inherited v2.9 markdown Prettier issue fixed; npm.cmd run format:check PASS
+- ComponentModelMappingService targeted tests PASS
+- hotsas-cli model-check targeted tests PASS
+- advanced report + CLI export model mapping tests PASS
+- subckt X-line model_pin_index order regression PASS
+- simulation preflight model mapping diagnostics regression PASS
+- frontend ModelAssignmentCard / SimulationReadinessBadge / SchematicSelectionInspector tests PASS
+- code/build queue PASS: cargo fmt --check, cargo test, cargo build -p hotsas_cli --release,
+  npm.cmd run format:check, npm.cmd run typecheck, npm.cmd run test, npm.cmd run build,
+  npm.cmd run tauri:build
+- final format/build/log/hash checks repeated after doc updates; git diff --check PASS
+- v3.1 CLI artifact: engine/target/release/hotsas-cli.exe, 3838464 bytes,
+  SHA256 AFF78C36E85A2D0E9F7EE89CA42416D65B6703C107BEC2379BA2C52540AFBDA4
+- v3.1 desktop artifact: apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe,
+  14218752 bytes, SHA256 39FB8D0B306D6B935DF352DD850A4787DE0FA0E915FF725F21845A0421C8CCE2
+
+Remaining before ACCEPT:
+- imported model persistence remains documented PARTIAL/DEFERRED
+```
+
 ## v3.0 Summary
 
 ```text

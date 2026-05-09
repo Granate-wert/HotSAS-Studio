@@ -54,6 +54,7 @@ pub enum ReportSectionKind {
     ESeriesSelections,
     Bom,
     ImportedModels,
+    ModelMappingReadiness,
     ExportHistory,
     WarningsAndAssumptions,
 }
@@ -73,6 +74,7 @@ impl std::fmt::Display for ReportSectionKind {
             ReportSectionKind::ESeriesSelections => write!(f, "ESeriesSelections"),
             ReportSectionKind::Bom => write!(f, "Bom"),
             ReportSectionKind::ImportedModels => write!(f, "ImportedModels"),
+            ReportSectionKind::ModelMappingReadiness => write!(f, "ModelMappingReadiness"),
             ReportSectionKind::ExportHistory => write!(f, "ExportHistory"),
             ReportSectionKind::WarningsAndAssumptions => write!(f, "WarningsAndAssumptions"),
         }
@@ -96,6 +98,7 @@ impl std::str::FromStr for ReportSectionKind {
             "ESeriesSelections" => Ok(ReportSectionKind::ESeriesSelections),
             "Bom" => Ok(ReportSectionKind::Bom),
             "ImportedModels" => Ok(ReportSectionKind::ImportedModels),
+            "ModelMappingReadiness" => Ok(ReportSectionKind::ModelMappingReadiness),
             "ExportHistory" => Ok(ReportSectionKind::ExportHistory),
             "WarningsAndAssumptions" => Ok(ReportSectionKind::WarningsAndAssumptions),
             other => Err(format!("unknown section kind: {other}")),
@@ -249,7 +252,7 @@ pub struct ReportSectionCapability {
     pub supported_report_types: Vec<AdvancedReportType>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct AdvancedReportContext {
     pub project: Option<crate::CircuitProject>,
     pub notebook: Option<crate::EngineeringNotebook>,
@@ -259,21 +262,6 @@ pub struct AdvancedReportContext {
     pub export_history: Vec<crate::ExportHistoryEntry>,
     pub netlist: Option<String>,
     pub imported_models_summary: Vec<String>,
-}
-
-impl Default for AdvancedReportContext {
-    fn default() -> Self {
-        Self {
-            project: None,
-            notebook: None,
-            simulation_result: None,
-            dcdc_result: None,
-            selected_region_result: None,
-            export_history: vec![],
-            netlist: None,
-            imported_models_summary: vec![],
-        }
-    }
 }
 
 pub fn default_section_capabilities() -> Vec<ReportSectionCapability> {
@@ -395,6 +383,17 @@ pub fn default_section_capabilities() -> Vec<ReportSectionCapability> {
             default_enabled: false,
             supported_report_types: vec![
                 AdvancedReportType::ProjectSummary,
+                AdvancedReportType::FullProjectReport,
+            ],
+        },
+        ReportSectionCapability {
+            kind: ReportSectionKind::ModelMappingReadiness,
+            title: "Model Mapping Readiness".to_string(),
+            description: "Component model assignment and simulation readiness".to_string(),
+            default_enabled: true,
+            supported_report_types: vec![
+                AdvancedReportType::ProjectSummary,
+                AdvancedReportType::SimulationReport,
                 AdvancedReportType::FullProjectReport,
             ],
         },

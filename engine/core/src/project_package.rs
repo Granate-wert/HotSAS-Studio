@@ -71,15 +71,9 @@ pub struct ReportIndexEntry {
     pub created_at: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct ReportIndex {
     pub reports: Vec<ReportIndexEntry>,
-}
-
-impl Default for ReportIndex {
-    fn default() -> Self {
-        Self { reports: vec![] }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -90,15 +84,9 @@ pub struct ResultIndexEntry {
     pub created_at: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct ResultIndex {
     pub results: Vec<ResultIndexEntry>,
-}
-
-impl Default for ResultIndex {
-    fn default() -> Self {
-        Self { results: vec![] }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

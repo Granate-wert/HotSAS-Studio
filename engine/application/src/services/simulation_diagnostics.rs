@@ -1,6 +1,6 @@
 use crate::ApplicationError;
 use hotsas_core::{
-    CircuitProject, NgspiceDiagnostics, SimulationDiagnosticEntityKind,
+    CircuitProject, ComponentLibrary, NgspiceDiagnostics, SimulationDiagnosticEntityKind,
     SimulationDiagnosticEntityRef, SimulationDiagnosticMessage, SimulationDiagnosticSeverity,
     UserCircuitSimulationProfile, UserCircuitSimulationRun, UserCircuitSimulationStatus,
 };
@@ -35,6 +35,7 @@ impl SimulationDiagnosticsService {
                     kind: SimulationDiagnosticEntityKind::Engine,
                     id: "ngspice".to_string(),
                 }),
+                related_model_id: None,
                 suggested_fix: Some(
                     "Install ngspice and ensure it is on PATH, or continue using mock engine."
                         .to_string(),
@@ -57,6 +58,19 @@ impl SimulationDiagnosticsService {
         project: &CircuitProject,
         profile: &UserCircuitSimulationProfile,
     ) -> Result<Vec<SimulationDiagnosticMessage>, ApplicationError> {
+        self.diagnose_simulation_preflight_with_library(
+            project,
+            profile,
+            &hotsas_core::built_in_component_library(),
+        )
+    }
+
+    pub fn diagnose_simulation_preflight_with_library(
+        &self,
+        project: &CircuitProject,
+        profile: &UserCircuitSimulationProfile,
+        library: &ComponentLibrary,
+    ) -> Result<Vec<SimulationDiagnosticMessage>, ApplicationError> {
         let mut diagnostics = vec![];
 
         if project.schematic.components.is_empty() {
@@ -67,6 +81,7 @@ impl SimulationDiagnosticsService {
                 message: "Add at least one component to the schematic before running simulation."
                     .to_string(),
                 related_entity: None,
+                related_model_id: None,
                 suggested_fix: Some(
                     "Place a voltage source and at least one passive component.".to_string(),
                 ),
@@ -80,6 +95,7 @@ impl SimulationDiagnosticsService {
                 title: "Schematic has no nets".to_string(),
                 message: "Nets are required for SPICE simulation.".to_string(),
                 related_entity: None,
+                related_model_id: None,
                 suggested_fix: Some("Connect component pins to create nets.".to_string()),
             });
         }
@@ -96,6 +112,7 @@ impl SimulationDiagnosticsService {
                 title: "No ground reference found".to_string(),
                 message: "Simulation may be unstable without a ground reference.".to_string(),
                 related_entity: None,
+                related_model_id: None,
                 suggested_fix: Some(
                     "Add a ground component and connect it to your circuit.".to_string(),
                 ),
@@ -109,6 +126,7 @@ impl SimulationDiagnosticsService {
                 title: "No probes selected".to_string(),
                 message: "No output probes are configured. Results may be minimal.".to_string(),
                 related_entity: None,
+                related_model_id: None,
                 suggested_fix: Some(
                     "Select node voltage probes for nets you want to observe.".to_string(),
                 ),
@@ -131,6 +149,7 @@ impl SimulationDiagnosticsService {
                                 kind: SimulationDiagnosticEntityKind::Probe,
                                 id: probe.id.clone(),
                             }),
+                            related_model_id: None,
                             suggested_fix: Some(
                                 "Remove or reconfigure the probe to target an existing net."
                                     .to_string(),
@@ -139,6 +158,50 @@ impl SimulationDiagnosticsService {
                     }
                 }
                 _ => {}
+            }
+        }
+
+        // v3.1: Model mapping diagnostics
+        let mapping_service = crate::services::ComponentModelMappingService::new();
+        let readiness = mapping_service.evaluate_project_simulation_readiness(project, &library);
+        for comp in &readiness.components {
+            for d in &comp.diagnostics {
+                diagnostics.push(SimulationDiagnosticMessage {
+                    code: d.code.clone(),
+                    severity: match d.severity {
+                        hotsas_core::ModelMappingSeverity::Info => {
+                            SimulationDiagnosticSeverity::Info
+                        }
+                        hotsas_core::ModelMappingSeverity::Warning => {
+                            SimulationDiagnosticSeverity::Warning
+                        }
+                        hotsas_core::ModelMappingSeverity::Error => {
+                            SimulationDiagnosticSeverity::Error
+                        }
+                        hotsas_core::ModelMappingSeverity::Blocking => {
+                            SimulationDiagnosticSeverity::Blocking
+                        }
+                    },
+                    title: d.title.clone(),
+                    message: d.message.clone(),
+                    related_entity: Some(SimulationDiagnosticEntityRef {
+                        kind: SimulationDiagnosticEntityKind::Component,
+                        id: comp
+                            .component_instance_id
+                            .clone()
+                            .unwrap_or_else(|| comp.component_definition_id.clone()),
+                    })
+                    .or_else(|| {
+                        d.related_component_id
+                            .as_ref()
+                            .map(|id| SimulationDiagnosticEntityRef {
+                                kind: SimulationDiagnosticEntityKind::Component,
+                                id: id.clone(),
+                            })
+                    }),
+                    related_model_id: d.related_model_id.clone(),
+                    suggested_fix: d.suggested_fix.clone(),
+                });
             }
         }
 
@@ -164,6 +227,7 @@ impl SimulationDiagnosticsService {
                     kind: SimulationDiagnosticEntityKind::Profile,
                     id: run.profile.id.clone(),
                 }),
+                related_model_id: None,
                 suggested_fix: Some(
                     "Check schematic validity, probe targets, and ngspice availability."
                         .to_string(),
@@ -184,6 +248,7 @@ impl SimulationDiagnosticsService {
                     kind: SimulationDiagnosticEntityKind::Engine,
                     id: "mock".to_string(),
                 }),
+                related_model_id: None,
                 suggested_fix: Some(
                     "Install ngspice to use the real SPICE engine in auto mode.".to_string(),
                 ),
@@ -197,6 +262,7 @@ impl SimulationDiagnosticsService {
                 title: err.message.clone(),
                 message: err.message.clone(),
                 related_entity: None,
+                related_model_id: None,
                 suggested_fix: None,
             });
         }
@@ -208,6 +274,7 @@ impl SimulationDiagnosticsService {
                 title: warn.message.clone(),
                 message: warn.message.clone(),
                 related_entity: None,
+                related_model_id: None,
                 suggested_fix: None,
             });
         }

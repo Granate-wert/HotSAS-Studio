@@ -1,36 +1,38 @@
 use crate::{
     AcSweepSettingsDto, AddComponentRequestDto, ApiError, AppDiagnosticsReportDto,
     ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitValidationIssueDto,
-    CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto, ComponentParameterDto,
-    ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto,
-    ConnectPinsRequestDto, DeleteComponentRequestDto, DeleteWireRequestDto, ExportCapabilityDto,
-    ExportHistoryEntryDto, ExportRequestDto, ExportResultDto, FootprintDto,
-    FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
-    FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, KeyValueDto,
-    MoveComponentRequestDto, NetlistPreviewDto, NgspiceAvailabilityDto, NgspiceDiagnosticsDto,
-    NotebookEvaluationRequestDto, NotebookEvaluationResultDto, NotebookStateDto,
-    OperatingPointSettingsDto, PlaceComponentRequestDto, PlaceableComponentDto, PreferredValueDto,
-    ProductWorkflowStatusDto, ProjectDto, ProjectOpenRequestDto, ProjectOpenResultDto,
-    ProjectPackageManifestDto, ProjectPackageValidationReportDto, ProjectPersistenceWarningDto,
-    ProjectSaveResultDto, ProjectSessionStateDto, RecentProjectEntryDto, RenameNetRequestDto,
-    SaveProjectDto, SchematicEditResultDto, SchematicEditableFieldDto,
-    SchematicSelectionDetailsDto, SchematicSelectionRequestDto, SchematicToolCapabilityDto,
-    SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
-    SelectedRegionPreviewDto, SimulationDiagnosticMessageDto, SimulationGraphViewDto,
-    SimulationMeasurementDto, SimulationModelDto, SimulationPointDto, SimulationPreflightResultDto,
-    SimulationProbeDto, SimulationProbeTargetDto, SimulationResultDto,
-    SimulationRunHistoryEntryDto, SimulationRunRequestDto, SimulationSeriesDto,
-    SimulationWorkflowErrorDto, SimulationWorkflowWarningDto, SymbolDto, TransientSettingsDto,
-    UndoRedoStateDto, UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
+    CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto,
+    ComponentModelAssignmentDto, ComponentParameterDto, ComponentSearchRequestDto,
+    ComponentSearchResultDto, ComponentSummaryDto, ConnectPinsRequestDto,
+    DeleteComponentRequestDto, DeleteWireRequestDto, ExportCapabilityDto, ExportHistoryEntryDto,
+    ExportRequestDto, ExportResultDto, FootprintDto, FormulaCalculationRequestDto,
+    FormulaDetailsDto, FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto,
+    FormulaResultDto, FormulaSummaryDto, KeyValueDto, MoveComponentRequestDto, NetlistPreviewDto,
+    NgspiceAvailabilityDto, NgspiceDiagnosticsDto, NotebookEvaluationRequestDto,
+    NotebookEvaluationResultDto, NotebookStateDto, OperatingPointSettingsDto,
+    PlaceComponentRequestDto, PlaceableComponentDto, PreferredValueDto, ProductWorkflowStatusDto,
+    ProjectDto, ProjectOpenRequestDto, ProjectOpenResultDto, ProjectPackageManifestDto,
+    ProjectPackageValidationReportDto, ProjectPersistenceWarningDto, ProjectSaveResultDto,
+    ProjectSessionStateDto, RecentProjectEntryDto, RenameNetRequestDto, SaveProjectDto,
+    SchematicEditResultDto, SchematicEditableFieldDto, SchematicSelectionDetailsDto,
+    SchematicSelectionRequestDto, SchematicToolCapabilityDto, SelectedComponentDto,
+    SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionPreviewDto,
+    SimulationDiagnosticMessageDto, SimulationGraphViewDto, SimulationMeasurementDto,
+    SimulationModelDto, SimulationPointDto, SimulationPreflightResultDto, SimulationProbeDto,
+    SimulationProbeTargetDto, SimulationResultDto, SimulationRunHistoryEntryDto,
+    SimulationRunRequestDto, SimulationSeriesDto, SimulationWorkflowErrorDto,
+    SimulationWorkflowWarningDto, SymbolDto, TransientSettingsDto, UndoRedoStateDto,
+    UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
     UserCircuitSimulationResultDto, UserCircuitSimulationRunDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{
     AppDiagnosticsService, AppServices, FormulaRegistryService, ProductWorkflowService,
 };
 use hotsas_core::{
-    rc_low_pass_formula, CircuitProject, ComponentAssignment, ComponentLibrary,
-    ComponentLibraryQuery, EngineeringNotebook, EngineeringUnit, FormulaDefinition, FormulaPack,
-    NotebookBlock, NotebookEvaluationStatus, NotebookHistoryEntry, ValueWithUnit,
+    rc_low_pass_formula, CircuitProject, ComponentAssignment, ComponentDefinition,
+    ComponentLibrary, ComponentLibraryQuery, EngineeringNotebook, EngineeringUnit,
+    FormulaDefinition, FormulaPack, NotebookBlock, NotebookEvaluationStatus, NotebookHistoryEntry,
+    ValueWithUnit,
 };
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -2067,11 +2069,46 @@ impl HotSasApi {
                         editable: true,
                     });
                 }
+                let library = hotsas_core::built_in_component_library();
+                let definition = library
+                    .components
+                    .iter()
+                    .find(|d| d.id == comp.definition_id)
+                    .cloned()
+                    .unwrap_or_else(|| ComponentDefinition {
+                        id: comp.definition_id.clone(),
+                        name: comp.definition_id.clone(),
+                        category: "unknown".to_string(),
+                        manufacturer: None,
+                        part_number: None,
+                        description: None,
+                        parameters: std::collections::BTreeMap::new(),
+                        ratings: std::collections::BTreeMap::new(),
+                        symbol_ids: vec![],
+                        footprint_ids: vec![],
+                        simulation_models: vec![],
+                        datasheets: vec![],
+                        tags: vec![],
+                        metadata: std::collections::BTreeMap::new(),
+                    });
+                let assignment = self
+                    .services
+                    .component_model_mapping_service()
+                    .get_instance_model_assignment(comp, &definition);
                 Ok(SchematicSelectionDetailsDto {
                     kind: "component".to_string(),
                     id: Some(comp.instance_id.clone()),
                     display_name: Some(comp.instance_id.clone()),
                     editable_fields: fields,
+                    model_assignment: Some(ComponentModelAssignmentDto::from(&assignment)),
+                    model_assignment_origin: Some(
+                        if comp.selected_simulation_model_id.is_some() {
+                            "override"
+                        } else {
+                            "inherited"
+                        }
+                        .to_string(),
+                    ),
                 })
             }
             "wire" => {
@@ -2088,6 +2125,8 @@ impl HotSasApi {
                     id: Some(wire.id.clone()),
                     display_name: Some(format!("Wire {}", wire.id)),
                     editable_fields: vec![],
+                    model_assignment: None,
+                    model_assignment_origin: None,
                 })
             }
             "net" => {
@@ -2109,6 +2148,8 @@ impl HotSasApi {
                         current_value: net.name.clone(),
                         editable: true,
                     }],
+                    model_assignment: None,
+                    model_assignment_origin: None,
                 })
             }
             _ => Err(ApiError::InvalidInput(format!(
@@ -2489,6 +2530,140 @@ impl HotSasApi {
             .simulation_graph_service()
             .export_run_series_json(&run)
             .map_err(ApiError::Application)
+    }
+
+    // ─── v3.1 Component Model Mapping ───
+
+    pub fn list_available_models_for_component(
+        &self,
+        definition_id: String,
+    ) -> Result<Vec<crate::SpiceModelReferenceDto>, ApiError> {
+        let library = hotsas_core::built_in_component_library();
+        let definition = library
+            .components
+            .iter()
+            .find(|d| d.id == definition_id)
+            .cloned()
+            .ok_or_else(|| {
+                ApiError::InvalidInput(format!(
+                    "component definition '{}' not found",
+                    definition_id
+                ))
+            })?;
+        let imported_models = self
+            .services
+            .model_import_service()
+            .list_imported_model_details()
+            .unwrap_or_default();
+        let models = self
+            .services
+            .component_model_mapping_service()
+            .list_available_models_for_component(&definition, &imported_models);
+        Ok(models
+            .iter()
+            .map(crate::SpiceModelReferenceDto::from)
+            .collect())
+    }
+
+    pub fn get_component_model_assignment(
+        &self,
+        instance_id: String,
+    ) -> Result<crate::ComponentModelAssignmentDto, ApiError> {
+        let project = self.current_project()?;
+        let library = hotsas_core::built_in_component_library();
+        let instance = project
+            .schematic
+            .components
+            .iter()
+            .find(|c| c.instance_id == instance_id)
+            .ok_or_else(|| {
+                ApiError::InvalidInput(format!("component instance '{}' not found", instance_id))
+            })?;
+        let definition = library
+            .components
+            .iter()
+            .find(|d| d.id == instance.definition_id)
+            .cloned()
+            .unwrap_or_else(|| ComponentDefinition {
+                id: instance.definition_id.clone(),
+                name: instance.definition_id.clone(),
+                category: "unknown".to_string(),
+                manufacturer: None,
+                part_number: None,
+                description: None,
+                parameters: std::collections::BTreeMap::new(),
+                ratings: std::collections::BTreeMap::new(),
+                symbol_ids: vec![],
+                footprint_ids: vec![],
+                simulation_models: vec![],
+                datasheets: vec![],
+                tags: vec![],
+                metadata: std::collections::BTreeMap::new(),
+            });
+        let assignment = self
+            .services
+            .component_model_mapping_service()
+            .get_instance_model_assignment(instance, &definition);
+        Ok(crate::ComponentModelAssignmentDto::from(&assignment))
+    }
+
+    pub fn assign_model_to_instance(
+        &self,
+        request: crate::AssignModelRequestDto,
+    ) -> Result<crate::ComponentModelAssignmentDto, ApiError> {
+        let mut project = self.current_project()?;
+        let library = hotsas_core::built_in_component_library();
+        let instance = project
+            .schematic
+            .components
+            .iter_mut()
+            .find(|c| c.instance_id == request.instance_id)
+            .ok_or_else(|| {
+                ApiError::InvalidInput(format!(
+                    "component instance '{}' not found",
+                    request.instance_id
+                ))
+            })?;
+        let definition = library
+            .components
+            .iter()
+            .find(|d| d.id == instance.definition_id)
+            .cloned()
+            .unwrap_or_else(|| ComponentDefinition {
+                id: instance.definition_id.clone(),
+                name: instance.definition_id.clone(),
+                category: "unknown".to_string(),
+                manufacturer: None,
+                part_number: None,
+                description: None,
+                parameters: std::collections::BTreeMap::new(),
+                ratings: std::collections::BTreeMap::new(),
+                symbol_ids: vec![],
+                footprint_ids: vec![],
+                simulation_models: vec![],
+                datasheets: vec![],
+                tags: vec![],
+                metadata: std::collections::BTreeMap::new(),
+            });
+        let assignment = self
+            .services
+            .component_model_mapping_service()
+            .assign_model_to_instance(instance, &request.model_id, &definition)
+            .map_err(ApiError::Application)?;
+        self.replace_current_project(project)?;
+        Ok(crate::ComponentModelAssignmentDto::from(&assignment))
+    }
+
+    pub fn evaluate_project_simulation_readiness(
+        &self,
+    ) -> Result<crate::ProjectSimulationReadinessDto, ApiError> {
+        let project = self.current_project()?;
+        let library = hotsas_core::built_in_component_library();
+        let readiness = self
+            .services
+            .component_model_mapping_service()
+            .evaluate_project_simulation_readiness(&project, &library);
+        Ok(crate::ProjectSimulationReadinessDto::from(&readiness))
     }
 }
 

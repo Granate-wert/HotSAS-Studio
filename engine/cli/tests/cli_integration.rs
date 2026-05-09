@@ -25,6 +25,10 @@ fn cli_help_returns_success_with_all_commands() {
     assert!(stdout.contains("netlist"), "help should mention netlist");
     assert!(stdout.contains("export"), "help should mention export");
     assert!(stdout.contains("simulate"), "help should mention simulate");
+    assert!(
+        stdout.contains("model-check"),
+        "help should mention model-check"
+    );
     assert!(stdout.contains("library"), "help should mention library");
 }
 
@@ -119,6 +123,126 @@ fn cli_validate_existing_demo_project_returns_success() {
     );
 }
 
+fn save_demo_package(name: &str) -> (std::path::PathBuf, std::path::PathBuf) {
+    let api = hotsas_cli::build_headless_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "hotsas_cli_{}_{}_{}",
+        name,
+        std::process::id(),
+        chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
+    ));
+    std::fs::create_dir_all(&temp_dir).unwrap();
+    let package_path = temp_dir.join("demo_project.circuit");
+    api.save_project_package(package_path.to_str().unwrap().to_string())
+        .unwrap();
+    (temp_dir, package_path)
+}
+
+fn set_first_component_definition(package_path: &std::path::Path, definition_id: &str) {
+    let schematic_path = package_path.join("schematic.json");
+    let raw = std::fs::read_to_string(&schematic_path).unwrap();
+    let mut schematic: serde_json::Value = serde_json::from_str(&raw).unwrap();
+    schematic["components"][0]["definition_id"] = serde_json::Value::String(definition_id.into());
+    std::fs::write(
+        &schematic_path,
+        serde_json::to_string_pretty(&schematic).unwrap(),
+    )
+    .unwrap();
+}
+
+#[test]
+fn cli_model_check_simple_rc_ready() {
+    let (temp_dir, package_path) = save_demo_package("model_check_ready");
+
+    let output = hotsas_cli()
+        .args(["model-check", package_path.to_str().unwrap(), "--json"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    assert!(
+        output.status.success(),
+        "model-check should succeed. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("should be valid JSON");
+    assert_eq!(json["status"], "success");
+    assert_eq!(json["data"]["can_simulate"], true);
+    assert!(json["data"]["summary"]["ready"].as_u64().unwrap() >= 1);
+    assert_eq!(json["data"]["summary"]["blocking"], 0);
+    assert_eq!(
+        json["data"]["components"][0]["model_status"],
+        "assigned_builtin"
+    );
+    assert_eq!(
+        json["data"]["components"][0]["pin_mappings"][0]["model_pin_index"],
+        0
+    );
+}
+
+#[test]
+fn cli_model_check_reports_placeholder_model() {
+    let (temp_dir, package_path) = save_demo_package("model_check_placeholder");
+    set_first_component_definition(&package_path, "generic_op_amp");
+
+    let output = hotsas_cli()
+        .args(["model-check", package_path.to_str().unwrap(), "--json"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    assert!(
+        output.status.success(),
+        "placeholder model-check should exit successfully with warning. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("should be valid JSON");
+    assert_eq!(json["status"], "warning");
+    assert_eq!(json["data"]["components"][0]["model_status"], "placeholder");
+    assert_eq!(
+        json["data"]["components"][0]["diagnostics"][0]["code"],
+        "PLACEHOLDER_MODEL"
+    );
+    assert!(json["data"]["summary"]["placeholder"].as_u64().unwrap() >= 1);
+    assert!(json["data"]["summary"]["warning"].as_u64().unwrap() >= 1);
+}
+
+#[test]
+fn cli_model_check_reports_missing_model() {
+    let (temp_dir, package_path) = save_demo_package("model_check_missing");
+    set_first_component_definition(&package_path, "custom_unknown");
+
+    let output = hotsas_cli()
+        .args(["model-check", package_path.to_str().unwrap(), "--json"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    assert!(
+        !output.status.success(),
+        "missing model-check should fail validation"
+    );
+    assert_eq!(output.status.code(), Some(2));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("should be valid JSON");
+    assert_eq!(json["status"], "validationerror");
+    assert_eq!(json["data"]["can_simulate"], false);
+    assert_eq!(json["data"]["components"][0]["model_status"], "missing");
+    assert_eq!(
+        json["data"]["components"][0]["diagnostics"][0]["code"],
+        "MISSING_MODEL"
+    );
+    assert!(json["data"]["summary"]["missing"].as_u64().unwrap() >= 1);
+    assert!(json["data"]["summary"]["blocking"].as_u64().unwrap() >= 1);
+}
+
 #[test]
 fn cli_netlist_demo_project_returns_success() {
     let api = hotsas_cli::build_headless_api();
@@ -176,6 +300,7 @@ fn cli_export_markdown_demo_project_returns_success() {
         ])
         .output()
         .unwrap();
+    let markdown = std::fs::read_to_string(temp_dir.join("report.md")).unwrap();
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 
@@ -184,6 +309,8 @@ fn cli_export_markdown_demo_project_returns_success() {
         "export markdown on demo project should succeed. stderr: {}",
         String::from_utf8_lossy(&output.stderr)
     );
+    assert!(markdown.contains("Model Mapping Readiness"));
+    assert!(markdown.contains("Pin mapping") || markdown.contains("Pin Mapping"));
 }
 
 #[test]
@@ -216,6 +343,10 @@ fn cli_export_json_demo_project_returns_success() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let json: serde_json::Value = serde_json::from_str(&stdout).expect("should be valid JSON");
     assert_eq!(json["status"], "success");
+    assert!(json["data"]["content"]
+        .as_str()
+        .unwrap()
+        .contains("ModelMappingReadiness"));
 }
 
 #[test]

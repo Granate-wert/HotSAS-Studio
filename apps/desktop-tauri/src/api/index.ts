@@ -8,10 +8,12 @@ import type {
   AppDiagnosticsReportDto,
   ApplyNotebookValueRequestDto,
   AssignComponentRequestDto,
+  AssignModelRequestDto,
   AttachImportedModelRequestDto,
   CircuitValidationReportDto,
   ComponentDetailsDto,
   ComponentLibraryDto,
+  ComponentModelAssignmentDto,
   ComponentSearchRequestDto,
   ComponentSearchResultDto,
   ComponentSummaryDto,
@@ -40,6 +42,7 @@ import type {
   ProjectDto,
   ProjectPackageManifestDto,
   ProjectPackageValidationReportDto,
+  ProjectSimulationReadinessDto,
   ReportSectionCapabilityDto,
   SaveProjectDto,
   SchematicEditResultDto,
@@ -59,6 +62,7 @@ import type {
   SimulationRunHistoryEntryDto,
   SimulationRunRequestDto,
   SpiceImportReportDto,
+  SpiceModelReferenceDto,
   UserCircuitSimulationProfileDto,
   UserCircuitSimulationRunDto,
   SpiceImportRequestDto,
@@ -295,4 +299,15 @@ export const backend = {
     invokeCommand<SimulationGraphViewDto>("build_simulation_graph_view"),
   exportRunSeriesCsv: () => invokeCommand<string>("export_run_series_csv"),
   exportRunSeriesJson: () => invokeCommand<string>("export_run_series_json"),
+  // v3.1 component model mapping
+  listAvailableModelsForComponent: (definitionId: string) =>
+    invokeCommand<SpiceModelReferenceDto[]>("list_available_models_for_component", {
+      definitionId,
+    }),
+  getComponentModelAssignment: (instanceId: string) =>
+    invokeCommand<ComponentModelAssignmentDto>("get_component_model_assignment", { instanceId }),
+  assignModelToInstance: (request: AssignModelRequestDto) =>
+    invokeCommand<ComponentModelAssignmentDto>("assign_model_to_instance", { request }),
+  evaluateProjectSimulationReadiness: () =>
+    invokeCommand<ProjectSimulationReadinessDto>("evaluate_project_simulation_readiness"),
 };

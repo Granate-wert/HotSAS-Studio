@@ -126,8 +126,8 @@ impl ComponentParameterDefinition {
         // Check unit compatibility.
         if value.unit != self.unit {
             return Err(ParameterValidationError::UnitMismatch {
-                expected: self.unit.clone(),
-                actual: value.unit.clone(),
+                expected: self.unit,
+                actual: value.unit,
             });
         }
 
@@ -144,7 +144,7 @@ impl ComponentParameterDefinition {
         }
 
         // Check tolerance if both nominal and tolerance exist.
-        if let (Some(ref default), Some(ref tol)) = (self.default_value.as_ref(), &self.tolerance) {
+        if let (Some(default), Some(ref tol)) = (self.default_value.as_ref(), &self.tolerance) {
             let nominal = default.si_value();
             let actual = value.si_value();
             if !tol.is_within(nominal, actual) {

@@ -7,6 +7,8 @@ use hotsas_ports::ReportExporterPort;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
+use super::ComponentModelMappingService;
+
 #[derive(Clone)]
 pub struct ExportService {
     report_exporter: Arc<dyn ReportExporterPort>,
@@ -73,6 +75,10 @@ impl ExportService {
                     body_markdown: format!("```spice\n{netlist}\n```"),
                 },
                 ReportSection {
+                    title: "Model Mapping Readiness".to_string(),
+                    body_markdown: build_model_mapping_markdown(project),
+                },
+                ReportSection {
                     title: "Mock AC Simulation".to_string(),
                     body_markdown: format!(
                         "Simulation status: `{:?}`. Series count: `{}`.",
@@ -109,4 +115,63 @@ impl ExportService {
     pub fn export_html_report(&self, report: &ReportModel) -> Result<String, ApplicationError> {
         Ok(self.report_exporter.export_html(report)?)
     }
+}
+
+fn build_model_mapping_markdown(project: &CircuitProject) -> String {
+    let readiness = ComponentModelMappingService::new()
+        .evaluate_project_simulation_readiness(project, &hotsas_core::built_in_component_library());
+    let mut body = String::new();
+    body.push_str(&format!(
+        "Can simulate: `{}`. Ready: `{}`, placeholder: `{}`, missing: `{}`, blocking: `{}`, warnings: `{}`.\n\n",
+        readiness.can_simulate,
+        readiness.ready_count,
+        readiness.placeholder_count,
+        readiness.missing_count,
+        readiness.blocking_count,
+        readiness.warning_count
+    ));
+    body.push_str(
+        "| Component | Model status | Model source | Pin mapping | Readiness | Diagnostics |\n",
+    );
+    body.push_str("| --- | --- | --- | --- | --- | --- |\n");
+    for assignment in readiness.components {
+        let component = assignment
+            .component_instance_id
+            .unwrap_or_else(|| assignment.component_definition_id.clone());
+        let source = assignment
+            .model_ref
+            .as_ref()
+            .map(|model| format!("{:?}", model.source))
+            .unwrap_or_else(|| "None".to_string());
+        let pin_mapping = if assignment.pin_mappings.is_empty() {
+            "None".to_string()
+        } else {
+            assignment
+                .pin_mappings
+                .iter()
+                .map(|mapping| format!("{}->{}", mapping.component_pin_id, mapping.model_pin_name))
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
+        let diagnostics = if assignment.diagnostics.is_empty() {
+            "None".to_string()
+        } else {
+            assignment
+                .diagnostics
+                .iter()
+                .map(|diagnostic| diagnostic.code.clone())
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
+        body.push_str(&format!(
+            "| {} | `{:?}` | `{}` | {} | {} | {} |\n",
+            component,
+            assignment.status,
+            source,
+            pin_mapping,
+            assignment.readiness.status_label,
+            diagnostics
+        ));
+    }
+    body
 }

@@ -83,6 +83,11 @@ enum Commands {
         #[arg(long, help = "Output file path for JSON results")]
         out: Option<String>,
     },
+    /// Check component model assignment and simulation readiness
+    ModelCheck {
+        #[arg(help = "Path to the project package directory")]
+        path: String,
+    },
     /// List simulation run history for a project
     SimulationHistory {
         #[arg(help = "Path to the project package directory")]
@@ -134,6 +139,7 @@ fn main() {
         Commands::SimulateDiagnostics { path, profile, out } => {
             commands::handle_simulate_diagnostics(&api, path, profile, out, cli.json)
         }
+        Commands::ModelCheck { path } => commands::handle_model_check(&api, path, cli.json),
         Commands::SimulationHistory {
             path,
             delete,

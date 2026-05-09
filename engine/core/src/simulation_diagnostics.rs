@@ -18,6 +18,8 @@ pub struct SimulationDiagnosticMessage {
     pub title: String,
     pub message: String,
     pub related_entity: Option<SimulationDiagnosticEntityRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub related_model_id: Option<String>,
     pub suggested_fix: Option<String>,
 }
 

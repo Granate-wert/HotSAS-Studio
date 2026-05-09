@@ -5,6 +5,7 @@ import type {
   CircuitValidationReportDto,
   ComponentDetailsDto,
   ComponentLibraryDto,
+  ComponentModelAssignmentDto,
   ComponentSearchResultDto,
   ExportCapabilityDto,
   ExportHistoryEntryDto,
@@ -21,6 +22,7 @@ import type {
   PreferredValueDto,
   ProductWorkflowStatusDto,
   ProjectDto,
+  ProjectSimulationReadinessDto,
   ReportSectionCapabilityDto,
   SchematicEditResultDto,
   SchematicSelectionDetailsDto,
@@ -39,6 +41,7 @@ import type {
   SimulationProbeDto,
   SimulationResultDto,
   SimulationRunHistoryEntryDto,
+  SpiceModelReferenceDto,
   SpiceImportReportDto,
   TouchstoneImportReportDto,
   UserCircuitSimulationProfileDto,
@@ -137,6 +140,11 @@ type HotSasState = {
   simulationRunHistory: SimulationRunHistoryEntryDto[];
   simulationGraphView: SimulationGraphViewDto | null;
   simulationGraphVisibleSeries: Record<string, boolean>;
+  availableSpiceModels: SpiceModelReferenceDto[];
+  selectedModelAssignment: ComponentModelAssignmentDto | null;
+  projectSimulationReadiness: ProjectSimulationReadinessDto | null;
+  modelMappingLoading: boolean;
+  modelMappingError: string | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -232,6 +240,11 @@ type HotSasState = {
   setSimulationRunHistory: (history: SimulationRunHistoryEntryDto[]) => void;
   setSimulationGraphView: (view: SimulationGraphViewDto | null) => void;
   setSimulationGraphVisibleSeries: (visible: Record<string, boolean>) => void;
+  setAvailableSpiceModels: (models: SpiceModelReferenceDto[]) => void;
+  setSelectedModelAssignment: (assignment: ComponentModelAssignmentDto | null) => void;
+  setProjectSimulationReadiness: (readiness: ProjectSimulationReadinessDto | null) => void;
+  setModelMappingLoading: (loading: boolean) => void;
+  setModelMappingError: (error: string | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -324,6 +337,11 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   simulationRunHistory: [],
   simulationGraphView: null,
   simulationGraphVisibleSeries: {},
+  availableSpiceModels: [],
+  selectedModelAssignment: null,
+  projectSimulationReadiness: null,
+  modelMappingLoading: false,
+  modelMappingError: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -447,4 +465,13 @@ export const useHotSasStore = create<HotSasState>((set) => ({
     set({ simulationGraphView }),
   setSimulationGraphVisibleSeries: (simulationGraphVisibleSeries: Record<string, boolean>) =>
     set({ simulationGraphVisibleSeries }),
+  setAvailableSpiceModels: (availableSpiceModels: SpiceModelReferenceDto[]) =>
+    set({ availableSpiceModels }),
+  setSelectedModelAssignment: (selectedModelAssignment: ComponentModelAssignmentDto | null) =>
+    set({ selectedModelAssignment }),
+  setProjectSimulationReadiness: (
+    projectSimulationReadiness: ProjectSimulationReadinessDto | null,
+  ) => set({ projectSimulationReadiness }),
+  setModelMappingLoading: (modelMappingLoading: boolean) => set({ modelMappingLoading }),
+  setModelMappingError: (modelMappingError: string | null) => set({ modelMappingError }),
 }));

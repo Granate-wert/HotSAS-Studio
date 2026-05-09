@@ -2371,6 +2371,8 @@ pub struct SchematicSelectionDetailsDto {
     pub id: Option<String>,
     pub display_name: Option<String>,
     pub editable_fields: Vec<SchematicEditableFieldDto>,
+    pub model_assignment: Option<ComponentModelAssignmentDto>,
+    pub model_assignment_origin: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -2654,6 +2656,7 @@ pub struct SimulationDiagnosticMessageDto {
     pub title: String,
     pub message: String,
     pub related_entity: Option<SimulationDiagnosticEntityRefDto>,
+    pub related_model_id: Option<String>,
     pub suggested_fix: Option<String>,
 }
 
@@ -2668,6 +2671,7 @@ impl From<&hotsas_core::SimulationDiagnosticMessage> for SimulationDiagnosticMes
                 .related_entity
                 .as_ref()
                 .map(SimulationDiagnosticEntityRefDto::from),
+            related_model_id: m.related_model_id.clone(),
             suggested_fix: m.suggested_fix.clone(),
         }
     }
@@ -2780,4 +2784,272 @@ impl From<&hotsas_core::SimulationGraphSeries> for SimulationGraphSeriesDto {
             points_count: s.points_count,
         }
     }
+}
+
+// ─── v3.1 Component Model Mapping DTOs ───
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpiceModelReferenceDto {
+    pub id: String,
+    pub display_name: String,
+    pub model_kind: String,
+    pub source: String,
+    pub status: String,
+    pub limitations: Vec<String>,
+    pub warnings: Vec<String>,
+}
+
+impl From<&hotsas_core::SpiceModelReference> for SpiceModelReferenceDto {
+    fn from(m: &hotsas_core::SpiceModelReference) -> Self {
+        Self {
+            id: m.id.clone(),
+            display_name: m.display_name.clone(),
+            model_kind: spice_model_reference_kind_to_string(m.model_kind),
+            source: spice_model_source_to_string(m.source),
+            status: component_model_assignment_status_to_string(m.status),
+            limitations: m.limitations.clone(),
+            warnings: m.warnings.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentPinMappingDto {
+    pub component_pin_id: String,
+    pub model_pin_name: String,
+    pub model_pin_index: Option<usize>,
+    pub role: Option<String>,
+    pub required: bool,
+}
+
+impl From<&hotsas_core::ComponentPinMapping> for ComponentPinMappingDto {
+    fn from(m: &hotsas_core::ComponentPinMapping) -> Self {
+        Self {
+            component_pin_id: m.component_pin_id.clone(),
+            model_pin_name: m.model_pin_name.clone(),
+            model_pin_index: m.model_pin_index,
+            role: m.role.map(component_pin_role_to_string),
+            required: m.required,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelParameterBindingDto {
+    pub model_parameter_name: String,
+    pub component_parameter_id: String,
+    pub value_expression: Option<String>,
+    pub required: bool,
+}
+
+impl From<&hotsas_core::ModelParameterBinding> for ModelParameterBindingDto {
+    fn from(m: &hotsas_core::ModelParameterBinding) -> Self {
+        Self {
+            model_parameter_name: m.model_parameter_name.clone(),
+            component_parameter_id: m.component_parameter_id.clone(),
+            value_expression: m.value_expression.clone(),
+            required: m.required,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationReadinessDto {
+    pub can_simulate: bool,
+    pub can_export_netlist: bool,
+    pub uses_placeholder: bool,
+    pub blocking_count: usize,
+    pub warning_count: usize,
+    pub status_label: String,
+}
+
+impl From<&hotsas_core::SimulationReadiness> for SimulationReadinessDto {
+    fn from(r: &hotsas_core::SimulationReadiness) -> Self {
+        Self {
+            can_simulate: r.can_simulate,
+            can_export_netlist: r.can_export_netlist,
+            uses_placeholder: r.uses_placeholder,
+            blocking_count: r.blocking_count,
+            warning_count: r.warning_count,
+            status_label: r.status_label.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelMappingDiagnosticDto {
+    pub code: String,
+    pub severity: String,
+    pub title: String,
+    pub message: String,
+    pub suggested_fix: Option<String>,
+    pub related_component_id: Option<String>,
+    pub related_model_id: Option<String>,
+}
+
+impl From<&hotsas_core::ModelMappingDiagnostic> for ModelMappingDiagnosticDto {
+    fn from(d: &hotsas_core::ModelMappingDiagnostic) -> Self {
+        Self {
+            code: d.code.clone(),
+            severity: model_mapping_severity_to_string(d.severity),
+            title: d.title.clone(),
+            message: d.message.clone(),
+            suggested_fix: d.suggested_fix.clone(),
+            related_component_id: d.related_component_id.clone(),
+            related_model_id: d.related_model_id.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentModelAssignmentDto {
+    pub component_definition_id: String,
+    pub component_instance_id: Option<String>,
+    pub model_ref: Option<SpiceModelReferenceDto>,
+    pub pin_mappings: Vec<ComponentPinMappingDto>,
+    pub parameter_bindings: Vec<ModelParameterBindingDto>,
+    pub status: String,
+    pub readiness: SimulationReadinessDto,
+    pub diagnostics: Vec<ModelMappingDiagnosticDto>,
+}
+
+impl From<&hotsas_core::ComponentModelAssignment> for ComponentModelAssignmentDto {
+    fn from(a: &hotsas_core::ComponentModelAssignment) -> Self {
+        Self {
+            component_definition_id: a.component_definition_id.clone(),
+            component_instance_id: a.component_instance_id.clone(),
+            model_ref: a.model_ref.as_ref().map(SpiceModelReferenceDto::from),
+            pin_mappings: a
+                .pin_mappings
+                .iter()
+                .map(ComponentPinMappingDto::from)
+                .collect(),
+            parameter_bindings: a
+                .parameter_bindings
+                .iter()
+                .map(ModelParameterBindingDto::from)
+                .collect(),
+            status: component_model_assignment_status_to_string(a.status),
+            readiness: SimulationReadinessDto::from(&a.readiness),
+            diagnostics: a
+                .diagnostics
+                .iter()
+                .map(ModelMappingDiagnosticDto::from)
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectSimulationReadinessDto {
+    pub project_id: String,
+    pub can_simulate: bool,
+    pub component_count: usize,
+    pub ready_count: usize,
+    pub placeholder_count: usize,
+    pub missing_count: usize,
+    pub invalid_count: usize,
+    pub blocking_count: usize,
+    pub warning_count: usize,
+    pub components: Vec<ComponentModelAssignmentDto>,
+}
+
+impl From<&hotsas_core::ProjectSimulationReadiness> for ProjectSimulationReadinessDto {
+    fn from(p: &hotsas_core::ProjectSimulationReadiness) -> Self {
+        Self {
+            project_id: p.project_id.clone(),
+            can_simulate: p.can_simulate,
+            component_count: p.component_count,
+            ready_count: p.ready_count,
+            placeholder_count: p.placeholder_count,
+            missing_count: p.missing_count,
+            invalid_count: p.invalid_count,
+            blocking_count: p.blocking_count,
+            warning_count: p.warning_count,
+            components: p
+                .components
+                .iter()
+                .map(ComponentModelAssignmentDto::from)
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AssignModelRequestDto {
+    pub instance_id: String,
+    pub model_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListAvailableModelsResponseDto {
+    pub definition_id: String,
+    pub models: Vec<SpiceModelReferenceDto>,
+}
+
+fn component_model_assignment_status_to_string(
+    status: hotsas_core::ComponentModelAssignmentStatus,
+) -> String {
+    match status {
+        hotsas_core::ComponentModelAssignmentStatus::Missing => "missing",
+        hotsas_core::ComponentModelAssignmentStatus::Placeholder => "placeholder",
+        hotsas_core::ComponentModelAssignmentStatus::AssignedBuiltin => "assigned_builtin",
+        hotsas_core::ComponentModelAssignmentStatus::AssignedImported => "assigned_imported",
+        hotsas_core::ComponentModelAssignmentStatus::AssignedManual => "assigned_manual",
+        hotsas_core::ComponentModelAssignmentStatus::Invalid => "invalid",
+    }
+    .to_string()
+}
+
+fn spice_model_reference_kind_to_string(kind: hotsas_core::SpiceModelReferenceKind) -> String {
+    match kind {
+        hotsas_core::SpiceModelReferenceKind::PrimitiveModel => "primitive_model",
+        hotsas_core::SpiceModelReferenceKind::Subcircuit => "subcircuit",
+        hotsas_core::SpiceModelReferenceKind::Behavioral => "behavioral",
+        hotsas_core::SpiceModelReferenceKind::Placeholder => "placeholder",
+    }
+    .to_string()
+}
+
+fn spice_model_source_to_string(source: hotsas_core::SpiceModelSource) -> String {
+    match source {
+        hotsas_core::SpiceModelSource::Builtin => "builtin",
+        hotsas_core::SpiceModelSource::ImportedFile => "imported_file",
+        hotsas_core::SpiceModelSource::UserAssigned => "user_assigned",
+        hotsas_core::SpiceModelSource::GeneratedFallback => "generated_fallback",
+        hotsas_core::SpiceModelSource::Unknown => "unknown",
+    }
+    .to_string()
+}
+
+fn component_pin_role_to_string(role: hotsas_core::ComponentPinRole) -> String {
+    match role {
+        hotsas_core::ComponentPinRole::Positive => "positive",
+        hotsas_core::ComponentPinRole::Negative => "negative",
+        hotsas_core::ComponentPinRole::Input => "input",
+        hotsas_core::ComponentPinRole::Output => "output",
+        hotsas_core::ComponentPinRole::SupplyPositive => "supply_positive",
+        hotsas_core::ComponentPinRole::SupplyNegative => "supply_negative",
+        hotsas_core::ComponentPinRole::Gate => "gate",
+        hotsas_core::ComponentPinRole::Drain => "drain",
+        hotsas_core::ComponentPinRole::Source => "source",
+        hotsas_core::ComponentPinRole::Base => "base",
+        hotsas_core::ComponentPinRole::Collector => "collector",
+        hotsas_core::ComponentPinRole::Emitter => "emitter",
+        hotsas_core::ComponentPinRole::Anode => "anode",
+        hotsas_core::ComponentPinRole::Cathode => "cathode",
+        hotsas_core::ComponentPinRole::Reference => "reference",
+        hotsas_core::ComponentPinRole::Other => "other",
+    }
+    .to_string()
+}
+
+fn model_mapping_severity_to_string(severity: hotsas_core::ModelMappingSeverity) -> String {
+    match severity {
+        hotsas_core::ModelMappingSeverity::Info => "info",
+        hotsas_core::ModelMappingSeverity::Warning => "warning",
+        hotsas_core::ModelMappingSeverity::Error => "error",
+        hotsas_core::ModelMappingSeverity::Blocking => "blocking",
+    }
+    .to_string()
 }
