@@ -16,10 +16,10 @@
 
 ```text
 Version: v3.3 — S-Parameters & Frequency Response Graphs / Touchstone Workflow
-Implementation commit: TBD
-Verification/docs commit: TBD
+Implementation commit: 39edd63
+Verification/docs commit: 39edd63
 Branch: main
-Push status: TBD
+Push status: PASS / origin/main OK
 Date: 2026-05-11
 ```
 
