@@ -2,33 +2,34 @@
 
 ## Current Version
 
-[v3.0 — Simulation UX, ngspice Hardening, Probes & Graph Workflow](./verification_logs/v3.0_simulation_ux_ngspice_probes_graphs.md)
+[v3.1 - Component Model Mapping & SPICE Model Assignment (partial/completion pass)](./verification_logs/v3.1_component_model_mapping_spice_assignment.md)
 
 ## In-Progress Development Log
 
-[v3.1 - Component Model Mapping & SPICE Model Assignment (partial/completion pass)](./verification_logs/v3.1_component_model_mapping_spice_assignment.md)
+[v3.2 - Two-Port / Filter Network Analysis Foundation (PARTIAL)](./verification_logs/v3.2_two_port_filter_network_analysis.md)
 
 ```text
-Current v3.1 status: PARTIAL; code/build verification PASS.
+Current v3.2 status: PARTIAL; backend/API/CLI foundation PASS; UI deferred.
 Latest evidence:
-- inherited v2.9 markdown Prettier issue fixed; npm.cmd run format:check PASS
-- ComponentModelMappingService targeted tests PASS
-- hotsas-cli model-check targeted tests PASS
-- advanced report + CLI export model mapping tests PASS
-- subckt X-line model_pin_index order regression PASS
-- simulation preflight model mapping diagnostics regression PASS
-- frontend ModelAssignmentCard / SimulationReadinessBadge / SchematicSelectionInspector tests PASS
-- code/build queue PASS: cargo fmt --check, cargo test, cargo build -p hotsas_cli --release,
-  npm.cmd run format:check, npm.cmd run typecheck, npm.cmd run test, npm.cmd run build,
-  npm.cmd run tauri:build
-- final format/build/log/hash checks repeated after doc updates; git diff --check PASS
-- v3.1 CLI artifact: engine/target/release/hotsas-cli.exe, 3838464 bytes,
-  SHA256 AFF78C36E85A2D0E9F7EE89CA42416D65B6703C107BEC2379BA2C52540AFBDA4
-- v3.1 desktop artifact: apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe,
-  14218752 bytes, SHA256 39FB8D0B306D6B935DF352DD850A4787DE0FA0E915FF725F21845A0421C8CCE2
+- Core two-port/filter domain models implemented in hotsas_core
+- TwoPortFilterAnalysisService with validation, mock/template analysis,
+  filter kind detection, metric estimation, CSV export, report section generation
+- API facade: 7 methods (suggest, validate, run, get/clear last, export CSV, add to report)
+- Tauri commands: 7 commands registered
+- Frontend: TypeScript types, API wrappers, Zustand store additions
+- CLI: hotsas-cli filter-analyze <path> [--method] [--out]
+- Rust tests: filter_analysis_api_tests.rs 7 tests PASS
+- Full Rust workspace: 250+ tests PASS, no regressions
+- Frontend: 165 Vitest tests PASS, no regressions
+- cargo fmt --check, cargo test, cargo build -p hotsas_cli --release PASS
+- npm.cmd run typecheck, npm.cmd run test PASS
+- npm.cmd run build, npm.cmd run tauri:build PASS
+- git diff --check PASS
 
 Remaining before ACCEPT:
-- imported model persistence remains documented PARTIAL/DEFERRED
+- Frontend UI screen/component with port config, sweep controls, Bode chart,
+  metrics table, diagnostics panel is deferred
+- S-parameters deferred to v3.3
 ```
 
 ## v3.0 Summary

@@ -27,6 +27,7 @@ mod simulation_diagnostics;
 mod simulation_graph;
 mod simulation_history;
 mod simulation_workflow;
+mod two_port_filter_analysis;
 
 pub use advanced_report::AdvancedReportService;
 pub use app_diagnostics::AppDiagnosticsService;
@@ -57,3 +58,4 @@ pub use simulation_diagnostics::SimulationDiagnosticsService;
 pub use simulation_graph::SimulationGraphService;
 pub use simulation_history::SimulationHistoryService;
 pub use simulation_workflow::SimulationWorkflowService;
+pub use two_port_filter_analysis::TwoPortFilterAnalysisService;

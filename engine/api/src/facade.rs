@@ -1,28 +1,29 @@
 use crate::{
     AcSweepSettingsDto, AddComponentRequestDto, ApiError, AppDiagnosticsReportDto,
-    ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitValidationIssueDto,
-    CircuitValidationReportDto, ComponentDetailsDto, ComponentLibraryDto,
-    ComponentModelAssignmentDto, ComponentParameterDto, ComponentSearchRequestDto,
-    ComponentSearchResultDto, ComponentSummaryDto, ConnectPinsRequestDto,
-    DeleteComponentRequestDto, DeleteWireRequestDto, ExportCapabilityDto, ExportHistoryEntryDto,
-    ExportRequestDto, ExportResultDto, FootprintDto, FormulaCalculationRequestDto,
-    FormulaDetailsDto, FormulaEvaluationResultDto, FormulaOutputValueDto, FormulaPackDto,
-    FormulaResultDto, FormulaSummaryDto, KeyValueDto, MoveComponentRequestDto, NetlistPreviewDto,
-    NgspiceAvailabilityDto, NgspiceDiagnosticsDto, NotebookEvaluationRequestDto,
-    NotebookEvaluationResultDto, NotebookStateDto, OperatingPointSettingsDto,
-    PlaceComponentRequestDto, PlaceableComponentDto, PreferredValueDto, ProductWorkflowStatusDto,
-    ProjectDto, ProjectOpenRequestDto, ProjectOpenResultDto, ProjectPackageManifestDto,
-    ProjectPackageValidationReportDto, ProjectPersistenceWarningDto, ProjectSaveResultDto,
-    ProjectSessionStateDto, RecentProjectEntryDto, RenameNetRequestDto, SaveProjectDto,
-    SchematicEditResultDto, SchematicEditableFieldDto, SchematicSelectionDetailsDto,
-    SchematicSelectionRequestDto, SchematicToolCapabilityDto, SelectedComponentDto,
-    SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto, SelectedRegionPreviewDto,
-    SimulationDiagnosticMessageDto, SimulationGraphViewDto, SimulationMeasurementDto,
-    SimulationModelDto, SimulationPointDto, SimulationPreflightResultDto, SimulationProbeDto,
-    SimulationProbeTargetDto, SimulationResultDto, SimulationRunHistoryEntryDto,
-    SimulationRunRequestDto, SimulationSeriesDto, SimulationWorkflowErrorDto,
-    SimulationWorkflowWarningDto, SymbolDto, TransientSettingsDto, UndoRedoStateDto,
-    UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
+    ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitAnalysisPortDto,
+    CircuitValidationIssueDto, CircuitValidationReportDto, ComponentDetailsDto,
+    ComponentLibraryDto, ComponentModelAssignmentDto, ComponentParameterDto,
+    ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto,
+    ConnectPinsRequestDto, DeleteComponentRequestDto, DeleteWireRequestDto, ExportCapabilityDto,
+    ExportHistoryEntryDto, ExportRequestDto, ExportResultDto, FilterAnalysisDiagnosticDto,
+    FilterNetworkAnalysisRequestDto, FilterNetworkAnalysisResultDto, FootprintDto,
+    FormulaCalculationRequestDto, FormulaDetailsDto, FormulaEvaluationResultDto,
+    FormulaOutputValueDto, FormulaPackDto, FormulaResultDto, FormulaSummaryDto, KeyValueDto,
+    MoveComponentRequestDto, NetlistPreviewDto, NgspiceAvailabilityDto, NgspiceDiagnosticsDto,
+    NotebookEvaluationRequestDto, NotebookEvaluationResultDto, NotebookStateDto,
+    OperatingPointSettingsDto, PlaceComponentRequestDto, PlaceableComponentDto, PreferredValueDto,
+    ProductWorkflowStatusDto, ProjectDto, ProjectOpenRequestDto, ProjectOpenResultDto,
+    ProjectPackageManifestDto, ProjectPackageValidationReportDto, ProjectPersistenceWarningDto,
+    ProjectSaveResultDto, ProjectSessionStateDto, RecentProjectEntryDto, RenameNetRequestDto,
+    SaveProjectDto, SchematicEditResultDto, SchematicEditableFieldDto,
+    SchematicSelectionDetailsDto, SchematicSelectionRequestDto, SchematicToolCapabilityDto,
+    SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
+    SelectedRegionPreviewDto, SimulationDiagnosticMessageDto, SimulationGraphViewDto,
+    SimulationMeasurementDto, SimulationModelDto, SimulationPointDto, SimulationPreflightResultDto,
+    SimulationProbeDto, SimulationProbeTargetDto, SimulationResultDto,
+    SimulationRunHistoryEntryDto, SimulationRunRequestDto, SimulationSeriesDto,
+    SimulationWorkflowErrorDto, SimulationWorkflowWarningDto, SymbolDto, TransientSettingsDto,
+    UndoRedoStateDto, UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
     UserCircuitSimulationResultDto, UserCircuitSimulationRunDto, ValueDto, VerticalSliceDto,
 };
 use hotsas_application::{
@@ -48,6 +49,7 @@ pub struct HotSasApi {
     product_workflow: ProductWorkflowService,
     last_advanced_report: Mutex<Option<hotsas_core::advanced_report::AdvancedReportModel>>,
     last_advanced_report_project_id: Mutex<Option<String>>,
+    last_filter_analysis_result: Mutex<Option<hotsas_core::FilterNetworkAnalysisResult>>,
     // v2.8 undo/redo foundation
     undo_stack: Mutex<Vec<(CircuitProject, String)>>,
     redo_stack: Mutex<Vec<(CircuitProject, String)>>,
@@ -82,6 +84,7 @@ impl HotSasApi {
             product_workflow: ProductWorkflowService::new(),
             last_advanced_report: Mutex::new(None),
             last_advanced_report_project_id: Mutex::new(None),
+            last_filter_analysis_result: Mutex::new(None),
             undo_stack: Mutex::new(Vec::new()),
             redo_stack: Mutex::new(Vec::new()),
         }
@@ -2664,6 +2667,146 @@ impl HotSasApi {
             .component_model_mapping_service()
             .evaluate_project_simulation_readiness(&project, &library);
         Ok(crate::ProjectSimulationReadinessDto::from(&readiness))
+    }
+    pub fn suggest_filter_analysis_ports(
+        &self,
+        selected_component_ids: Vec<String>,
+    ) -> Result<Vec<CircuitAnalysisPortDto>, ApiError> {
+        let project = self.current_project()?;
+        let ports = self
+            .services
+            .two_port_filter_analysis_service()
+            .suggest_filter_analysis_ports(&project, selected_component_ids)
+            .map_err(ApiError::Application)?;
+        Ok(ports.iter().map(CircuitAnalysisPortDto::from).collect())
+    }
+
+    pub fn validate_filter_network_analysis_request(
+        &self,
+        request: FilterNetworkAnalysisRequestDto,
+    ) -> Result<Vec<FilterAnalysisDiagnosticDto>, ApiError> {
+        let project = self.current_project()?;
+        let diagnostics = self
+            .services
+            .two_port_filter_analysis_service()
+            .validate_filter_network_analysis_request(&project, &request.into());
+        Ok(diagnostics
+            .iter()
+            .map(FilterAnalysisDiagnosticDto::from)
+            .collect())
+    }
+
+    pub fn run_filter_network_analysis(
+        &self,
+        request: FilterNetworkAnalysisRequestDto,
+    ) -> Result<FilterNetworkAnalysisResultDto, ApiError> {
+        let project = self.current_project()?;
+        let library = self.current_component_library()?;
+        let readiness = self
+            .services
+            .component_model_mapping_service()
+            .evaluate_project_simulation_readiness(&project, &library);
+        let ngspice_available = self
+            .services
+            .check_ngspice_availability()
+            .map(|a| a.available)
+            .unwrap_or(false);
+        let result = self
+            .services
+            .two_port_filter_analysis_service()
+            .run_filter_network_analysis(&project, request.into(), &readiness, ngspice_available)
+            .map_err(ApiError::Application)?;
+        let dto = FilterNetworkAnalysisResultDto::from(&result);
+        if let Ok(mut guard) = self.last_filter_analysis_result.lock() {
+            *guard = Some(result);
+        }
+        Ok(dto)
+    }
+
+    pub fn get_last_filter_network_analysis(
+        &self,
+    ) -> Result<Option<FilterNetworkAnalysisResultDto>, ApiError> {
+        let guard = self
+            .last_filter_analysis_result
+            .lock()
+            .map_err(|_| ApiError::State("filter analysis lock poisoned".to_string()))?;
+        Ok(guard.as_ref().map(FilterNetworkAnalysisResultDto::from))
+    }
+
+    pub fn clear_last_filter_network_analysis(&self) -> Result<(), ApiError> {
+        let mut guard = self
+            .last_filter_analysis_result
+            .lock()
+            .map_err(|_| ApiError::State("filter analysis lock poisoned".to_string()))?;
+        *guard = None;
+        Ok(())
+    }
+
+    pub fn export_filter_network_analysis_csv(&self) -> Result<String, ApiError> {
+        let guard = self
+            .last_filter_analysis_result
+            .lock()
+            .map_err(|_| ApiError::State("filter analysis lock poisoned".to_string()))?;
+        let result = guard
+            .as_ref()
+            .ok_or_else(|| ApiError::State("no filter analysis result".to_string()))?;
+        self.services
+            .two_port_filter_analysis_service()
+            .export_filter_analysis_csv(result)
+            .map_err(ApiError::Application)
+    }
+
+    pub fn add_filter_network_analysis_to_advanced_report(
+        &self,
+    ) -> Result<crate::AdvancedReportDto, ApiError> {
+        let guard = self
+            .last_filter_analysis_result
+            .lock()
+            .map_err(|_| ApiError::State("filter analysis lock poisoned".to_string()))?;
+        let result = guard
+            .as_ref()
+            .ok_or_else(|| ApiError::State("no filter analysis result".to_string()))?;
+        let section = self
+            .services
+            .two_port_filter_analysis_service()
+            .filter_analysis_to_report_section(result)
+            .map_err(ApiError::Application)?;
+        let section_dto = crate::ReportSectionDto {
+            kind: section.kind.to_string(),
+            title: section.title.clone(),
+            status: section.status.to_string(),
+            blocks: section
+                .blocks
+                .iter()
+                .map(|b| Self::report_block_to_dto(b))
+                .collect(),
+            warnings: section
+                .warnings
+                .iter()
+                .map(|w| crate::ReportWarningDto {
+                    severity: format!("{:?}", w.severity),
+                    code: w.code.clone(),
+                    message: w.message.clone(),
+                    section_kind: w.section_kind.as_ref().map(|k| k.to_string()),
+                })
+                .collect(),
+        };
+        Ok(crate::AdvancedReportDto {
+            id: result.analysis_id.clone(),
+            title: "Filter / Two-Port Network Analysis Report".to_string(),
+            report_type: "FilterNetworkAnalysis".to_string(),
+            generated_at: Some(result.created_at.clone()),
+            project_id: Some(result.project_id.clone()),
+            project_name: None,
+            sections: vec![section_dto],
+            warnings: vec![],
+            assumptions: vec![
+                "v3.2 foundation only".to_string(),
+                "S-parameters deferred to v3.3".to_string(),
+            ],
+            source_references: vec![],
+            metadata: std::collections::BTreeMap::new(),
+        })
     }
 }
 

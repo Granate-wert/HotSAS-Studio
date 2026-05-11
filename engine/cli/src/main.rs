@@ -97,6 +97,15 @@ enum Commands {
         #[arg(long, help = "Clear all history")]
         clear: bool,
     },
+    /// Run two-port / filter network analysis on a project
+    FilterAnalyze {
+        #[arg(help = "Path to the project package directory")]
+        path: String,
+        #[arg(long, help = "Analysis method: auto, template_analytic, mock, ngspice")]
+        method: Option<String>,
+        #[arg(long, help = "Output file path for JSON results")]
+        out: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -145,6 +154,9 @@ fn main() {
             delete,
             clear,
         } => commands::handle_simulation_history(&api, path, delete, clear, cli.json),
+        Commands::FilterAnalyze { path, method, out } => {
+            commands::handle_filter_analyze(&api, path, method, out, cli.json)
+        }
     };
     std::process::exit(result);
 }

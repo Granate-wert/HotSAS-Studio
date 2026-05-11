@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v3.1 next**
+**Current roadmap stage: v3.2 PARTIAL — UI screen/charts deferred**
 
 > App version (v0.1.4) and roadmap stage are different concepts.
 
@@ -30,6 +30,7 @@ Completed:
 - v2.8 — Interactive Schematic Editing MVP
 - v2.9 — User-Circuit Netlist & Simulation End-to-End
 - v3.0 — Simulation UX, ngspice Hardening, Probes & Graph Workflow
+- v3.1 — Component Model Mapping & SPICE Model Assignment (PARTIAL; imported model persistence deferred)
 
 ---
 

@@ -29,6 +29,8 @@ use hotsas_api::{
     SimulationRunHistoryEntryDto, SimulationRunRequestDto, SpiceModelReferenceDto,
     TypedComponentParametersDto, UndoRedoStateDto, UpdateQuickParameterRequestDto,
     UserCircuitSimulationProfileDto, UserCircuitSimulationRunDto, VerticalSliceDto,
+    CircuitAnalysisPortDto, FilterAnalysisDiagnosticDto, FilterNetworkAnalysisRequestDto,
+    FilterNetworkAnalysisResultDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -1207,6 +1209,81 @@ fn evaluate_project_simulation_readiness(
     result
 }
 
+#[tauri::command]
+fn suggest_filter_analysis_ports(
+    api: State<'_, HotSasApi>,
+    selected_component_ids: Vec<String>,
+) -> Result<Vec<CircuitAnalysisPortDto>, String> {
+    log::info!("COMMAND suggest_filter_analysis_ports");
+    let result = api
+        .suggest_filter_analysis_ports(selected_component_ids)
+        .map_err(tauri_error);
+    log_command_result("suggest_filter_analysis_ports", &result);
+    result
+}
+
+#[tauri::command]
+fn validate_filter_network_analysis_request(
+    api: State<'_, HotSasApi>,
+    request: FilterNetworkAnalysisRequestDto,
+) -> Result<Vec<FilterAnalysisDiagnosticDto>, String> {
+    log::info!("COMMAND validate_filter_network_analysis_request");
+    let result = api
+        .validate_filter_network_analysis_request(request)
+        .map_err(tauri_error);
+    log_command_result("validate_filter_network_analysis_request", &result);
+    result
+}
+
+#[tauri::command]
+fn run_filter_network_analysis(
+    api: State<'_, HotSasApi>,
+    request: FilterNetworkAnalysisRequestDto,
+) -> Result<FilterNetworkAnalysisResultDto, String> {
+    log::info!("COMMAND run_filter_network_analysis");
+    let result = api.run_filter_network_analysis(request).map_err(tauri_error);
+    log_command_result("run_filter_network_analysis", &result);
+    result
+}
+
+#[tauri::command]
+fn get_last_filter_network_analysis(
+    api: State<'_, HotSasApi>,
+) -> Result<Option<FilterNetworkAnalysisResultDto>, String> {
+    log::info!("COMMAND get_last_filter_network_analysis");
+    let result = api.get_last_filter_network_analysis().map_err(tauri_error);
+    log_command_result("get_last_filter_network_analysis", &result);
+    result
+}
+
+#[tauri::command]
+fn clear_last_filter_network_analysis(api: State<'_, HotSasApi>) -> Result<(), String> {
+    log::info!("COMMAND clear_last_filter_network_analysis");
+    let result = api.clear_last_filter_network_analysis().map_err(tauri_error);
+    log_command_result("clear_last_filter_network_analysis", &result);
+    result
+}
+
+#[tauri::command]
+fn export_filter_network_analysis_csv(api: State<'_, HotSasApi>) -> Result<String, String> {
+    log::info!("COMMAND export_filter_network_analysis_csv");
+    let result = api.export_filter_network_analysis_csv().map_err(tauri_error);
+    log_command_result("export_filter_network_analysis_csv", &result);
+    result
+}
+
+#[tauri::command]
+fn add_filter_network_analysis_to_advanced_report(
+    api: State<'_, HotSasApi>,
+) -> Result<hotsas_api::AdvancedReportDto, String> {
+    log::info!("COMMAND add_filter_network_analysis_to_advanced_report");
+    let result = api
+        .add_filter_network_analysis_to_advanced_report()
+        .map_err(tauri_error);
+    log_command_result("add_filter_network_analysis_to_advanced_report", &result);
+    result
+}
+
 fn build_api() -> HotSasApi {
     HotSasApi::new(AppServices::new(
         Arc::new(JsonProjectStorage),
@@ -1352,6 +1429,13 @@ pub fn run() {
             get_component_model_assignment,
             assign_model_to_instance,
             evaluate_project_simulation_readiness,
+            suggest_filter_analysis_ports,
+            validate_filter_network_analysis_request,
+            run_filter_network_analysis,
+            get_last_filter_network_analysis,
+            clear_last_filter_network_analysis,
+            export_filter_network_analysis_csv,
+            add_filter_network_analysis_to_advanced_report,
             write_log
         ])
         .run(tauri::generate_context!())

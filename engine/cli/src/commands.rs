@@ -1,5 +1,6 @@
 use hotsas_api::{
     AcSweepSettingsDto, AdvancedReportExportRequestDto, AdvancedReportRequestDto, ApiError,
+    FilterAnalysisMethodDto, FilterAnalysisSeverityDto, FilterNetworkAnalysisRequestDto,
     FormulaCalculationRequestDto, FormulaVariableInputDto, HotSasApi, OperatingPointSettingsDto,
     ProjectOpenRequestDto, ReportExportOptionsDto, SimulationDiagnosticMessageDto,
     SimulationRunRequestDto, TransientSettingsDto, UserCircuitSimulationProfileDto,
@@ -1006,6 +1007,131 @@ fn load_project(api: &HotSasApi, path: &str, json: bool) -> Result<(), i32> {
             print_output(&output, json);
             eprintln!("Error loading project '{}': {}", path, msg);
             Err(exit_code(&e))
+        }
+    }
+}
+
+pub fn handle_filter_analyze(
+    api: &HotSasApi,
+    path: String,
+    method: Option<String>,
+    out: Option<String>,
+    json: bool,
+) -> i32 {
+    if let Err(code) = load_project(api, &path, json) {
+        return code;
+    }
+
+    let method_dto = match method.as_deref() {
+        Some("template_analytic") => FilterAnalysisMethodDto::TemplateAnalytic,
+        Some("mock") => FilterAnalysisMethodDto::Mock,
+        Some("ngspice") => FilterAnalysisMethodDto::Ngspice,
+        _ => FilterAnalysisMethodDto::Auto,
+    };
+
+    // Suggest ports using whole-circuit scope (empty selection)
+    let ports = match api.suggest_filter_analysis_ports(vec![]) {
+        Ok(p) => p,
+        Err(e) => {
+            let msg = format_error(&e);
+            let output = CliOutput::<()> {
+                status: CliStatus::Error,
+                command: "filter_analyze".to_string(),
+                warnings: vec![],
+                errors: vec![msg.clone()],
+                data: None,
+            };
+            print_output(&output, json);
+            eprintln!("{}", msg);
+            return exit_code(&e);
+        }
+    };
+
+    if ports.len() < 2 {
+        let msg = "Could not suggest at least 2 analysis ports for the circuit.".to_string();
+        let output = CliOutput::<()> {
+            status: CliStatus::Error,
+            command: "filter_analyze".to_string(),
+            warnings: vec![],
+            errors: vec![msg.clone()],
+            data: None,
+        };
+        print_output(&output, json);
+        eprintln!("{}", msg);
+        return 2;
+    }
+
+    let input_port = ports[0].clone();
+    let output_port = ports[1].clone();
+
+    let request = FilterNetworkAnalysisRequestDto {
+        project_id: path.clone(),
+        scope: hotsas_api::FilterAnalysisScopeDto::WholeCircuit,
+        selected_component_ids: vec![],
+        input_port,
+        output_port,
+        sweep: hotsas_api::FrequencySweepSettingsDto {
+            start_hz: 1.0,
+            stop_hz: 1_000_000.0,
+            points: 100,
+            points_per_decade: None,
+            scale: hotsas_api::FrequencySweepScaleDto::Logarithmic,
+        },
+        method: method_dto,
+        source_amplitude_v: Some(1.0),
+        requested_metrics: vec![
+            hotsas_api::FilterMetricKindDto::CutoffFrequency,
+            hotsas_api::FilterMetricKindDto::PeakGain,
+        ],
+    };
+
+    let result = api.run_filter_network_analysis(request);
+    match result {
+        Ok(dto) => {
+            let output = CliOutput {
+                status: CliStatus::Success,
+                command: "filter_analyze".to_string(),
+                warnings: dto
+                    .diagnostics
+                    .iter()
+                    .filter(|d| d.severity == FilterAnalysisSeverityDto::Warning)
+                    .map(|d| d.message.clone())
+                    .collect(),
+                errors: dto
+                    .diagnostics
+                    .iter()
+                    .filter(|d| {
+                        d.severity == FilterAnalysisSeverityDto::Error
+                            || d.severity == FilterAnalysisSeverityDto::Blocking
+                    })
+                    .map(|d| d.message.clone())
+                    .collect(),
+                data: Some(&dto),
+            };
+            print_output(&output, json);
+            if let Some(out_path) = out {
+                if let Ok(json_str) = serde_json::to_string_pretty(&dto) {
+                    if let Err(e) = std::fs::write(&out_path, json_str) {
+                        eprintln!("Failed to write output to {}: {}", out_path, e);
+                        return 1;
+                    }
+                    println!("Results written to {}", out_path);
+                }
+            }
+            0
+        }
+        Err(e) => {
+            let msg = format_error(&e);
+            let output = CliOutput::<()> {
+                status: CliStatus::Error,
+                command: "filter_analyze".to_string(),
+                warnings: vec![],
+                errors: vec![msg.clone()],
+                data: None,
+            };
+            print_output(&output, json);
+            eprintln!("{}", msg);
+            exit_code(&e)
         }
     }
 }

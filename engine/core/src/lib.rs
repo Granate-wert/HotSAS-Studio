@@ -26,6 +26,7 @@ pub mod simulation_history;
 pub mod simulation_workflow;
 pub mod symbol;
 pub mod templates;
+pub mod two_port_filter_analysis;
 pub mod value;
 
 pub use app_diagnostics::*;
@@ -59,4 +60,5 @@ pub use symbol::{
     PinSide, SymbolDefinition,
 };
 pub use templates::*;
+pub use two_port_filter_analysis::*;
 pub use value::*;

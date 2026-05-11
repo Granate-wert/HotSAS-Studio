@@ -92,6 +92,10 @@ import type {
   ProjectOpenRequestDto,
   ProjectOpenResultDto,
   RecentProjectEntryDto,
+  CircuitAnalysisPort,
+  FilterAnalysisDiagnostic,
+  FilterNetworkAnalysisRequest,
+  FilterNetworkAnalysisResult,
 } from "../types";
 
 async function invokeCommand<T>(command: string, args?: Record<string, unknown>) {
@@ -310,4 +314,19 @@ export const backend = {
     invokeCommand<ComponentModelAssignmentDto>("assign_model_to_instance", { request }),
   evaluateProjectSimulationReadiness: () =>
     invokeCommand<ProjectSimulationReadinessDto>("evaluate_project_simulation_readiness"),
+  // v3.2 two-port / filter network analysis
+  suggestFilterAnalysisPorts: (selectedComponentIds: string[]) =>
+    invokeCommand<CircuitAnalysisPort[]>("suggest_filter_analysis_ports", { selectedComponentIds }),
+  validateFilterNetworkAnalysisRequest: (request: FilterNetworkAnalysisRequest) =>
+    invokeCommand<FilterAnalysisDiagnostic[]>("validate_filter_network_analysis_request", {
+      request,
+    }),
+  runFilterNetworkAnalysis: (request: FilterNetworkAnalysisRequest) =>
+    invokeCommand<FilterNetworkAnalysisResult>("run_filter_network_analysis", { request }),
+  getLastFilterNetworkAnalysis: () =>
+    invokeCommand<FilterNetworkAnalysisResult | null>("get_last_filter_network_analysis"),
+  clearLastFilterNetworkAnalysis: () => invokeCommand<void>("clear_last_filter_network_analysis"),
+  exportFilterNetworkAnalysisCsv: () => invokeCommand<string>("export_filter_network_analysis_csv"),
+  addFilterNetworkAnalysisToAdvancedReport: () =>
+    invokeCommand<AdvancedReportDto>("add_filter_network_analysis_to_advanced_report"),
 };

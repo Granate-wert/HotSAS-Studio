@@ -1350,3 +1350,112 @@ export type AssignModelRequestDto = {
   instance_id: string;
   model_id: string;
 };
+
+// === v3.2 Two-Port / Filter Network Analysis Types ===
+
+export type FilterAnalysisScope = "whole_circuit" | "selected_region";
+
+export type FrequencySweepScale = "linear" | "logarithmic";
+
+export type FilterAnalysisMethod = "auto" | "template_analytic" | "mock" | "ngspice";
+
+export type DetectedFilterKind =
+  | "low_pass"
+  | "high_pass"
+  | "band_pass"
+  | "band_stop"
+  | "all_pass"
+  | "unknown";
+
+export type FilterMetricKind =
+  | "cutoff_frequency"
+  | "lower_cutoff_frequency"
+  | "upper_cutoff_frequency"
+  | "bandwidth"
+  | "peak_gain"
+  | "passband_ripple"
+  | "stopband_attenuation"
+  | "attenuation_at_frequency"
+  | "input_impedance"
+  | "output_impedance";
+
+export type FilterMetricConfidence = "exact" | "estimated" | "approximate" | "not_available";
+
+export type FilterAnalysisSeverity = "info" | "warning" | "error" | "blocking";
+
+export type CircuitAnalysisPort = {
+  label: string;
+  positive_net_id: string;
+  negative_net_id: string | null;
+  reference_node_id: string | null;
+  nominal_impedance_ohm: number | null;
+};
+
+export type FrequencySweepSettings = {
+  start_hz: number;
+  stop_hz: number;
+  points: number;
+  points_per_decade: number | null;
+  scale: FrequencySweepScale;
+};
+
+export type FilterMetricValue = {
+  kind: FilterMetricKind;
+  label: string;
+  value: number | null;
+  unit: string;
+  frequency_hz: number | null;
+  confidence: FilterMetricConfidence;
+  note: string | null;
+};
+
+export type FilterSweepPoint = {
+  frequency_hz: number;
+  vin_magnitude: number | null;
+  vout_magnitude: number | null;
+  transfer_magnitude: number | null;
+  gain_db: number | null;
+  attenuation_db: number | null;
+  phase_deg: number | null;
+  zin_magnitude_ohm: number | null;
+  zin_phase_deg: number | null;
+  zout_magnitude_ohm: number | null;
+  zout_phase_deg: number | null;
+};
+
+export type FilterAnalysisDiagnostic = {
+  code: string;
+  severity: FilterAnalysisSeverity;
+  title: string;
+  message: string;
+  suggested_fix: string | null;
+  related_component_id: string | null;
+  related_net_id: string | null;
+  related_model_id: string | null;
+};
+
+export type FilterNetworkAnalysisRequest = {
+  project_id: string;
+  scope: FilterAnalysisScope;
+  selected_component_ids: string[];
+  input_port: CircuitAnalysisPort;
+  output_port: CircuitAnalysisPort;
+  sweep: FrequencySweepSettings;
+  method: FilterAnalysisMethod;
+  source_amplitude_v: number | null;
+  requested_metrics: FilterMetricKind[];
+};
+
+export type FilterNetworkAnalysisResult = {
+  analysis_id: string;
+  project_id: string;
+  request: FilterNetworkAnalysisRequest;
+  method_used: FilterAnalysisMethod;
+  detected_filter_kind: DetectedFilterKind;
+  can_trust_as_engineering_estimate: boolean;
+  points: FilterSweepPoint[];
+  metrics: FilterMetricValue[];
+  diagnostics: FilterAnalysisDiagnostic[];
+  generated_netlist_preview: string | null;
+  created_at: string;
+};

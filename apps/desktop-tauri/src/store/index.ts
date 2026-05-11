@@ -46,6 +46,10 @@ import type {
   TouchstoneImportReportDto,
   UserCircuitSimulationProfileDto,
   UserCircuitSimulationRunDto,
+  CircuitAnalysisPort,
+  FilterAnalysisDiagnostic,
+  FilterNetworkAnalysisRequest,
+  FilterNetworkAnalysisResult,
 } from "../types";
 
 type HotSasState = {
@@ -145,6 +149,14 @@ type HotSasState = {
   projectSimulationReadiness: ProjectSimulationReadinessDto | null;
   modelMappingLoading: boolean;
   modelMappingError: string | null;
+  // v3.2 two-port / filter network analysis
+  filterAnalysisPorts: CircuitAnalysisPort[];
+  filterAnalysisRequest: FilterNetworkAnalysisRequest | null;
+  filterAnalysisResult: FilterNetworkAnalysisResult | null;
+  filterAnalysisDiagnostics: FilterAnalysisDiagnostic[];
+  filterAnalysisLoading: boolean;
+  filterAnalysisError: string | null;
+  filterAnalysisCsvExport: string | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -342,6 +354,14 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   projectSimulationReadiness: null,
   modelMappingLoading: false,
   modelMappingError: null,
+  // v3.2 two-port / filter network analysis initial state
+  filterAnalysisPorts: [],
+  filterAnalysisRequest: null,
+  filterAnalysisResult: null,
+  filterAnalysisDiagnostics: [],
+  filterAnalysisLoading: false,
+  filterAnalysisError: null,
+  filterAnalysisCsvExport: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -474,4 +494,17 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   ) => set({ projectSimulationReadiness }),
   setModelMappingLoading: (modelMappingLoading: boolean) => set({ modelMappingLoading }),
   setModelMappingError: (modelMappingError: string | null) => set({ modelMappingError }),
+  // v3.2 two-port / filter network analysis setters
+  setFilterAnalysisPorts: (filterAnalysisPorts: CircuitAnalysisPort[]) =>
+    set({ filterAnalysisPorts }),
+  setFilterAnalysisRequest: (filterAnalysisRequest: FilterNetworkAnalysisRequest | null) =>
+    set({ filterAnalysisRequest }),
+  setFilterAnalysisResult: (filterAnalysisResult: FilterNetworkAnalysisResult | null) =>
+    set({ filterAnalysisResult }),
+  setFilterAnalysisDiagnostics: (filterAnalysisDiagnostics: FilterAnalysisDiagnostic[]) =>
+    set({ filterAnalysisDiagnostics }),
+  setFilterAnalysisLoading: (filterAnalysisLoading: boolean) => set({ filterAnalysisLoading }),
+  setFilterAnalysisError: (filterAnalysisError: string | null) => set({ filterAnalysisError }),
+  setFilterAnalysisCsvExport: (filterAnalysisCsvExport: string | null) =>
+    set({ filterAnalysisCsvExport }),
 }));

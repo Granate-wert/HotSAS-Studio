@@ -11,5 +11,5 @@ pub use services::{
     NetlistGenerationService, NgspiceSimulationService, ParameterIssue, PreferredValuesService,
     ProductWorkflowService, ProjectPackageService, ProjectService, ProjectSessionService,
     SchematicEditingService, SelectedRegionAnalysisService, SimulationEngineChoice,
-    SimulationService,
+    SimulationService, TwoPortFilterAnalysisService,
 };

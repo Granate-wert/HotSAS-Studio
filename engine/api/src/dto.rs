@@ -3053,3 +3053,482 @@ fn model_mapping_severity_to_string(severity: hotsas_core::ModelMappingSeverity)
     }
     .to_string()
 }
+
+// Two-Port / Filter Network Analysis DTOs
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FilterAnalysisScopeDto {
+    WholeCircuit,
+    SelectedRegion,
+}
+
+impl From<hotsas_core::FilterAnalysisScope> for FilterAnalysisScopeDto {
+    fn from(v: hotsas_core::FilterAnalysisScope) -> Self {
+        match v {
+            hotsas_core::FilterAnalysisScope::WholeCircuit => Self::WholeCircuit,
+            hotsas_core::FilterAnalysisScope::SelectedRegion => Self::SelectedRegion,
+        }
+    }
+}
+
+impl From<FilterAnalysisScopeDto> for hotsas_core::FilterAnalysisScope {
+    fn from(v: FilterAnalysisScopeDto) -> Self {
+        match v {
+            FilterAnalysisScopeDto::WholeCircuit => Self::WholeCircuit,
+            FilterAnalysisScopeDto::SelectedRegion => Self::SelectedRegion,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CircuitAnalysisPortDto {
+    pub label: String,
+    pub positive_net_id: String,
+    pub negative_net_id: Option<String>,
+    pub reference_node_id: Option<String>,
+    pub nominal_impedance_ohm: Option<f64>,
+}
+
+impl From<&hotsas_core::CircuitAnalysisPort> for CircuitAnalysisPortDto {
+    fn from(p: &hotsas_core::CircuitAnalysisPort) -> Self {
+        Self {
+            label: p.label.clone(),
+            positive_net_id: p.positive_net_id.clone(),
+            negative_net_id: p.negative_net_id.clone(),
+            reference_node_id: p.reference_node_id.clone(),
+            nominal_impedance_ohm: p.nominal_impedance_ohm,
+        }
+    }
+}
+
+impl From<CircuitAnalysisPortDto> for hotsas_core::CircuitAnalysisPort {
+    fn from(p: CircuitAnalysisPortDto) -> Self {
+        Self {
+            label: p.label,
+            positive_net_id: p.positive_net_id,
+            negative_net_id: p.negative_net_id,
+            reference_node_id: p.reference_node_id,
+            nominal_impedance_ohm: p.nominal_impedance_ohm,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FrequencySweepScaleDto {
+    Linear,
+    Logarithmic,
+}
+
+impl From<hotsas_core::FrequencySweepScale> for FrequencySweepScaleDto {
+    fn from(v: hotsas_core::FrequencySweepScale) -> Self {
+        match v {
+            hotsas_core::FrequencySweepScale::Linear => Self::Linear,
+            hotsas_core::FrequencySweepScale::Logarithmic => Self::Logarithmic,
+        }
+    }
+}
+
+impl From<FrequencySweepScaleDto> for hotsas_core::FrequencySweepScale {
+    fn from(v: FrequencySweepScaleDto) -> Self {
+        match v {
+            FrequencySweepScaleDto::Linear => Self::Linear,
+            FrequencySweepScaleDto::Logarithmic => Self::Logarithmic,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FrequencySweepSettingsDto {
+    pub start_hz: f64,
+    pub stop_hz: f64,
+    pub points: usize,
+    pub points_per_decade: Option<usize>,
+    pub scale: FrequencySweepScaleDto,
+}
+
+impl From<&hotsas_core::FrequencySweepSettings> for FrequencySweepSettingsDto {
+    fn from(s: &hotsas_core::FrequencySweepSettings) -> Self {
+        Self {
+            start_hz: s.start_hz,
+            stop_hz: s.stop_hz,
+            points: s.points,
+            points_per_decade: s.points_per_decade,
+            scale: s.scale.into(),
+        }
+    }
+}
+
+impl From<FrequencySweepSettingsDto> for hotsas_core::FrequencySweepSettings {
+    fn from(s: FrequencySweepSettingsDto) -> Self {
+        Self {
+            start_hz: s.start_hz,
+            stop_hz: s.stop_hz,
+            points: s.points,
+            points_per_decade: s.points_per_decade,
+            scale: s.scale.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FilterAnalysisMethodDto {
+    Auto,
+    TemplateAnalytic,
+    Mock,
+    Ngspice,
+}
+
+impl From<hotsas_core::FilterAnalysisMethod> for FilterAnalysisMethodDto {
+    fn from(v: hotsas_core::FilterAnalysisMethod) -> Self {
+        match v {
+            hotsas_core::FilterAnalysisMethod::Auto => Self::Auto,
+            hotsas_core::FilterAnalysisMethod::TemplateAnalytic => Self::TemplateAnalytic,
+            hotsas_core::FilterAnalysisMethod::Mock => Self::Mock,
+            hotsas_core::FilterAnalysisMethod::Ngspice => Self::Ngspice,
+        }
+    }
+}
+
+impl From<FilterAnalysisMethodDto> for hotsas_core::FilterAnalysisMethod {
+    fn from(v: FilterAnalysisMethodDto) -> Self {
+        match v {
+            FilterAnalysisMethodDto::Auto => Self::Auto,
+            FilterAnalysisMethodDto::TemplateAnalytic => Self::TemplateAnalytic,
+            FilterAnalysisMethodDto::Mock => Self::Mock,
+            FilterAnalysisMethodDto::Ngspice => Self::Ngspice,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DetectedFilterKindDto {
+    LowPass,
+    HighPass,
+    BandPass,
+    BandStop,
+    AllPass,
+    Unknown,
+}
+
+impl From<hotsas_core::DetectedFilterKind> for DetectedFilterKindDto {
+    fn from(v: hotsas_core::DetectedFilterKind) -> Self {
+        match v {
+            hotsas_core::DetectedFilterKind::LowPass => Self::LowPass,
+            hotsas_core::DetectedFilterKind::HighPass => Self::HighPass,
+            hotsas_core::DetectedFilterKind::BandPass => Self::BandPass,
+            hotsas_core::DetectedFilterKind::BandStop => Self::BandStop,
+            hotsas_core::DetectedFilterKind::AllPass => Self::AllPass,
+            hotsas_core::DetectedFilterKind::Unknown => Self::Unknown,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FilterMetricKindDto {
+    CutoffFrequency,
+    LowerCutoffFrequency,
+    UpperCutoffFrequency,
+    Bandwidth,
+    PeakGain,
+    PassbandRipple,
+    StopbandAttenuation,
+    AttenuationAtFrequency,
+    InputImpedance,
+    OutputImpedance,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FilterMetricConfidenceDto {
+    Exact,
+    Estimated,
+    Approximate,
+    NotAvailable,
+}
+
+impl From<hotsas_core::FilterMetricConfidence> for FilterMetricConfidenceDto {
+    fn from(v: hotsas_core::FilterMetricConfidence) -> Self {
+        match v {
+            hotsas_core::FilterMetricConfidence::Exact => Self::Exact,
+            hotsas_core::FilterMetricConfidence::Estimated => Self::Estimated,
+            hotsas_core::FilterMetricConfidence::Approximate => Self::Approximate,
+            hotsas_core::FilterMetricConfidence::NotAvailable => Self::NotAvailable,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FilterMetricValueDto {
+    pub kind: FilterMetricKindDto,
+    pub label: String,
+    pub value: Option<f64>,
+    pub unit: String,
+    pub frequency_hz: Option<f64>,
+    pub confidence: FilterMetricConfidenceDto,
+    pub note: Option<String>,
+}
+
+impl From<&hotsas_core::FilterMetricValue> for FilterMetricValueDto {
+    fn from(m: &hotsas_core::FilterMetricValue) -> Self {
+        Self {
+            kind: match m.kind {
+                hotsas_core::FilterMetricKind::CutoffFrequency => {
+                    FilterMetricKindDto::CutoffFrequency
+                }
+                hotsas_core::FilterMetricKind::LowerCutoffFrequency => {
+                    FilterMetricKindDto::LowerCutoffFrequency
+                }
+                hotsas_core::FilterMetricKind::UpperCutoffFrequency => {
+                    FilterMetricKindDto::UpperCutoffFrequency
+                }
+                hotsas_core::FilterMetricKind::Bandwidth => FilterMetricKindDto::Bandwidth,
+                hotsas_core::FilterMetricKind::PeakGain => FilterMetricKindDto::PeakGain,
+                hotsas_core::FilterMetricKind::PassbandRipple => {
+                    FilterMetricKindDto::PassbandRipple
+                }
+                hotsas_core::FilterMetricKind::StopbandAttenuation => {
+                    FilterMetricKindDto::StopbandAttenuation
+                }
+                hotsas_core::FilterMetricKind::AttenuationAtFrequency => {
+                    FilterMetricKindDto::AttenuationAtFrequency
+                }
+                hotsas_core::FilterMetricKind::InputImpedance => {
+                    FilterMetricKindDto::InputImpedance
+                }
+                hotsas_core::FilterMetricKind::OutputImpedance => {
+                    FilterMetricKindDto::OutputImpedance
+                }
+            },
+            label: m.label.clone(),
+            value: m.value,
+            unit: m.unit.clone(),
+            frequency_hz: m.frequency_hz,
+            confidence: m.confidence.into(),
+            note: m.note.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FilterSweepPointDto {
+    pub frequency_hz: f64,
+    pub vin_magnitude: Option<f64>,
+    pub vout_magnitude: Option<f64>,
+    pub transfer_magnitude: Option<f64>,
+    pub gain_db: Option<f64>,
+    pub attenuation_db: Option<f64>,
+    pub phase_deg: Option<f64>,
+    pub zin_magnitude_ohm: Option<f64>,
+    pub zin_phase_deg: Option<f64>,
+    pub zout_magnitude_ohm: Option<f64>,
+    pub zout_phase_deg: Option<f64>,
+}
+
+impl From<&hotsas_core::FilterSweepPoint> for FilterSweepPointDto {
+    fn from(p: &hotsas_core::FilterSweepPoint) -> Self {
+        Self {
+            frequency_hz: p.frequency_hz,
+            vin_magnitude: p.vin_magnitude,
+            vout_magnitude: p.vout_magnitude,
+            transfer_magnitude: p.transfer_magnitude,
+            gain_db: p.gain_db,
+            attenuation_db: p.attenuation_db,
+            phase_deg: p.phase_deg,
+            zin_magnitude_ohm: p.zin_magnitude_ohm,
+            zin_phase_deg: p.zin_phase_deg,
+            zout_magnitude_ohm: p.zout_magnitude_ohm,
+            zout_phase_deg: p.zout_phase_deg,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FilterAnalysisSeverityDto {
+    Info,
+    Warning,
+    Error,
+    Blocking,
+}
+
+impl From<hotsas_core::FilterAnalysisSeverity> for FilterAnalysisSeverityDto {
+    fn from(v: hotsas_core::FilterAnalysisSeverity) -> Self {
+        match v {
+            hotsas_core::FilterAnalysisSeverity::Info => Self::Info,
+            hotsas_core::FilterAnalysisSeverity::Warning => Self::Warning,
+            hotsas_core::FilterAnalysisSeverity::Error => Self::Error,
+            hotsas_core::FilterAnalysisSeverity::Blocking => Self::Blocking,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FilterAnalysisDiagnosticDto {
+    pub code: String,
+    pub severity: FilterAnalysisSeverityDto,
+    pub title: String,
+    pub message: String,
+    pub suggested_fix: Option<String>,
+    pub related_component_id: Option<String>,
+    pub related_net_id: Option<String>,
+    pub related_model_id: Option<String>,
+}
+
+impl From<&hotsas_core::FilterAnalysisDiagnostic> for FilterAnalysisDiagnosticDto {
+    fn from(d: &hotsas_core::FilterAnalysisDiagnostic) -> Self {
+        Self {
+            code: d.code.clone(),
+            severity: d.severity.into(),
+            title: d.title.clone(),
+            message: d.message.clone(),
+            suggested_fix: d.suggested_fix.clone(),
+            related_component_id: d.related_component_id.clone(),
+            related_net_id: d.related_net_id.clone(),
+            related_model_id: d.related_model_id.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FilterNetworkAnalysisRequestDto {
+    pub project_id: String,
+    pub scope: FilterAnalysisScopeDto,
+    pub selected_component_ids: Vec<String>,
+    pub input_port: CircuitAnalysisPortDto,
+    pub output_port: CircuitAnalysisPortDto,
+    pub sweep: FrequencySweepSettingsDto,
+    pub method: FilterAnalysisMethodDto,
+    pub source_amplitude_v: Option<f64>,
+    pub requested_metrics: Vec<FilterMetricKindDto>,
+}
+
+impl From<FilterNetworkAnalysisRequestDto> for hotsas_core::FilterNetworkAnalysisRequest {
+    fn from(r: FilterNetworkAnalysisRequestDto) -> Self {
+        Self {
+            project_id: r.project_id,
+            scope: r.scope.into(),
+            selected_component_ids: r.selected_component_ids,
+            input_port: r.input_port.into(),
+            output_port: r.output_port.into(),
+            sweep: r.sweep.into(),
+            method: r.method.into(),
+            source_amplitude_v: r.source_amplitude_v,
+            requested_metrics: r
+                .requested_metrics
+                .into_iter()
+                .map(|k| match k {
+                    FilterMetricKindDto::CutoffFrequency => {
+                        hotsas_core::FilterMetricKind::CutoffFrequency
+                    }
+                    FilterMetricKindDto::LowerCutoffFrequency => {
+                        hotsas_core::FilterMetricKind::LowerCutoffFrequency
+                    }
+                    FilterMetricKindDto::UpperCutoffFrequency => {
+                        hotsas_core::FilterMetricKind::UpperCutoffFrequency
+                    }
+                    FilterMetricKindDto::Bandwidth => hotsas_core::FilterMetricKind::Bandwidth,
+                    FilterMetricKindDto::PeakGain => hotsas_core::FilterMetricKind::PeakGain,
+                    FilterMetricKindDto::PassbandRipple => {
+                        hotsas_core::FilterMetricKind::PassbandRipple
+                    }
+                    FilterMetricKindDto::StopbandAttenuation => {
+                        hotsas_core::FilterMetricKind::StopbandAttenuation
+                    }
+                    FilterMetricKindDto::AttenuationAtFrequency => {
+                        hotsas_core::FilterMetricKind::AttenuationAtFrequency
+                    }
+                    FilterMetricKindDto::InputImpedance => {
+                        hotsas_core::FilterMetricKind::InputImpedance
+                    }
+                    FilterMetricKindDto::OutputImpedance => {
+                        hotsas_core::FilterMetricKind::OutputImpedance
+                    }
+                })
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FilterNetworkAnalysisResultDto {
+    pub analysis_id: String,
+    pub project_id: String,
+    pub request: FilterNetworkAnalysisRequestDto,
+    pub method_used: FilterAnalysisMethodDto,
+    pub detected_filter_kind: DetectedFilterKindDto,
+    pub can_trust_as_engineering_estimate: bool,
+    pub points: Vec<FilterSweepPointDto>,
+    pub metrics: Vec<FilterMetricValueDto>,
+    pub diagnostics: Vec<FilterAnalysisDiagnosticDto>,
+    pub generated_netlist_preview: Option<String>,
+    pub created_at: String,
+}
+
+impl From<&hotsas_core::FilterNetworkAnalysisResult> for FilterNetworkAnalysisResultDto {
+    fn from(r: &hotsas_core::FilterNetworkAnalysisResult) -> Self {
+        Self {
+            analysis_id: r.analysis_id.clone(),
+            project_id: r.project_id.clone(),
+            request: FilterNetworkAnalysisRequestDto {
+                project_id: r.request.project_id.clone(),
+                scope: r.request.scope.into(),
+                selected_component_ids: r.request.selected_component_ids.clone(),
+                input_port: CircuitAnalysisPortDto::from(&r.request.input_port),
+                output_port: CircuitAnalysisPortDto::from(&r.request.output_port),
+                sweep: FrequencySweepSettingsDto::from(&r.request.sweep),
+                method: r.request.method.into(),
+                source_amplitude_v: r.request.source_amplitude_v,
+                requested_metrics: r
+                    .request
+                    .requested_metrics
+                    .iter()
+                    .map(|k| match k {
+                        hotsas_core::FilterMetricKind::CutoffFrequency => {
+                            FilterMetricKindDto::CutoffFrequency
+                        }
+                        hotsas_core::FilterMetricKind::LowerCutoffFrequency => {
+                            FilterMetricKindDto::LowerCutoffFrequency
+                        }
+                        hotsas_core::FilterMetricKind::UpperCutoffFrequency => {
+                            FilterMetricKindDto::UpperCutoffFrequency
+                        }
+                        hotsas_core::FilterMetricKind::Bandwidth => FilterMetricKindDto::Bandwidth,
+                        hotsas_core::FilterMetricKind::PeakGain => FilterMetricKindDto::PeakGain,
+                        hotsas_core::FilterMetricKind::PassbandRipple => {
+                            FilterMetricKindDto::PassbandRipple
+                        }
+                        hotsas_core::FilterMetricKind::StopbandAttenuation => {
+                            FilterMetricKindDto::StopbandAttenuation
+                        }
+                        hotsas_core::FilterMetricKind::AttenuationAtFrequency => {
+                            FilterMetricKindDto::AttenuationAtFrequency
+                        }
+                        hotsas_core::FilterMetricKind::InputImpedance => {
+                            FilterMetricKindDto::InputImpedance
+                        }
+                        hotsas_core::FilterMetricKind::OutputImpedance => {
+                            FilterMetricKindDto::OutputImpedance
+                        }
+                    })
+                    .collect(),
+            },
+            method_used: r.method_used.into(),
+            detected_filter_kind: r.detected_filter_kind.into(),
+            can_trust_as_engineering_estimate: r.can_trust_as_engineering_estimate,
+            points: r.points.iter().map(FilterSweepPointDto::from).collect(),
+            metrics: r.metrics.iter().map(FilterMetricValueDto::from).collect(),
+            diagnostics: r
+                .diagnostics
+                .iter()
+                .map(FilterAnalysisDiagnosticDto::from)
+                .collect(),
+            generated_netlist_preview: r.generated_netlist_preview.clone(),
+            created_at: r.created_at.clone(),
+        }
+    }
+}

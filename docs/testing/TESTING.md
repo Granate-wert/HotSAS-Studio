@@ -104,6 +104,35 @@ and `warning`.
 
 ---
 
+## v3.2 Two-Port / Filter Network Analysis Verification
+
+Targeted checks for Two-Port / Filter Network Analysis Foundation:
+
+```bash
+cd "D:\Документы\vscode\HotSAS Studio\engine"
+cargo test -p hotsas_api --test filter_analysis_api_tests
+cargo test -p hotsas_application --test simulation_dashboard_integration_tests
+cargo test -p hotsas_cli --test cli_integration
+```
+
+```bash
+cd "D:\Документы\vscode\HotSAS Studio\apps\desktop-tauri"
+npm.cmd run typecheck
+npm.cmd run test
+```
+
+Manual CLI smoke:
+
+```bash
+hotsas-cli filter-analyze <project.circuit> [--method mock] [--out result.json]
+```
+
+Expected JSON includes `analysis_id`, `method_used`, `detected_filter_kind`,
+`points` (frequency, gain_dB, phase_deg), `metrics` (cutoff_frequency, peak_gain),
+and `diagnostics`.
+
+---
+
 ## Manual v1 Vertical Slice Smoke Check
 
 1. Start the app with `npm.cmd run tauri:dev`.
