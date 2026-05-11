@@ -106,7 +106,7 @@ and `warning`.
 
 ## v3.2 Two-Port / Filter Network Analysis Verification
 
-Targeted checks for Two-Port / Filter Network Analysis Foundation:
+Targeted checks for Two-Port / Filter Network Analysis Foundation + UI Fix:
 
 ```bash
 cd "D:\Документы\vscode\HotSAS Studio\engine"
@@ -118,7 +118,9 @@ cargo test -p hotsas_cli --test cli_integration
 ```bash
 cd "D:\Документы\vscode\HotSAS Studio\apps\desktop-tauri"
 npm.cmd run typecheck
+npm.cmd run test -- FilterAnalysisScreen
 npm.cmd run test
+npm.cmd run build
 ```
 
 Manual CLI smoke:
@@ -130,6 +132,21 @@ hotsas-cli filter-analyze <project.circuit> [--method mock] [--out result.json]
 Expected JSON includes `analysis_id`, `method_used`, `detected_filter_kind`,
 `points` (frequency, gain_dB, phase_deg), `metrics` (cutoff_frequency, peak_gain),
 and `diagnostics`.
+
+Manual UI smoke:
+
+1. Open the app and create/load a project.
+2. Navigate to **Filter Analysis** from the sidebar.
+3. Verify port configuration card shows input/output selectors.
+4. Select input and output ports.
+5. Adjust sweep settings (start/stop/points/scale).
+6. Click **Run Analysis**.
+7. Verify result summary appears with filter kind and method.
+8. Verify gain and phase charts render.
+9. Verify impedance chart appears if data exists.
+10. Verify metrics table shows cutoff, gain, etc.
+11. Verify diagnostics panel shows any backend warnings/errors.
+12. Click **Export CSV** or **Add to Report** if available.
 
 ---
 

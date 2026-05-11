@@ -257,6 +257,14 @@ type HotSasState = {
   setProjectSimulationReadiness: (readiness: ProjectSimulationReadinessDto | null) => void;
   setModelMappingLoading: (loading: boolean) => void;
   setModelMappingError: (error: string | null) => void;
+  // v3.2 two-port / filter network analysis setters
+  setFilterAnalysisPorts: (filterAnalysisPorts: CircuitAnalysisPort[]) => void;
+  setFilterAnalysisRequest: (filterAnalysisRequest: FilterNetworkAnalysisRequest | null) => void;
+  setFilterAnalysisResult: (filterAnalysisResult: FilterNetworkAnalysisResult | null) => void;
+  setFilterAnalysisDiagnostics: (filterAnalysisDiagnostics: FilterAnalysisDiagnostic[]) => void;
+  setFilterAnalysisLoading: (filterAnalysisLoading: boolean) => void;
+  setFilterAnalysisError: (filterAnalysisError: string | null) => void;
+  setFilterAnalysisCsvExport: (filterAnalysisCsvExport: string | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({

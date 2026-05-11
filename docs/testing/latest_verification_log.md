@@ -6,10 +6,12 @@
 
 ## In-Progress Development Log
 
-[v3.2 - Two-Port / Filter Network Analysis Foundation (PARTIAL)](./verification_logs/v3.2_two_port_filter_network_analysis.md)
+[v3.2 - Two-Port / Filter Network Analysis Foundation (ACCEPTED WITH DOCUMENTED LIMITATIONS)](./verification_logs/v3.2_two_port_filter_network_analysis.md)
+
+[v3.2-ui-fix - Filter Analysis Screen & Charts](./verification_logs/v3.2_ui_fix_filter_analysis_screen.md)
 
 ```text
-Current v3.2 status: PARTIAL; backend/API/CLI foundation PASS; UI deferred.
+Current v3.2 status: ACCEPTED WITH DOCUMENTED LIMITATIONS.
 Latest evidence:
 - Core two-port/filter domain models implemented in hotsas_core
 - TwoPortFilterAnalysisService with validation, mock/template analysis,
@@ -20,16 +22,20 @@ Latest evidence:
 - CLI: hotsas-cli filter-analyze <path> [--method] [--out]
 - Rust tests: filter_analysis_api_tests.rs 7 tests PASS
 - Full Rust workspace: 250+ tests PASS, no regressions
-- Frontend: 165 Vitest tests PASS, no regressions
+- Frontend UI screen: FilterAnalysisScreen with port config, sweep controls,
+  Bode charts (gain + phase), impedance chart, metrics table, diagnostics panel,
+  export actions, loading/error/empty states
+- Frontend components: 9 components under components/filter-analysis/
+- Frontend tests: 9 new Vitest tests + 165 existing = 174 total PASS
 - cargo fmt --check, cargo test, cargo build -p hotsas_cli --release PASS
 - npm.cmd run typecheck, npm.cmd run test PASS
-- npm.cmd run build, npm.cmd run tauri:build PASS
+- npm.cmd run build PASS
 - git diff --check PASS
 
-Remaining before ACCEPT:
-- Frontend UI screen/component with port config, sweep controls, Bode chart,
-  metrics table, diagnostics panel is deferred
-- S-parameters deferred to v3.3
+Known limitations:
+- Mock analysis limited to RC-like generic data; template analytic detects RC low-pass/high-pass only
+- ngspice impedance extraction marked as foundation-only with diagnostic
+- S-parameters/Smith chart/Touchstone workflow deferred to v3.3
 ```
 
 ## v3.0 Summary

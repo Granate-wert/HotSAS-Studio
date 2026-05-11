@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v3.2 PARTIAL — UI screen/charts deferred**
+**Current roadmap stage: v3.2 ACCEPTED WITH DOCUMENTED LIMITATIONS — ready for v3.3**
 
 > App version (v0.1.4) and roadmap stage are different concepts.
 

@@ -14,6 +14,7 @@ import { ImportModelsScreen } from "../screens/ImportModelsScreen";
 import { backend } from "../api";
 import { AdvancedReportsScreen } from "../screens/AdvancedReportsScreen";
 import { DcdcCalculatorScreen } from "../screens/DcdcCalculatorScreen";
+import { FilterAnalysisScreen } from "../screens/FilterAnalysisScreen";
 import { CalculatorScreen } from "../screens/CalculatorScreen";
 import { ComponentLibraryScreen } from "../screens/ComponentLibraryScreen";
 import { DiagnosticsScreen } from "../screens/DiagnosticsScreen";
@@ -1059,6 +1060,10 @@ function renderScreen(
 
   if (activeScreen === "simulation") {
     return <SimulationScreen />;
+  }
+
+  if (activeScreen === "filter-analysis") {
+    return <FilterAnalysisScreen />;
   }
 
   if (activeScreen === "import") {
