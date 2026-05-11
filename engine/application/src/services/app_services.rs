@@ -8,8 +8,9 @@ use crate::{
     ComponentModelMappingService, ComponentParameterService, EngineeringNotebookService,
     ExportCenterService, ExportService, FormulaService, ModelImportService,
     NetlistGenerationService, NgspiceSimulationService, PreferredValuesService,
-    ProjectPackageService, ProjectService, SchematicEditingService, SelectedRegionAnalysisService,
-    SimulationEngineChoice, SimulationService, SParameterAnalysisService, TwoPortFilterAnalysisService,
+    ProjectPackageService, ProjectService, SParameterAnalysisService, SchematicEditingService,
+    SelectedRegionAnalysisService, SimulationEngineChoice, SimulationService,
+    TwoPortFilterAnalysisService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,

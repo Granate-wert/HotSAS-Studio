@@ -1,8 +1,8 @@
 use crate::{
-    AcSweepSettingsDto, AddComponentRequestDto, ApiError, AppDiagnosticsReportDto,
-    ApplyNotebookValueRequestDto, AssignComponentRequestDto, CircuitAnalysisPortDto,
-    CircuitValidationIssueDto, CircuitValidationReportDto, ComponentDetailsDto,
-    ComponentLibraryDto, ComponentModelAssignmentDto, ComponentParameterDto,
+    AcSweepSettingsDto, AddComponentRequestDto, AnalyzeTouchstoneRequestDto, ApiError,
+    AppDiagnosticsReportDto, ApplyNotebookValueRequestDto, AssignComponentRequestDto,
+    CircuitAnalysisPortDto, CircuitValidationIssueDto, CircuitValidationReportDto,
+    ComponentDetailsDto, ComponentLibraryDto, ComponentModelAssignmentDto, ComponentParameterDto,
     ComponentSearchRequestDto, ComponentSearchResultDto, ComponentSummaryDto,
     ConnectPinsRequestDto, DeleteComponentRequestDto, DeleteWireRequestDto, ExportCapabilityDto,
     ExportHistoryEntryDto, ExportRequestDto, ExportResultDto, FilterAnalysisDiagnosticDto,
@@ -15,7 +15,7 @@ use crate::{
     ProductWorkflowStatusDto, ProjectDto, ProjectOpenRequestDto, ProjectOpenResultDto,
     ProjectPackageManifestDto, ProjectPackageValidationReportDto, ProjectPersistenceWarningDto,
     ProjectSaveResultDto, ProjectSessionStateDto, RecentProjectEntryDto, RenameNetRequestDto,
-    SaveProjectDto, SchematicEditResultDto, SchematicEditableFieldDto,
+    SParameterAnalysisResultDto, SaveProjectDto, SchematicEditResultDto, SchematicEditableFieldDto,
     SchematicSelectionDetailsDto, SchematicSelectionRequestDto, SchematicToolCapabilityDto,
     SelectedComponentDto, SelectedRegionAnalysisRequestDto, SelectedRegionAnalysisResultDto,
     SelectedRegionPreviewDto, SimulationDiagnosticMessageDto, SimulationGraphViewDto,
@@ -25,7 +25,6 @@ use crate::{
     SimulationWorkflowErrorDto, SimulationWorkflowWarningDto, SymbolDto, TransientSettingsDto,
     UndoRedoStateDto, UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
     UserCircuitSimulationResultDto, UserCircuitSimulationRunDto, ValueDto, VerticalSliceDto,
-    AnalyzeTouchstoneRequestDto, SParameterAnalysisResultDto,
 };
 use hotsas_application::{
     AppDiagnosticsService, AppServices, FormulaRegistryService, ProductWorkflowService,
@@ -2880,36 +2879,44 @@ impl HotSasApi {
             id: result.id.clone(),
             title: "S-Parameter Analysis Report".to_string(),
             report_type: "SParameterAnalysis".to_string(),
-            generated_at: Some(result.dataset.points.first().map(|p| format!("{}", p.frequency_hz)).unwrap_or_default()),
+            generated_at: Some(
+                result
+                    .dataset
+                    .points
+                    .first()
+                    .map(|p| format!("{}", p.frequency_hz))
+                    .unwrap_or_default(),
+            ),
             project_id: None,
             project_name: None,
             sections: vec![crate::ReportSectionDto {
                 kind: "s_parameter_analysis".to_string(),
                 title: "S-Parameter Analysis".to_string(),
                 status: "complete".to_string(),
-                blocks: vec![
-                    crate::ReportContentBlockDto {
-                        block_type: "paragraph".to_string(),
-                        title: None,
-                        text: Some(result.summary.clone()),
-                        rows: None,
-                        columns: None,
-                        data_rows: None,
-                        equation: None,
-                        substituted_values: None,
-                        result: None,
-                        language: None,
-                        content: None,
-                        series_names: None,
-                        x_unit: None,
-                        y_unit: None,
-                        items: None,
-                    },
-                ],
+                blocks: vec![crate::ReportContentBlockDto {
+                    block_type: "paragraph".to_string(),
+                    title: None,
+                    text: Some(result.summary.clone()),
+                    rows: None,
+                    columns: None,
+                    data_rows: None,
+                    equation: None,
+                    substituted_values: None,
+                    result: None,
+                    language: None,
+                    content: None,
+                    series_names: None,
+                    x_unit: None,
+                    y_unit: None,
+                    items: None,
+                }],
                 warnings: result
                     .diagnostics
                     .iter()
-                    .filter(|d| d.severity == hotsas_core::SParameterSeverity::Warning || d.severity == hotsas_core::SParameterSeverity::Error)
+                    .filter(|d| {
+                        d.severity == hotsas_core::SParameterSeverity::Warning
+                            || d.severity == hotsas_core::SParameterSeverity::Error
+                    })
                     .map(|d| crate::ReportWarningDto {
                         severity: format!("{:?}", d.severity),
                         code: d.code.clone(),

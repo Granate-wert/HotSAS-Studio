@@ -24,9 +24,9 @@ impl SParameterAnalysisService {
         report: TouchstoneImportReport,
         source_name: Option<String>,
     ) -> Result<SParameterAnalysisResult, ApplicationError> {
-        let network = report
-            .network
-            .ok_or_else(|| ApplicationError::InvalidInput("No network data in Touchstone report".to_string()))?;
+        let network = report.network.ok_or_else(|| {
+            ApplicationError::InvalidInput("No network data in Touchstone report".to_string())
+        })?;
 
         let dataset = Self::network_to_dataset(&network, source_name)?;
         let mut result = Self::derive_result(dataset)?;
@@ -123,7 +123,9 @@ impl SParameterAnalysisService {
         })
     }
 
-    fn derive_result(dataset: SParameterDataset) -> Result<SParameterAnalysisResult, ApplicationError> {
+    fn derive_result(
+        dataset: SParameterDataset,
+    ) -> Result<SParameterAnalysisResult, ApplicationError> {
         let mut curve_points = Vec::with_capacity(dataset.points.len());
         let mut can_plot_s11 = false;
         let mut can_plot_s21 = false;
@@ -150,10 +152,18 @@ impl SParameterAnalysisService {
             let vswr_s11 = s11_mag.and_then(vswr);
             let vswr_s22 = s22_mag.and_then(vswr);
 
-            if s11_db.is_some() { can_plot_s11 = true; }
-            if s21_db.is_some() { can_plot_s21 = true; }
-            if s12_db.is_some() { can_plot_s12 = true; }
-            if s22_db.is_some() { can_plot_s22 = true; }
+            if s11_db.is_some() {
+                can_plot_s11 = true;
+            }
+            if s21_db.is_some() {
+                can_plot_s21 = true;
+            }
+            if s12_db.is_some() {
+                can_plot_s12 = true;
+            }
+            if s22_db.is_some() {
+                can_plot_s22 = true;
+            }
 
             curve_points.push(SParameterCurvePoint {
                 frequency_hz: p.frequency_hz,
@@ -183,7 +193,10 @@ impl SParameterAnalysisService {
                     "Reference impedance is {} Ω; calculations assume 50 Ω unless otherwise noted",
                     dataset.reference_impedance_ohm
                 ),
-                suggested_fix: Some("Verify that your measurement setup uses the expected reference impedance".to_string()),
+                suggested_fix: Some(
+                    "Verify that your measurement setup uses the expected reference impedance"
+                        .to_string(),
+                ),
             });
         }
         if dataset.points.len() < 2 {
@@ -236,50 +249,77 @@ impl SParameterAnalysisService {
     ) -> Vec<SParameterMetric> {
         let mut metrics = Vec::new();
 
-        if let Some(min_s21) = curve_points.iter().filter_map(|p| p.s21_db).min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)) {
+        if let Some(min_s21) = curve_points
+            .iter()
+            .filter_map(|p| p.s21_db)
+            .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+        {
             metrics.push(SParameterMetric {
                 id: "insertion_loss_max".to_string(),
                 label: "Max Insertion Loss".to_string(),
                 value: -min_s21,
                 unit: "dB".to_string(),
-                frequency_hz: curve_points.iter().find(|p| p.s21_db == Some(min_s21)).map(|p| p.frequency_hz),
+                frequency_hz: curve_points
+                    .iter()
+                    .find(|p| p.s21_db == Some(min_s21))
+                    .map(|p| p.frequency_hz),
                 confidence: SParameterMetricConfidence::Medium,
                 notes: vec!["From S21 magnitude".to_string()],
             });
         }
 
-        if let Some(max_s21) = curve_points.iter().filter_map(|p| p.s21_db).max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)) {
+        if let Some(max_s21) = curve_points
+            .iter()
+            .filter_map(|p| p.s21_db)
+            .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+        {
             metrics.push(SParameterMetric {
                 id: "s21_peak".to_string(),
                 label: "S21 Peak".to_string(),
                 value: max_s21,
                 unit: "dB".to_string(),
-                frequency_hz: curve_points.iter().find(|p| p.s21_db == Some(max_s21)).map(|p| p.frequency_hz),
+                frequency_hz: curve_points
+                    .iter()
+                    .find(|p| p.s21_db == Some(max_s21))
+                    .map(|p| p.frequency_hz),
                 confidence: SParameterMetricConfidence::High,
                 notes: vec!["Maximum S21 magnitude".to_string()],
             });
         }
 
-        if let Some(max_rl) = curve_points.iter().filter_map(|p| p.return_loss_s11_db).max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)) {
+        if let Some(max_rl) = curve_points
+            .iter()
+            .filter_map(|p| p.return_loss_s11_db)
+            .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+        {
             metrics.push(SParameterMetric {
                 id: "return_loss_s11_max".to_string(),
                 label: "Input Return Loss (max)".to_string(),
                 value: max_rl,
                 unit: "dB".to_string(),
-                frequency_hz: curve_points.iter().find(|p| p.return_loss_s11_db == Some(max_rl)).map(|p| p.frequency_hz),
+                frequency_hz: curve_points
+                    .iter()
+                    .find(|p| p.return_loss_s11_db == Some(max_rl))
+                    .map(|p| p.frequency_hz),
                 confidence: SParameterMetricConfidence::Medium,
                 notes: vec!["From S11 magnitude".to_string()],
             });
         }
 
-        let min_vswr = curve_points.iter().filter_map(|p| p.vswr_s11).min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        let min_vswr = curve_points
+            .iter()
+            .filter_map(|p| p.vswr_s11)
+            .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
         if let Some(vswr) = min_vswr {
             metrics.push(SParameterMetric {
                 id: "vswr_s11_min".to_string(),
                 label: "Minimum VSWR (input)".to_string(),
                 value: vswr,
                 unit: "ratio".to_string(),
-                frequency_hz: curve_points.iter().find(|p| p.vswr_s11 == Some(vswr)).map(|p| p.frequency_hz),
+                frequency_hz: curve_points
+                    .iter()
+                    .find(|p| p.vswr_s11 == Some(vswr))
+                    .map(|p| p.frequency_hz),
                 confidence: SParameterMetricConfidence::Medium,
                 notes: vec!["From S11 magnitude".to_string()],
             });

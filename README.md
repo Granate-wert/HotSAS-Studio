@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v3.2 ACCEPTED WITH DOCUMENTED LIMITATIONS — ready for v3.3**
+**Current roadmap stage: v3.3 ACCEPTED WITH DOCUMENTED LIMITATIONS — Next: post-v3.3 audit gate / v3.4 planning**
 
 > App version (v0.1.4) and roadmap stage are different concepts.
 
@@ -31,6 +31,8 @@ Completed:
 - v2.9 — User-Circuit Netlist & Simulation End-to-End
 - v3.0 — Simulation UX, ngspice Hardening, Probes & Graph Workflow
 - v3.1 — Component Model Mapping & SPICE Model Assignment (PARTIAL; imported model persistence deferred)
+- v3.2 — Two-Port / Filter Network Analysis Foundation (ACCEPTED WITH DOCUMENTED LIMITATIONS)
+- v3.3 — S-Parameters & Touchstone Workflow (ACCEPTED WITH DOCUMENTED LIMITATIONS)
 
 ---
 
@@ -246,6 +248,34 @@ Completed:
 - Added `SchematicPropertyPanel` for viewing/editing component parameters.
 - Added `CircuitValidationPanel` for running circuit validation.
 - React Flow remains view adapter only; backend remains source of truth.
+
+### v3.2 — Two-Port / Filter Network Analysis Foundation
+
+- Added core domain models: `FilterAnalysisMethod`, `FilterAnalysisScope`, `FilterAnalysisDiagnostic`, `FilterSweepPoint`, `FilterMetricValue`, `FilterNetworkAnalysisRequest`, `FilterNetworkAnalysisResult`.
+- Added `TwoPortFilterAnalysisService` with port suggestion, request validation, mock/template_analytic/ngspice analysis methods, filter kind detection, metric estimation, CSV export, report section generation.
+- Added API facade: 7 methods (suggest ports, validate request, run analysis, get/clear last, export CSV, add to report).
+- Added Tauri commands: 7 commands.
+- Added CLI: `hotsas-cli filter-analyze <path> [--method] [--out]`.
+- Added frontend: `FilterAnalysisScreen` with port configuration, sweep controls, method selector, run/clear actions.
+- Added components: `FilterBodeChart` (gain + phase), `FilterImpedanceChart`, `FilterMetricsTable`, `FilterDiagnosticsPanel`, `FilterAnalysisSummaryCard`, `FilterRunControls`, `FilterSweepControls`, `FilterPortConfigurationCard`.
+- Added frontend tests: 9 tests + 165 existing = 174 total PASS.
+- Added Rust tests: filter_analysis_api_tests 7 tests PASS.
+- Limitations: mock analysis generates generic RC-like data; ngspice impedance extraction is foundation-only.
+
+### v3.3 — S-Parameters & Touchstone Workflow
+
+- Added core domain models: `SParameterDataset`, `SParameterDataPoint`, `SParameterCurvePoint`, `SParameterMetric`, `SParameterMetricConfidence`, `SParameterDiagnostic`, `SParameterSeverity`, `SParameterAnalysisResult`.
+- Added calculation helpers: `magnitude_db`, `phase_deg`, `return_loss_db`, `vswr`, `build_s_parameter_csv`.
+- Added `SParameterAnalysisService`: analyzes Touchstone text/network data, derives curve points and metrics, exports CSV, generates report sections.
+- Added API facade: 5 methods (analyze, export CSV, add to report, get/clear last result).
+- Added Tauri commands: 5 commands.
+- Added CLI: `hotsas-cli sparams <file> [--source] [--out] [--json]`.
+- Reused existing `SimpleTouchstoneParser` (v1.9) via `TouchstoneParserPort` trait.
+- Added frontend: `SParameterAnalysisScreen` with Touchstone paste input, analyze/clear controls, curve toggles.
+- Added components: `SParameterMagnitudeChart`, `SParameterPhaseChart`, `SParameterMetricsTable`, `SParameterDiagnosticsPanel`, `SParameterExportActions`, `SParameterSummaryCard`.
+- Added frontend tests: 9 tests + 174 existing = 183 total PASS.
+- Added Rust tests: 33 new tests (core 16, app 8, api 5, cli 4) PASS.
+- Limitations: no VNA-grade accuracy claimed; Smith chart deferred; 3/4-port Touchstone rejected with controlled error; no calibration/de-embedding.
 
 ---
 

@@ -1,9 +1,10 @@
 use hotsas_api::{
-    AcSweepSettingsDto, AdvancedReportExportRequestDto, AdvancedReportRequestDto, AnalyzeTouchstoneRequestDto,
-    ApiError, FilterAnalysisMethodDto, FilterAnalysisSeverityDto, FilterNetworkAnalysisRequestDto,
-    FormulaCalculationRequestDto, FormulaVariableInputDto, HotSasApi, OperatingPointSettingsDto,
-    ProjectOpenRequestDto, ReportExportOptionsDto, SimulationDiagnosticMessageDto,
-    SimulationRunRequestDto, SParameterSeverityDto, TransientSettingsDto, UserCircuitSimulationProfileDto,
+    AcSweepSettingsDto, AdvancedReportExportRequestDto, AdvancedReportRequestDto,
+    AnalyzeTouchstoneRequestDto, ApiError, FilterAnalysisMethodDto, FilterAnalysisSeverityDto,
+    FilterNetworkAnalysisRequestDto, FormulaCalculationRequestDto, FormulaVariableInputDto,
+    HotSasApi, OperatingPointSettingsDto, ProjectOpenRequestDto, ReportExportOptionsDto,
+    SParameterSeverityDto, SimulationDiagnosticMessageDto, SimulationRunRequestDto,
+    TransientSettingsDto, UserCircuitSimulationProfileDto,
 };
 
 use crate::output::{print_output, CliOutput, CliStatus};

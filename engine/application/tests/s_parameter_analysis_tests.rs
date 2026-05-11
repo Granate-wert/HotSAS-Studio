@@ -173,7 +173,9 @@ fn export_csv_roundtrip() {
         .analyze_imported_touchstone_dataset(&network)
         .expect("should analyze");
 
-    let csv = svc.export_s_parameter_csv(&result).expect("should export CSV");
+    let csv = svc
+        .export_s_parameter_csv(&result)
+        .expect("should export CSV");
     assert!(csv.contains("frequency_hz"));
     assert!(csv.contains("s11_db"));
     assert!(csv.lines().count() >= 4); // header + 3 data rows

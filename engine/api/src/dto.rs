@@ -3616,7 +3616,11 @@ impl From<&hotsas_core::SParameterDataset> for SParameterDatasetDto {
             frequency_unit: d.frequency_unit.clone(),
             parameter_format: d.parameter_format.clone(),
             points: d.points.iter().map(SParameterDataPointDto::from).collect(),
-            warnings: d.warnings.iter().map(SParameterDiagnosticDto::from).collect(),
+            warnings: d
+                .warnings
+                .iter()
+                .map(SParameterDiagnosticDto::from)
+                .collect(),
         }
     }
 }
@@ -3763,9 +3767,17 @@ impl From<&hotsas_core::SParameterAnalysisResult> for SParameterAnalysisResultDt
         Self {
             id: r.id.clone(),
             dataset: SParameterDatasetDto::from(&r.dataset),
-            curve_points: r.curve_points.iter().map(SParameterCurvePointDto::from).collect(),
+            curve_points: r
+                .curve_points
+                .iter()
+                .map(SParameterCurvePointDto::from)
+                .collect(),
             metrics: r.metrics.iter().map(SParameterMetricDto::from).collect(),
-            diagnostics: r.diagnostics.iter().map(SParameterDiagnosticDto::from).collect(),
+            diagnostics: r
+                .diagnostics
+                .iter()
+                .map(SParameterDiagnosticDto::from)
+                .collect(),
             can_plot_s11: r.can_plot_s11,
             can_plot_s21: r.can_plot_s21,
             can_plot_s12: r.can_plot_s12,

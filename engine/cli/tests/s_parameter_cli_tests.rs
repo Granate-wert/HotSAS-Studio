@@ -1,5 +1,5 @@
-use std::process::Command;
 use std::io::Write;
+use std::process::Command;
 
 fn hotsas_cli() -> Command {
     Command::new(env!("CARGO_BIN_EXE_hotsas-cli"))
@@ -40,7 +40,10 @@ fn cli_sparams_analyze_valid_s2p_returns_success() {
 
     let json: serde_json::Value = serde_json::from_str(&stdout).expect("should be valid JSON");
     assert_eq!(json["status"], "success", "JSON status should be success");
-    assert!(json["data"].is_object(), "JSON data should contain result object");
+    assert!(
+        json["data"].is_object(),
+        "JSON data should contain result object"
+    );
     assert!(
         json["data"]["dataset"]["port_count"].is_number(),
         "should include port_count"
@@ -58,7 +61,8 @@ fn cli_sparams_analyze_missing_file_returns_error() {
 
     assert!(!output.status.success(), "missing file should fail");
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout).expect("should still be valid JSON");
+    let json: serde_json::Value =
+        serde_json::from_str(&stdout).expect("should still be valid JSON");
     assert_eq!(json["status"], "error", "JSON status should be error");
 }
 
@@ -87,14 +91,15 @@ fn cli_sparams_analyze_with_out_writes_file() {
         .unwrap();
 
     assert!(output.status.success(), "sparams with --out should succeed");
-    assert!(
-        outpath.exists(),
-        "output file should be created"
-    );
+    assert!(outpath.exists(), "output file should be created");
 
     let written = std::fs::read_to_string(&outpath).unwrap();
-    let json: serde_json::Value = serde_json::from_str(&written).expect("written file should be valid JSON");
-    assert!(json["dataset"].is_object(), "written file should contain raw DTO with dataset");
+    let json: serde_json::Value =
+        serde_json::from_str(&written).expect("written file should be valid JSON");
+    assert!(
+        json["dataset"].is_object(),
+        "written file should contain raw DTO with dataset"
+    );
     assert_eq!(json["dataset"]["port_count"], 2);
 
     let _ = std::fs::remove_file(&tmpfile);

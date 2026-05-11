@@ -1,12 +1,12 @@
 use hotsas_api::{
-    AnalyzeTouchstoneRequestDto, ExportSParameterCsvRequestDto, HotSasApi,
-    AddSParameterAnalysisToReportRequestDto,
+    AddSParameterAnalysisToReportRequestDto, AnalyzeTouchstoneRequestDto,
+    ExportSParameterCsvRequestDto, HotSasApi,
 };
 use hotsas_application::AppServices;
 use hotsas_core::{
-    CircuitProject, ComplexValue, EngineeringUnit, ImportedModelSource, ReportModel, SimulationProfile,
-    SimulationResult, SParameterPoint, TouchstoneFrequencyUnit, TouchstoneImportReport,
-    TouchstoneNetworkData, TouchstoneParameterFormat, ValueWithUnit,
+    CircuitProject, ComplexValue, EngineeringUnit, ImportedModelSource, ReportModel,
+    SParameterPoint, SimulationProfile, SimulationResult, TouchstoneFrequencyUnit,
+    TouchstoneImportReport, TouchstoneNetworkData, TouchstoneParameterFormat, ValueWithUnit,
 };
 use hotsas_ports::{
     BomExporterPort, ComponentLibraryExporterPort, FormulaEnginePort, NetlistExporterPort,
@@ -29,7 +29,9 @@ impl hotsas_ports::ComponentLibraryPort for FakeComponentLibraryStorage {
         &self,
         _path: &std::path::Path,
     ) -> Result<hotsas_core::ComponentLibrary, hotsas_ports::PortError> {
-        Err(hotsas_ports::PortError::Storage("not implemented".to_string()))
+        Err(hotsas_ports::PortError::Storage(
+            "not implemented".to_string(),
+        ))
     }
     fn save_library_to_path(
         &self,
@@ -302,7 +304,9 @@ fn analyze_touchstone_s_parameters_returns_result() {
         source_name: Some("test.s2p".to_string()),
         content: "# dummy content".to_string(),
     };
-    let result = api.analyze_touchstone_s_parameters(request).expect("should analyze");
+    let result = api
+        .analyze_touchstone_s_parameters(request)
+        .expect("should analyze");
     assert_eq!(result.dataset.port_count, 2);
     assert!(!result.curve_points.is_empty());
     assert!(result.can_plot_s11);
@@ -316,8 +320,12 @@ fn get_last_s_parameter_analysis_after_analyze() {
         source_name: Some("test.s2p".to_string()),
         content: "# dummy".to_string(),
     };
-    api.analyze_touchstone_s_parameters(request).expect("should analyze");
-    let last = api.get_last_s_parameter_analysis().expect("should have last result").expect("should have result");
+    api.analyze_touchstone_s_parameters(request)
+        .expect("should analyze");
+    let last = api
+        .get_last_s_parameter_analysis()
+        .expect("should have last result")
+        .expect("should have result");
     assert_eq!(last.dataset.port_count, 2);
 }
 
@@ -328,7 +336,8 @@ fn clear_last_s_parameter_analysis_works() {
         source_name: Some("test.s2p".to_string()),
         content: "# dummy".to_string(),
     };
-    api.analyze_touchstone_s_parameters(request).expect("should analyze");
+    api.analyze_touchstone_s_parameters(request)
+        .expect("should analyze");
     assert!(api.get_last_s_parameter_analysis().unwrap().is_some());
     api.clear_last_s_parameter_analysis();
     assert!(api.get_last_s_parameter_analysis().unwrap().is_none());
@@ -341,7 +350,8 @@ fn export_s_parameter_csv_uses_last_result() {
         source_name: Some("test.s2p".to_string()),
         content: "# dummy".to_string(),
     };
-    api.analyze_touchstone_s_parameters(request).expect("should analyze");
+    api.analyze_touchstone_s_parameters(request)
+        .expect("should analyze");
     let csv = api.export_s_parameter_csv().expect("should export csv");
     assert!(csv.contains("frequency_hz"));
     assert!(csv.contains("s11_db"));
@@ -354,8 +364,13 @@ fn add_s_parameter_analysis_to_report_adds_section() {
         source_name: Some("test.s2p".to_string()),
         content: "# dummy".to_string(),
     };
-    api.analyze_touchstone_s_parameters(request).expect("should analyze");
-    let result = api.add_s_parameter_analysis_to_advanced_report()
+    api.analyze_touchstone_s_parameters(request)
+        .expect("should analyze");
+    let result = api
+        .add_s_parameter_analysis_to_advanced_report()
         .expect("should add to report");
-    assert!(!result.sections.is_empty(), "report should have sections after adding s-parameter analysis");
+    assert!(
+        !result.sections.is_empty(),
+        "report should have sections after adding s-parameter analysis"
+    );
 }

@@ -101,15 +101,13 @@ fn build_csv_produces_header_and_rows() {
             reference_impedance_ohm: 50.0,
             frequency_unit: "Hz".to_string(),
             parameter_format: "MA".to_string(),
-            points: vec![
-                SParameterDataPoint {
-                    frequency_hz: 1e6,
-                    s11: Some(ComplexValue { re: 0.5, im: 0.0 }),
-                    s21: Some(ComplexValue { re: 0.9, im: 0.1 }),
-                    s12: None,
-                    s22: None,
-                },
-            ],
+            points: vec![SParameterDataPoint {
+                frequency_hz: 1e6,
+                s11: Some(ComplexValue { re: 0.5, im: 0.0 }),
+                s21: Some(ComplexValue { re: 0.9, im: 0.1 }),
+                s12: None,
+                s22: None,
+            }],
             warnings: vec![],
         },
         curve_points: vec![SParameterCurvePoint {
@@ -140,9 +138,15 @@ fn build_csv_produces_header_and_rows() {
     let csv = build_s_parameter_csv(&result);
     let lines: Vec<&str> = csv.lines().collect();
     assert_eq!(lines.len(), 2, "expected header + 1 data row");
-    assert!(lines[0].contains("frequency_hz"), "header should contain frequency_hz");
+    assert!(
+        lines[0].contains("frequency_hz"),
+        "header should contain frequency_hz"
+    );
     assert!(lines[0].contains("s11_db"), "header should contain s11_db");
-    assert!(lines[1].contains("1000000"), "data row should contain frequency");
+    assert!(
+        lines[1].contains("1000000"),
+        "data row should contain frequency"
+    );
 }
 
 #[test]
