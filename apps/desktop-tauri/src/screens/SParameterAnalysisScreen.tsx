@@ -1,4 +1,14 @@
-import { Alert, Button, Checkbox, Group, ScrollArea, Stack, Textarea, TextInput, Title } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Group,
+  ScrollArea,
+  Stack,
+  Textarea,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import { AlertCircle, Radio } from "lucide-react";
 import { useState } from "react";
 import { backend } from "../api";
@@ -15,7 +25,9 @@ export function SParameterAnalysisScreen() {
   const storeLoading = useHotSasStore((s) => s.sParameterAnalysisLoading);
   const storeError = useHotSasStore((s) => s.sParameterAnalysisError);
   const setSParameterAnalysisResult = useHotSasStore((s) => s.setSParameterAnalysisResult);
-  const setSParameterAnalysisDiagnostics = useHotSasStore((s) => s.setSParameterAnalysisDiagnostics);
+  const setSParameterAnalysisDiagnostics = useHotSasStore(
+    (s) => s.setSParameterAnalysisDiagnostics,
+  );
   const setSParameterAnalysisLoading = useHotSasStore((s) => s.setSParameterAnalysisLoading);
   const setSParameterAnalysisError = useHotSasStore((s) => s.setSParameterAnalysisError);
   const setSParameterAnalysisCsvExport = useHotSasStore((s) => s.setSParameterAnalysisCsvExport);
@@ -141,16 +153,32 @@ export function SParameterAnalysisScreen() {
 
                 <Group gap="sm">
                   {storeResult.can_plot_s11 && (
-                    <Checkbox label="S11" checked={showS11} onChange={(e) => setShowS11(e.currentTarget.checked)} />
+                    <Checkbox
+                      label="S11"
+                      checked={showS11}
+                      onChange={(e) => setShowS11(e.currentTarget.checked)}
+                    />
                   )}
                   {storeResult.can_plot_s21 && (
-                    <Checkbox label="S21" checked={showS21} onChange={(e) => setShowS21(e.currentTarget.checked)} />
+                    <Checkbox
+                      label="S21"
+                      checked={showS21}
+                      onChange={(e) => setShowS21(e.currentTarget.checked)}
+                    />
                   )}
                   {storeResult.can_plot_s12 && (
-                    <Checkbox label="S12" checked={showS12} onChange={(e) => setShowS12(e.currentTarget.checked)} />
+                    <Checkbox
+                      label="S12"
+                      checked={showS12}
+                      onChange={(e) => setShowS12(e.currentTarget.checked)}
+                    />
                   )}
                   {storeResult.can_plot_s22 && (
-                    <Checkbox label="S22" checked={showS22} onChange={(e) => setShowS22(e.currentTarget.checked)} />
+                    <Checkbox
+                      label="S22"
+                      checked={showS22}
+                      onChange={(e) => setShowS22(e.currentTarget.checked)}
+                    />
                   )}
                 </Group>
 

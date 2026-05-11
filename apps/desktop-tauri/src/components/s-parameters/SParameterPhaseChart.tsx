@@ -23,7 +23,9 @@ export function SParameterPhaseChart({ points, showS11, showS21, showS12, showS2
         name: "S11",
         type: "line",
         showSymbol: false,
-        data: points.filter((p) => p.s11_phase_deg !== null).map((p) => [p.frequency_hz, p.s11_phase_deg]),
+        data: points
+          .filter((p) => p.s11_phase_deg !== null)
+          .map((p) => [p.frequency_hz, p.s11_phase_deg]),
       });
     }
     if (showS21) {
@@ -31,7 +33,9 @@ export function SParameterPhaseChart({ points, showS11, showS21, showS12, showS2
         name: "S21",
         type: "line",
         showSymbol: false,
-        data: points.filter((p) => p.s21_phase_deg !== null).map((p) => [p.frequency_hz, p.s21_phase_deg]),
+        data: points
+          .filter((p) => p.s21_phase_deg !== null)
+          .map((p) => [p.frequency_hz, p.s21_phase_deg]),
       });
     }
     if (showS12) {
@@ -39,7 +43,9 @@ export function SParameterPhaseChart({ points, showS11, showS21, showS12, showS2
         name: "S12",
         type: "line",
         showSymbol: false,
-        data: points.filter((p) => p.s12_phase_deg !== null).map((p) => [p.frequency_hz, p.s12_phase_deg]),
+        data: points
+          .filter((p) => p.s12_phase_deg !== null)
+          .map((p) => [p.frequency_hz, p.s12_phase_deg]),
       });
     }
     if (showS22) {
@@ -47,7 +53,9 @@ export function SParameterPhaseChart({ points, showS11, showS21, showS12, showS2
         name: "S22",
         type: "line",
         showSymbol: false,
-        data: points.filter((p) => p.s22_phase_deg !== null).map((p) => [p.frequency_hz, p.s22_phase_deg]),
+        data: points
+          .filter((p) => p.s22_phase_deg !== null)
+          .map((p) => [p.frequency_hz, p.s22_phase_deg]),
       });
     }
 

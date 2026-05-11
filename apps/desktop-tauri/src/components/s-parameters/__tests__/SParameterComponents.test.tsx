@@ -40,8 +40,6 @@ describe("SParameterMetricsTable", () => {
     expect(screen.getByText("high")).toBeInTheDocument();
     expect(screen.getByText("medium")).toBeInTheDocument();
   });
-
-
 });
 
 describe("SParameterDiagnosticsPanel", () => {
@@ -68,8 +66,6 @@ describe("SParameterDiagnosticsPanel", () => {
     expect(screen.getByText("Parsed OK")).toBeInTheDocument();
     expect(screen.getByText(/Check setup/)).toBeInTheDocument();
   });
-
-
 });
 
 describe("SParameterSummaryCard", () => {
@@ -95,7 +91,9 @@ describe("SParameterSummaryCard", () => {
 
 describe("SParameterExportActions", () => {
   it("renders export and report buttons", () => {
-    renderWithMantine(<SParameterExportActions onExportCsv={() => {}} onAddToReport={() => {}} loading={false} />);
+    renderWithMantine(
+      <SParameterExportActions onExportCsv={() => {}} onAddToReport={() => {}} loading={false} />,
+    );
     expect(screen.getByRole("button", { name: /Export CSV/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Add to Report/i })).toBeInTheDocument();
   });
