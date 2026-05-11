@@ -30,7 +30,7 @@ use hotsas_api::{
     TypedComponentParametersDto, UndoRedoStateDto, UpdateQuickParameterRequestDto,
     UserCircuitSimulationProfileDto, UserCircuitSimulationRunDto, VerticalSliceDto,
     CircuitAnalysisPortDto, FilterAnalysisDiagnosticDto, FilterNetworkAnalysisRequestDto,
-    FilterNetworkAnalysisResultDto,
+    FilterNetworkAnalysisResultDto, AnalyzeTouchstoneRequestDto, SParameterAnalysisResultDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -1284,6 +1284,57 @@ fn add_filter_network_analysis_to_advanced_report(
     result
 }
 
+#[tauri::command]
+fn analyze_touchstone_s_parameters(
+    api: State<'_, HotSasApi>,
+    request: AnalyzeTouchstoneRequestDto,
+) -> Result<SParameterAnalysisResultDto, String> {
+    log::info!("COMMAND analyze_touchstone_s_parameters");
+    let result = api
+        .analyze_touchstone_s_parameters(request)
+        .map_err(tauri_error);
+    log_command_result("analyze_touchstone_s_parameters", &result);
+    result
+}
+
+#[tauri::command]
+fn export_s_parameter_csv(api: State<'_, HotSasApi>) -> Result<String, String> {
+    log::info!("COMMAND export_s_parameter_csv");
+    let result = api.export_s_parameter_csv().map_err(tauri_error);
+    log_command_result("export_s_parameter_csv", &result);
+    result
+}
+
+#[tauri::command]
+fn add_s_parameter_analysis_to_advanced_report(
+    api: State<'_, HotSasApi>,
+) -> Result<hotsas_api::AdvancedReportDto, String> {
+    log::info!("COMMAND add_s_parameter_analysis_to_advanced_report");
+    let result = api
+        .add_s_parameter_analysis_to_advanced_report()
+        .map_err(tauri_error);
+    log_command_result("add_s_parameter_analysis_to_advanced_report", &result);
+    result
+}
+
+#[tauri::command]
+fn get_last_s_parameter_analysis(
+    api: State<'_, HotSasApi>,
+) -> Result<Option<SParameterAnalysisResultDto>, String> {
+    log::info!("COMMAND get_last_s_parameter_analysis");
+    let result = api.get_last_s_parameter_analysis().map_err(tauri_error);
+    log_command_result("get_last_s_parameter_analysis", &result);
+    result
+}
+
+#[tauri::command]
+fn clear_last_s_parameter_analysis(api: State<'_, HotSasApi>) -> Result<(), String> {
+    log::info!("COMMAND clear_last_s_parameter_analysis");
+    let result = api.clear_last_s_parameter_analysis().map_err(tauri_error);
+    log_command_result("clear_last_s_parameter_analysis", &result);
+    result
+}
+
 fn build_api() -> HotSasApi {
     HotSasApi::new(AppServices::new(
         Arc::new(JsonProjectStorage),
@@ -1436,6 +1487,11 @@ pub fn run() {
             clear_last_filter_network_analysis,
             export_filter_network_analysis_csv,
             add_filter_network_analysis_to_advanced_report,
+            analyze_touchstone_s_parameters,
+            export_s_parameter_csv,
+            add_s_parameter_analysis_to_advanced_report,
+            get_last_s_parameter_analysis,
+            clear_last_s_parameter_analysis,
             write_log
         ])
         .run(tauri::generate_context!())

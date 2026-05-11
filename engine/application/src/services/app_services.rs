@@ -9,7 +9,7 @@ use crate::{
     ExportCenterService, ExportService, FormulaService, ModelImportService,
     NetlistGenerationService, NgspiceSimulationService, PreferredValuesService,
     ProjectPackageService, ProjectService, SchematicEditingService, SelectedRegionAnalysisService,
-    SimulationEngineChoice, SimulationService, TwoPortFilterAnalysisService,
+    SimulationEngineChoice, SimulationService, SParameterAnalysisService, TwoPortFilterAnalysisService,
 };
 use hotsas_core::{
     CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
@@ -51,6 +51,7 @@ pub struct AppServices {
     simulation_history_service: SimulationHistoryService,
     simulation_graph_service: SimulationGraphService,
     component_model_mapping_service: ComponentModelMappingService,
+    s_parameter_analysis_service: SParameterAnalysisService,
     two_port_filter_analysis_service: TwoPortFilterAnalysisService,
 }
 
@@ -107,6 +108,7 @@ impl AppServices {
             schematic_editing_service: SchematicEditingService::new(),
             selected_region_analysis_service: SelectedRegionAnalysisService::new(),
             two_port_filter_analysis_service: TwoPortFilterAnalysisService::new(),
+            s_parameter_analysis_service: SParameterAnalysisService::new(),
             model_import_service: ModelImportService::new(spice_parser, touchstone_parser),
             dcdc_calculator_service: crate::services::DcdcCalculatorService::new(),
             advanced_report_service: AdvancedReportService::new(),
@@ -196,6 +198,10 @@ impl AppServices {
 
     pub fn advanced_report_service(&self) -> &AdvancedReportService {
         &self.advanced_report_service
+    }
+
+    pub fn s_parameter_analysis_service(&self) -> &SParameterAnalysisService {
+        &self.s_parameter_analysis_service
     }
 
     pub fn two_port_filter_analysis_service(&self) -> &TwoPortFilterAnalysisService {

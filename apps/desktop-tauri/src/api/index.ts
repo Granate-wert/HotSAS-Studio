@@ -96,6 +96,8 @@ import type {
   FilterAnalysisDiagnostic,
   FilterNetworkAnalysisRequest,
   FilterNetworkAnalysisResult,
+  SParameterAnalysisResult,
+  AnalyzeTouchstoneRequest,
 } from "../types";
 
 async function invokeCommand<T>(command: string, args?: Record<string, unknown>) {
@@ -329,4 +331,13 @@ export const backend = {
   exportFilterNetworkAnalysisCsv: () => invokeCommand<string>("export_filter_network_analysis_csv"),
   addFilterNetworkAnalysisToAdvancedReport: () =>
     invokeCommand<AdvancedReportDto>("add_filter_network_analysis_to_advanced_report"),
+  // v3.3 S-parameter analysis
+  analyzeTouchstoneSParameters: (request: AnalyzeTouchstoneRequest) =>
+    invokeCommand<SParameterAnalysisResult>("analyze_touchstone_s_parameters", { request }),
+  exportSParameterCsv: () => invokeCommand<string>("export_s_parameter_csv"),
+  addSParameterAnalysisToAdvancedReport: () =>
+    invokeCommand<AdvancedReportDto>("add_s_parameter_analysis_to_advanced_report"),
+  getLastSParameterAnalysis: () =>
+    invokeCommand<SParameterAnalysisResult | null>("get_last_s_parameter_analysis"),
+  clearLastSParameterAnalysis: () => invokeCommand<void>("clear_last_s_parameter_analysis"),
 };

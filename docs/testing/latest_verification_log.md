@@ -2,41 +2,72 @@
 
 ## Current Version
 
-[v3.1 - Component Model Mapping & SPICE Model Assignment (partial/completion pass)](./verification_logs/v3.1_component_model_mapping_spice_assignment.md)
+[v3.3 — S-Parameters & Touchstone Workflow](./verification_logs/v3.3_s_parameters_touchstone_workflow.md)
 
-## In-Progress Development Log
-
-[v3.2 - Two-Port / Filter Network Analysis Foundation (ACCEPTED WITH DOCUMENTED LIMITATIONS)](./verification_logs/v3.2_two_port_filter_network_analysis.md)
+## Previous Versions
 
 [v3.2-ui-fix - Filter Analysis Screen & Charts](./verification_logs/v3.2_ui_fix_filter_analysis_screen.md)
 
-```text
-Current v3.2 status: ACCEPTED WITH DOCUMENTED LIMITATIONS.
-Latest evidence:
-- Core two-port/filter domain models implemented in hotsas_core
-- TwoPortFilterAnalysisService with validation, mock/template analysis,
-  filter kind detection, metric estimation, CSV export, report section generation
-- API facade: 7 methods (suggest, validate, run, get/clear last, export CSV, add to report)
-- Tauri commands: 7 commands registered
-- Frontend: TypeScript types, API wrappers, Zustand store additions
-- CLI: hotsas-cli filter-analyze <path> [--method] [--out]
-- Rust tests: filter_analysis_api_tests.rs 7 tests PASS
-- Full Rust workspace: 250+ tests PASS, no regressions
-- Frontend UI screen: FilterAnalysisScreen with port config, sweep controls,
-  Bode charts (gain + phase), impedance chart, metrics table, diagnostics panel,
-  export actions, loading/error/empty states
-- Frontend components: 9 components under components/filter-analysis/
-- Frontend tests: 9 new Vitest tests + 165 existing = 174 total PASS
-- cargo fmt --check, cargo test, cargo build -p hotsas_cli --release PASS
-- npm.cmd run typecheck, npm.cmd run test PASS
-- npm.cmd run build PASS
-- git diff --check PASS
+[v3.2 - Two-Port / Filter Network Analysis Foundation (ACCEPTED WITH DOCUMENTED LIMITATIONS)](./verification_logs/v3.2_two_port_filter_network_analysis.md)
 
-Known limitations:
-- Mock analysis limited to RC-like generic data; template analytic detects RC low-pass/high-pass only
-- ngspice impedance extraction marked as foundation-only with diagnostic
-- S-parameters/Smith chart/Touchstone workflow deferred to v3.3
+[v3.1 - Component Model Mapping & SPICE Model Assignment (partial/completion pass)](./verification_logs/v3.1_component_model_mapping_spice_assignment.md)
+
+## v3.3 Summary
+
+```text
+Version: v3.3 — S-Parameters & Frequency Response Graphs / Touchstone Workflow
+Implementation commit: TBD
+Verification/docs commit: TBD
+Branch: main
+Push status: TBD
+Date: 2026-05-11
 ```
+
+### What changed
+
+```text
+Backend:
+- New core module: s_parameters.rs with domain models, calculation helpers, CSV builder
+- New application service: SParameterAnalysisService with analyze, derive metrics, export CSV, report section generation
+- API facade: 5 new methods (analyze, export CSV, add to report, get/clear last result)
+- Tauri commands: 5 new commands registered
+- CLI: hotsas-cli sparams <file> [--source] [--out] [--json]
+- Reuses existing SimpleTouchstoneParser (v1.9) via TouchstoneParserPort trait
+- 33 new Rust tests (core 16, app 8, api 5, cli 4)
+
+Frontend:
+- New screen: SParameterAnalysisScreen with Touchstone paste input, analyze/clear controls
+- New components: SParameterMagnitudeChart, SParameterPhaseChart, SParameterMetricsTable,
+  SParameterDiagnosticsPanel, SParameterExportActions, SParameterSummaryCard
+- Types, API wrappers, Zustand store extended for S-parameter state
+- Navigation: new "S-Parameters" item with Radio icon
+- 9 new Vitest tests (screen 5, components 4)
+- Total frontend tests: 183 pass (37 files)
+```
+
+### Checks
+
+```text
+cargo fmt --check — PASS
+cargo test — PASS (all suites pass, 0 failures, ~350+ total Rust tests)
+cargo build -p hotsas_cli --release — PASS
+npm run typecheck — PASS
+npm test — PASS (183 frontend tests, 37 files)
+npm run build — PASS
+```
+
+### Known limitations
+
+```text
+- No production RF CAD / VNA-grade accuracy claimed
+- No EM/PCB solver integration
+- No Smith chart (deferred)
+- No calibration/de-embedding/VNA workflow
+- No full SPICE small-signal S-parameter extraction
+- Touchstone parser supports 1-port and 2-port only in v3.3
+```
+
+---
 
 ## v3.0 Summary
 
@@ -78,15 +109,4 @@ New in v3.0:
 - SimulationSeriesExportPanel for CSV/JSON export
 - SimulationDiagnosticsService, SimulationHistoryService, SimulationGraphService
 - 23 new Rust tests + 157 frontend tests (all pass)
-- CLI simulate-diagnostics and simulation-history commands
-- Architecture rule preserved: React remains view adapter only
 ```
-
-## Previous Versions
-
-- [v2.9 — User-Circuit Netlist & Simulation End-to-End](./verification_logs/v2.9_user_circuit_netlist_simulation_e2e.md)
-- [v2.8 — Interactive Schematic Editing MVP](./verification_logs/v2.8_interactive_schematic_editing_mvp.md)
-- [v2.7 — CLI / Headless Mode Foundation](./verification_logs/v2.7_cli_headless_mode.md)
-- [v2.6 — Project Persistence / Save-Load UX Hardening](./verification_logs/v2.6_project_persistence_save_load_ux.md)
-- [v2.5 — Schematic Editor Hardening (v2.5-fix applied)](./verification_logs/v2.5_schematic_editor_hardening.md)
-- [v2.4 — Real Component Parameters](./verification_logs/v2.4_real_component_parameters.md)

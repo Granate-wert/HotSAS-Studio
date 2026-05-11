@@ -10,6 +10,6 @@ pub use services::{
     FormulaRegistryService, FormulaService, IssueSeverity, ModelImportService,
     NetlistGenerationService, NgspiceSimulationService, ParameterIssue, PreferredValuesService,
     ProductWorkflowService, ProjectPackageService, ProjectService, ProjectSessionService,
-    SchematicEditingService, SelectedRegionAnalysisService, SimulationEngineChoice,
-    SimulationService, TwoPortFilterAnalysisService,
+    SchematicEditingService, SelectedRegionAnalysisService, SParameterAnalysisService,
+    SimulationEngineChoice, SimulationService, TwoPortFilterAnalysisService,
 };

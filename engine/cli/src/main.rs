@@ -106,6 +106,15 @@ enum Commands {
         #[arg(long, help = "Output file path for JSON results")]
         out: Option<String>,
     },
+    /// Analyze S-parameters from a Touchstone file
+    Sparams {
+        #[arg(help = "Path to the Touchstone file (.s1p, .s2p, .s3p, .s4p)")]
+        file: String,
+        #[arg(long, help = "Source name override")]
+        source: Option<String>,
+        #[arg(long, help = "Output file path for JSON results")]
+        out: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -156,6 +165,9 @@ fn main() {
         } => commands::handle_simulation_history(&api, path, delete, clear, cli.json),
         Commands::FilterAnalyze { path, method, out } => {
             commands::handle_filter_analyze(&api, path, method, out, cli.json)
+        }
+        Commands::Sparams { file, source, out } => {
+            commands::handle_sparams(&api, file, source, out, cli.json)
         }
     };
     std::process::exit(result);

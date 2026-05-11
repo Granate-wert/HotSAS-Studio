@@ -15,6 +15,7 @@ import { backend } from "../api";
 import { AdvancedReportsScreen } from "../screens/AdvancedReportsScreen";
 import { DcdcCalculatorScreen } from "../screens/DcdcCalculatorScreen";
 import { FilterAnalysisScreen } from "../screens/FilterAnalysisScreen";
+import { SParameterAnalysisScreen } from "../screens/SParameterAnalysisScreen";
 import { CalculatorScreen } from "../screens/CalculatorScreen";
 import { ComponentLibraryScreen } from "../screens/ComponentLibraryScreen";
 import { DiagnosticsScreen } from "../screens/DiagnosticsScreen";
@@ -1064,6 +1065,10 @@ function renderScreen(
 
   if (activeScreen === "filter-analysis") {
     return <FilterAnalysisScreen />;
+  }
+
+  if (activeScreen === "s-parameter-analysis") {
+    return <SParameterAnalysisScreen />;
   }
 
   if (activeScreen === "import") {

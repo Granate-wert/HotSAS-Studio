@@ -25,6 +25,7 @@ use crate::{
     SimulationWorkflowErrorDto, SimulationWorkflowWarningDto, SymbolDto, TransientSettingsDto,
     UndoRedoStateDto, UpdateQuickParameterRequestDto, UserCircuitSimulationProfileDto,
     UserCircuitSimulationResultDto, UserCircuitSimulationRunDto, ValueDto, VerticalSliceDto,
+    AnalyzeTouchstoneRequestDto, SParameterAnalysisResultDto,
 };
 use hotsas_application::{
     AppDiagnosticsService, AppServices, FormulaRegistryService, ProductWorkflowService,
@@ -50,6 +51,7 @@ pub struct HotSasApi {
     last_advanced_report: Mutex<Option<hotsas_core::advanced_report::AdvancedReportModel>>,
     last_advanced_report_project_id: Mutex<Option<String>>,
     last_filter_analysis_result: Mutex<Option<hotsas_core::FilterNetworkAnalysisResult>>,
+    last_s_parameter_result: Mutex<Option<hotsas_core::SParameterAnalysisResult>>,
     // v2.8 undo/redo foundation
     undo_stack: Mutex<Vec<(CircuitProject, String)>>,
     redo_stack: Mutex<Vec<(CircuitProject, String)>>,
@@ -85,6 +87,7 @@ impl HotSasApi {
             last_advanced_report: Mutex::new(None),
             last_advanced_report_project_id: Mutex::new(None),
             last_filter_analysis_result: Mutex::new(None),
+            last_s_parameter_result: Mutex::new(None),
             undo_stack: Mutex::new(Vec::new()),
             redo_stack: Mutex::new(Vec::new()),
         }
@@ -2803,6 +2806,122 @@ impl HotSasApi {
             assumptions: vec![
                 "v3.2 foundation only".to_string(),
                 "S-parameters deferred to v3.3".to_string(),
+            ],
+            source_references: vec![],
+            metadata: std::collections::BTreeMap::new(),
+        })
+    }
+
+    pub fn analyze_touchstone_s_parameters(
+        &self,
+        request: AnalyzeTouchstoneRequestDto,
+    ) -> Result<SParameterAnalysisResultDto, ApiError> {
+        let report = self
+            .services
+            .model_import_service()
+            .import_touchstone_from_text(request.source_name, request.content)
+            .map_err(ApiError::Application)?;
+        let result = self
+            .services
+            .s_parameter_analysis_service()
+            .analyze_touchstone_report(report, None)
+            .map_err(ApiError::Application)?;
+        let dto = SParameterAnalysisResultDto::from(&result);
+        if let Ok(mut guard) = self.last_s_parameter_result.lock() {
+            *guard = Some(result);
+        }
+        Ok(dto)
+    }
+
+    pub fn get_last_s_parameter_analysis(
+        &self,
+    ) -> Result<Option<SParameterAnalysisResultDto>, ApiError> {
+        let guard = self
+            .last_s_parameter_result
+            .lock()
+            .map_err(|_| ApiError::State("s-parameter analysis lock poisoned".to_string()))?;
+        Ok(guard.as_ref().map(SParameterAnalysisResultDto::from))
+    }
+
+    pub fn clear_last_s_parameter_analysis(&self) -> Result<(), ApiError> {
+        let mut guard = self
+            .last_s_parameter_result
+            .lock()
+            .map_err(|_| ApiError::State("s-parameter analysis lock poisoned".to_string()))?;
+        *guard = None;
+        Ok(())
+    }
+
+    pub fn export_s_parameter_csv(&self) -> Result<String, ApiError> {
+        let guard = self
+            .last_s_parameter_result
+            .lock()
+            .map_err(|_| ApiError::State("s-parameter analysis lock poisoned".to_string()))?;
+        let result = guard
+            .as_ref()
+            .ok_or_else(|| ApiError::State("no s-parameter analysis result".to_string()))?;
+        self.services
+            .s_parameter_analysis_service()
+            .export_s_parameter_csv(result)
+            .map_err(ApiError::Application)
+    }
+
+    pub fn add_s_parameter_analysis_to_advanced_report(
+        &self,
+    ) -> Result<crate::AdvancedReportDto, ApiError> {
+        let guard = self
+            .last_s_parameter_result
+            .lock()
+            .map_err(|_| ApiError::State("s-parameter analysis lock poisoned".to_string()))?;
+        let result = guard
+            .as_ref()
+            .ok_or_else(|| ApiError::State("no s-parameter analysis result".to_string()))?;
+        Ok(crate::AdvancedReportDto {
+            id: result.id.clone(),
+            title: "S-Parameter Analysis Report".to_string(),
+            report_type: "SParameterAnalysis".to_string(),
+            generated_at: Some(result.dataset.points.first().map(|p| format!("{}", p.frequency_hz)).unwrap_or_default()),
+            project_id: None,
+            project_name: None,
+            sections: vec![crate::ReportSectionDto {
+                kind: "s_parameter_analysis".to_string(),
+                title: "S-Parameter Analysis".to_string(),
+                status: "complete".to_string(),
+                blocks: vec![
+                    crate::ReportContentBlockDto {
+                        block_type: "paragraph".to_string(),
+                        title: None,
+                        text: Some(result.summary.clone()),
+                        rows: None,
+                        columns: None,
+                        data_rows: None,
+                        equation: None,
+                        substituted_values: None,
+                        result: None,
+                        language: None,
+                        content: None,
+                        series_names: None,
+                        x_unit: None,
+                        y_unit: None,
+                        items: None,
+                    },
+                ],
+                warnings: result
+                    .diagnostics
+                    .iter()
+                    .filter(|d| d.severity == hotsas_core::SParameterSeverity::Warning || d.severity == hotsas_core::SParameterSeverity::Error)
+                    .map(|d| crate::ReportWarningDto {
+                        severity: format!("{:?}", d.severity),
+                        code: d.code.clone(),
+                        message: d.message.clone(),
+                        section_kind: Some("s_parameter_analysis".to_string()),
+                    })
+                    .collect(),
+            }],
+            warnings: vec![],
+            assumptions: vec![
+                "v3.3 foundation only".to_string(),
+                "Imported Touchstone dataset analysis".to_string(),
             ],
             source_references: vec![],
             metadata: std::collections::BTreeMap::new(),

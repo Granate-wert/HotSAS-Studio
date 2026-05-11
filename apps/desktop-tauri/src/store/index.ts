@@ -50,6 +50,8 @@ import type {
   FilterAnalysisDiagnostic,
   FilterNetworkAnalysisRequest,
   FilterNetworkAnalysisResult,
+  SParameterAnalysisResult,
+  SParameterDiagnostic,
 } from "../types";
 
 type HotSasState = {
@@ -157,6 +159,12 @@ type HotSasState = {
   filterAnalysisLoading: boolean;
   filterAnalysisError: string | null;
   filterAnalysisCsvExport: string | null;
+  // v3.3 S-parameter analysis
+  sParameterAnalysisResult: SParameterAnalysisResult | null;
+  sParameterAnalysisDiagnostics: SParameterDiagnostic[];
+  sParameterAnalysisLoading: boolean;
+  sParameterAnalysisError: string | null;
+  sParameterAnalysisCsvExport: string | null;
   setProject: (project: ProjectDto) => void;
   setFormulaResult: (result: FormulaResultDto) => void;
   setPreferredValue: (result: PreferredValueDto) => void;
@@ -265,6 +273,12 @@ type HotSasState = {
   setFilterAnalysisLoading: (filterAnalysisLoading: boolean) => void;
   setFilterAnalysisError: (filterAnalysisError: string | null) => void;
   setFilterAnalysisCsvExport: (filterAnalysisCsvExport: string | null) => void;
+  // v3.3 S-parameter analysis setters
+  setSParameterAnalysisResult: (sParameterAnalysisResult: SParameterAnalysisResult | null) => void;
+  setSParameterAnalysisDiagnostics: (sParameterAnalysisDiagnostics: SParameterDiagnostic[]) => void;
+  setSParameterAnalysisLoading: (sParameterAnalysisLoading: boolean) => void;
+  setSParameterAnalysisError: (sParameterAnalysisError: string | null) => void;
+  setSParameterAnalysisCsvExport: (sParameterAnalysisCsvExport: string | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -370,6 +384,12 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   filterAnalysisLoading: false,
   filterAnalysisError: null,
   filterAnalysisCsvExport: null,
+  // v3.3 S-parameter analysis initial state
+  sParameterAnalysisResult: null,
+  sParameterAnalysisDiagnostics: [],
+  sParameterAnalysisLoading: false,
+  sParameterAnalysisError: null,
+  sParameterAnalysisCsvExport: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -515,4 +535,15 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   setFilterAnalysisError: (filterAnalysisError: string | null) => set({ filterAnalysisError }),
   setFilterAnalysisCsvExport: (filterAnalysisCsvExport: string | null) =>
     set({ filterAnalysisCsvExport }),
+  // v3.3 S-parameter analysis setters
+  setSParameterAnalysisResult: (sParameterAnalysisResult: SParameterAnalysisResult | null) =>
+    set({ sParameterAnalysisResult }),
+  setSParameterAnalysisDiagnostics: (sParameterAnalysisDiagnostics: SParameterDiagnostic[]) =>
+    set({ sParameterAnalysisDiagnostics }),
+  setSParameterAnalysisLoading: (sParameterAnalysisLoading: boolean) =>
+    set({ sParameterAnalysisLoading }),
+  setSParameterAnalysisError: (sParameterAnalysisError: string | null) =>
+    set({ sParameterAnalysisError }),
+  setSParameterAnalysisCsvExport: (sParameterAnalysisCsvExport: string | null) =>
+    set({ sParameterAnalysisCsvExport }),
 }));

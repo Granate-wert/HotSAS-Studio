@@ -1,9 +1,9 @@
 use hotsas_api::{
-    AcSweepSettingsDto, AdvancedReportExportRequestDto, AdvancedReportRequestDto, ApiError,
-    FilterAnalysisMethodDto, FilterAnalysisSeverityDto, FilterNetworkAnalysisRequestDto,
+    AcSweepSettingsDto, AdvancedReportExportRequestDto, AdvancedReportRequestDto, AnalyzeTouchstoneRequestDto,
+    ApiError, FilterAnalysisMethodDto, FilterAnalysisSeverityDto, FilterNetworkAnalysisRequestDto,
     FormulaCalculationRequestDto, FormulaVariableInputDto, HotSasApi, OperatingPointSettingsDto,
     ProjectOpenRequestDto, ReportExportOptionsDto, SimulationDiagnosticMessageDto,
-    SimulationRunRequestDto, TransientSettingsDto, UserCircuitSimulationProfileDto,
+    SimulationRunRequestDto, SParameterSeverityDto, TransientSettingsDto, UserCircuitSimulationProfileDto,
 };
 
 use crate::output::{print_output, CliOutput, CliStatus};
@@ -1125,6 +1125,92 @@ pub fn handle_filter_analyze(
             let output = CliOutput::<()> {
                 status: CliStatus::Error,
                 command: "filter_analyze".to_string(),
+                warnings: vec![],
+                errors: vec![msg.clone()],
+                data: None,
+            };
+            print_output(&output, json);
+            eprintln!("{}", msg);
+            exit_code(&e)
+        }
+    }
+}
+
+pub fn handle_sparams(
+    api: &HotSasApi,
+    file: String,
+    source: Option<String>,
+    out: Option<String>,
+    json: bool,
+) -> i32 {
+    let content = match std::fs::read_to_string(&file) {
+        Ok(c) => c,
+        Err(e) => {
+            let msg = format!("Failed to read Touchstone file {}: {}", file, e);
+            let output = CliOutput::<()> {
+                status: CliStatus::Error,
+                command: "sparams".to_string(),
+                warnings: vec![],
+                errors: vec![msg.clone()],
+                data: None,
+            };
+            print_output(&output, json);
+            eprintln!("{}", msg);
+            return 2;
+        }
+    };
+
+    let source_name = source.or_else(|| {
+        std::path::Path::new(&file)
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+    });
+
+    let request = AnalyzeTouchstoneRequestDto {
+        source_name,
+        content,
+    };
+
+    let result = api.analyze_touchstone_s_parameters(request);
+    match result {
+        Ok(dto) => {
+            let output = CliOutput {
+                status: CliStatus::Success,
+                command: "sparams".to_string(),
+                warnings: dto
+                    .diagnostics
+                    .iter()
+                    .filter(|d| d.severity == SParameterSeverityDto::Warning)
+                    .map(|d| d.message.clone())
+                    .collect(),
+                errors: dto
+                    .diagnostics
+                    .iter()
+                    .filter(|d| {
+                        d.severity == SParameterSeverityDto::Error
+                            || d.severity == SParameterSeverityDto::Blocking
+                    })
+                    .map(|d| d.message.clone())
+                    .collect(),
+                data: Some(&dto),
+            };
+            print_output(&output, json);
+            if let Some(out_path) = out {
+                if let Ok(json_str) = serde_json::to_string_pretty(&dto) {
+                    if let Err(e) = std::fs::write(&out_path, json_str) {
+                        eprintln!("Failed to write output to {}: {}", out_path, e);
+                        return 1;
+                    }
+                    println!("Results written to {}", out_path);
+                }
+            }
+            0
+        }
+        Err(e) => {
+            let msg = format_error(&e);
+            let output = CliOutput::<()> {
+                status: CliStatus::Error,
+                command: "sparams".to_string(),
                 warnings: vec![],
                 errors: vec![msg.clone()],
                 data: None,

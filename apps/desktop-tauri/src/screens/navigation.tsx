@@ -6,6 +6,7 @@ import {
   FileText,
   Filter,
   HeartPulse,
+  Radio,
   Rocket,
   Sigma,
   TableProperties,
@@ -22,6 +23,7 @@ export type ScreenId =
   | "components"
   | "simulation"
   | "filter-analysis"
+  | "s-parameter-analysis"
   | "export"
   | "import"
   | "diagnostics"
@@ -37,6 +39,7 @@ export const navigationItems: Array<{ id: ScreenId; label: string; icon: ReactNo
   { id: "components", label: "E Component Library", icon: <TableProperties size={18} /> },
   { id: "simulation", label: "Simulation Dashboard", icon: <Activity size={18} /> },
   { id: "filter-analysis", label: "Filter Analysis", icon: <Filter size={18} /> },
+  { id: "s-parameter-analysis", label: "S-Parameters", icon: <Radio size={18} /> },
   { id: "dcdc", label: "DC-DC Calculators", icon: <Zap size={18} /> },
   { id: "export", label: "Export Center", icon: <FileText size={18} /> },
   { id: "import", label: "Import Models", icon: <Upload size={18} /> },

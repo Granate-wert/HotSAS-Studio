@@ -1459,3 +1459,87 @@ export type FilterNetworkAnalysisResult = {
   generated_netlist_preview: string | null;
   created_at: string;
 };
+
+// v3.3 S-parameter analysis
+export type SParameterAnalysisSource =
+  | "imported_touchstone"
+  | "two_port_filter_analysis"
+  | "manual_dataset"
+  | "simulated_foundation";
+
+export type SParameterSeverity = "info" | "warning" | "error" | "blocking";
+
+export type SParameterMetricConfidence = "high" | "medium" | "low";
+
+export type SParameterDataPoint = {
+  frequency_hz: number;
+  s11: { re: number; im: number } | null;
+  s21: { re: number; im: number } | null;
+  s12: { re: number; im: number } | null;
+  s22: { re: number; im: number } | null;
+};
+
+export type SParameterDataset = {
+  id: string;
+  name: string;
+  source: SParameterAnalysisSource;
+  port_count: number;
+  reference_impedance_ohm: number;
+  frequency_unit: string;
+  parameter_format: string;
+  points: SParameterDataPoint[];
+  warnings: SParameterDiagnostic[];
+};
+
+export type SParameterCurvePoint = {
+  frequency_hz: number;
+  s11_db: number | null;
+  s21_db: number | null;
+  s12_db: number | null;
+  s22_db: number | null;
+  s11_phase_deg: number | null;
+  s21_phase_deg: number | null;
+  s12_phase_deg: number | null;
+  s22_phase_deg: number | null;
+  return_loss_s11_db: number | null;
+  return_loss_s22_db: number | null;
+  insertion_loss_s21_db: number | null;
+  vswr_s11: number | null;
+  vswr_s22: number | null;
+};
+
+export type SParameterMetric = {
+  id: string;
+  label: string;
+  value: number;
+  unit: string;
+  frequency_hz: number | null;
+  confidence: SParameterMetricConfidence;
+  notes: string[];
+};
+
+export type SParameterDiagnostic = {
+  code: string;
+  severity: SParameterSeverity;
+  title: string;
+  message: string;
+  suggested_fix: string | null;
+};
+
+export type SParameterAnalysisResult = {
+  id: string;
+  dataset: SParameterDataset;
+  curve_points: SParameterCurvePoint[];
+  metrics: SParameterMetric[];
+  diagnostics: SParameterDiagnostic[];
+  can_plot_s11: boolean;
+  can_plot_s21: boolean;
+  can_plot_s12: boolean;
+  can_plot_s22: boolean;
+  summary: string;
+};
+
+export type AnalyzeTouchstoneRequest = {
+  source_name: string | null;
+  content: string;
+};

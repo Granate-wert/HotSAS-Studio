@@ -3308,7 +3308,7 @@ impl From<&hotsas_core::FilterMetricValue> for FilterMetricValueDto {
             value: m.value,
             unit: m.unit.clone(),
             frequency_hz: m.frequency_hz,
-            confidence: m.confidence.into(),
+            confidence: m.confidence.clone().into(),
             note: m.note.clone(),
         }
     }
@@ -3383,7 +3383,7 @@ impl From<&hotsas_core::FilterAnalysisDiagnostic> for FilterAnalysisDiagnosticDt
     fn from(d: &hotsas_core::FilterAnalysisDiagnostic) -> Self {
         Self {
             code: d.code.clone(),
-            severity: d.severity.into(),
+            severity: d.severity.clone().into(),
             title: d.title.clone(),
             message: d.message.clone(),
             suggested_fix: d.suggested_fix.clone(),
@@ -3531,4 +3531,262 @@ impl From<&hotsas_core::FilterNetworkAnalysisResult> for FilterNetworkAnalysisRe
             created_at: r.created_at.clone(),
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// v3.3 S-Parameter / Touchstone Workflow DTOs
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SParameterAnalysisSourceDto {
+    ImportedTouchstone,
+    TwoPortFilterAnalysis,
+    ManualDataset,
+    SimulatedFoundation,
+}
+
+impl From<hotsas_core::SParameterAnalysisSource> for SParameterAnalysisSourceDto {
+    fn from(v: hotsas_core::SParameterAnalysisSource) -> Self {
+        match v {
+            hotsas_core::SParameterAnalysisSource::ImportedTouchstone => Self::ImportedTouchstone,
+            hotsas_core::SParameterAnalysisSource::TwoPortFilterAnalysis => {
+                Self::TwoPortFilterAnalysis
+            }
+            hotsas_core::SParameterAnalysisSource::ManualDataset => Self::ManualDataset,
+            hotsas_core::SParameterAnalysisSource::SimulatedFoundation => Self::SimulatedFoundation,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComplexValueDto {
+    pub re: f64,
+    pub im: f64,
+}
+
+impl From<&hotsas_core::ComplexValue> for ComplexValueDto {
+    fn from(c: &hotsas_core::ComplexValue) -> Self {
+        Self { re: c.re, im: c.im }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SParameterDataPointDto {
+    pub frequency_hz: f64,
+    pub s11: Option<ComplexValueDto>,
+    pub s21: Option<ComplexValueDto>,
+    pub s12: Option<ComplexValueDto>,
+    pub s22: Option<ComplexValueDto>,
+}
+
+impl From<&hotsas_core::SParameterDataPoint> for SParameterDataPointDto {
+    fn from(p: &hotsas_core::SParameterDataPoint) -> Self {
+        Self {
+            frequency_hz: p.frequency_hz,
+            s11: p.s11.as_ref().map(ComplexValueDto::from),
+            s21: p.s21.as_ref().map(ComplexValueDto::from),
+            s12: p.s12.as_ref().map(ComplexValueDto::from),
+            s22: p.s22.as_ref().map(ComplexValueDto::from),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SParameterDatasetDto {
+    pub id: String,
+    pub name: String,
+    pub source: SParameterAnalysisSourceDto,
+    pub port_count: usize,
+    pub reference_impedance_ohm: f64,
+    pub frequency_unit: String,
+    pub parameter_format: String,
+    pub points: Vec<SParameterDataPointDto>,
+    pub warnings: Vec<SParameterDiagnosticDto>,
+}
+
+impl From<&hotsas_core::SParameterDataset> for SParameterDatasetDto {
+    fn from(d: &hotsas_core::SParameterDataset) -> Self {
+        Self {
+            id: d.id.clone(),
+            name: d.name.clone(),
+            source: d.source.clone().into(),
+            port_count: d.port_count,
+            reference_impedance_ohm: d.reference_impedance_ohm,
+            frequency_unit: d.frequency_unit.clone(),
+            parameter_format: d.parameter_format.clone(),
+            points: d.points.iter().map(SParameterDataPointDto::from).collect(),
+            warnings: d.warnings.iter().map(SParameterDiagnosticDto::from).collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SParameterCurvePointDto {
+    pub frequency_hz: f64,
+    pub s11_db: Option<f64>,
+    pub s21_db: Option<f64>,
+    pub s12_db: Option<f64>,
+    pub s22_db: Option<f64>,
+    pub s11_phase_deg: Option<f64>,
+    pub s21_phase_deg: Option<f64>,
+    pub s12_phase_deg: Option<f64>,
+    pub s22_phase_deg: Option<f64>,
+    pub return_loss_s11_db: Option<f64>,
+    pub return_loss_s22_db: Option<f64>,
+    pub insertion_loss_s21_db: Option<f64>,
+    pub vswr_s11: Option<f64>,
+    pub vswr_s22: Option<f64>,
+}
+
+impl From<&hotsas_core::SParameterCurvePoint> for SParameterCurvePointDto {
+    fn from(p: &hotsas_core::SParameterCurvePoint) -> Self {
+        Self {
+            frequency_hz: p.frequency_hz,
+            s11_db: p.s11_db,
+            s21_db: p.s21_db,
+            s12_db: p.s12_db,
+            s22_db: p.s22_db,
+            s11_phase_deg: p.s11_phase_deg,
+            s21_phase_deg: p.s21_phase_deg,
+            s12_phase_deg: p.s12_phase_deg,
+            s22_phase_deg: p.s22_phase_deg,
+            return_loss_s11_db: p.return_loss_s11_db,
+            return_loss_s22_db: p.return_loss_s22_db,
+            insertion_loss_s21_db: p.insertion_loss_s21_db,
+            vswr_s11: p.vswr_s11,
+            vswr_s22: p.vswr_s22,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SParameterMetricConfidenceDto {
+    High,
+    Medium,
+    Low,
+}
+
+impl From<hotsas_core::SParameterMetricConfidence> for SParameterMetricConfidenceDto {
+    fn from(v: hotsas_core::SParameterMetricConfidence) -> Self {
+        match v {
+            hotsas_core::SParameterMetricConfidence::High => Self::High,
+            hotsas_core::SParameterMetricConfidence::Medium => Self::Medium,
+            hotsas_core::SParameterMetricConfidence::Low => Self::Low,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SParameterMetricDto {
+    pub id: String,
+    pub label: String,
+    pub value: f64,
+    pub unit: String,
+    pub frequency_hz: Option<f64>,
+    pub confidence: SParameterMetricConfidenceDto,
+    pub notes: Vec<String>,
+}
+
+impl From<&hotsas_core::SParameterMetric> for SParameterMetricDto {
+    fn from(m: &hotsas_core::SParameterMetric) -> Self {
+        Self {
+            id: m.id.clone(),
+            label: m.label.clone(),
+            value: m.value,
+            unit: m.unit.clone(),
+            frequency_hz: m.frequency_hz,
+            confidence: m.confidence.clone().into(),
+            notes: m.notes.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SParameterSeverityDto {
+    Info,
+    Warning,
+    Error,
+    Blocking,
+}
+
+impl From<hotsas_core::SParameterSeverity> for SParameterSeverityDto {
+    fn from(v: hotsas_core::SParameterSeverity) -> Self {
+        match v {
+            hotsas_core::SParameterSeverity::Info => Self::Info,
+            hotsas_core::SParameterSeverity::Warning => Self::Warning,
+            hotsas_core::SParameterSeverity::Error => Self::Error,
+            hotsas_core::SParameterSeverity::Blocking => Self::Blocking,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SParameterDiagnosticDto {
+    pub code: String,
+    pub severity: SParameterSeverityDto,
+    pub title: String,
+    pub message: String,
+    pub suggested_fix: Option<String>,
+}
+
+impl From<&hotsas_core::SParameterDiagnostic> for SParameterDiagnosticDto {
+    fn from(d: &hotsas_core::SParameterDiagnostic) -> Self {
+        Self {
+            code: d.code.clone(),
+            severity: d.severity.clone().into(),
+            title: d.title.clone(),
+            message: d.message.clone(),
+            suggested_fix: d.suggested_fix.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SParameterAnalysisResultDto {
+    pub id: String,
+    pub dataset: SParameterDatasetDto,
+    pub curve_points: Vec<SParameterCurvePointDto>,
+    pub metrics: Vec<SParameterMetricDto>,
+    pub diagnostics: Vec<SParameterDiagnosticDto>,
+    pub can_plot_s11: bool,
+    pub can_plot_s21: bool,
+    pub can_plot_s12: bool,
+    pub can_plot_s22: bool,
+    pub summary: String,
+}
+
+impl From<&hotsas_core::SParameterAnalysisResult> for SParameterAnalysisResultDto {
+    fn from(r: &hotsas_core::SParameterAnalysisResult) -> Self {
+        Self {
+            id: r.id.clone(),
+            dataset: SParameterDatasetDto::from(&r.dataset),
+            curve_points: r.curve_points.iter().map(SParameterCurvePointDto::from).collect(),
+            metrics: r.metrics.iter().map(SParameterMetricDto::from).collect(),
+            diagnostics: r.diagnostics.iter().map(SParameterDiagnosticDto::from).collect(),
+            can_plot_s11: r.can_plot_s11,
+            can_plot_s21: r.can_plot_s21,
+            can_plot_s12: r.can_plot_s12,
+            can_plot_s22: r.can_plot_s22,
+            summary: r.summary.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnalyzeTouchstoneRequestDto {
+    pub source_name: Option<String>,
+    pub content: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExportSParameterCsvRequestDto {
+    pub result_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddSParameterAnalysisToReportRequestDto {
+    pub result_id: String,
 }
