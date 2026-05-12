@@ -22,6 +22,7 @@ fn default_section_capabilities_contains_all_kinds() {
     assert!(kinds.contains(&ReportSectionKind::ESeriesSelections));
     assert!(kinds.contains(&ReportSectionKind::Bom));
     assert!(kinds.contains(&ReportSectionKind::ImportedModels));
+    assert!(kinds.contains(&ReportSectionKind::ModelPersistence));
     assert!(kinds.contains(&ReportSectionKind::ExportHistory));
     assert!(kinds.contains(&ReportSectionKind::WarningsAndAssumptions));
 }

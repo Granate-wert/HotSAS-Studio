@@ -2,6 +2,34 @@
 
 All notable changes to HotSAS Studio are documented in this file.
 
+## [v3.4-ui-report-fix] — Model Persistence UI Indicators & Report Section
+
+### Added
+- Frontend persistence status badges in `ModelAssignmentCard`:
+  - Persisted, Package-backed, Derived builtin, Session-only, Missing asset, Stale reference, Unknown.
+  - Persistence warning alert for missing/stale asset references.
+- Frontend persistence status indicators in `SchematicSelectionInspector`:
+  - Inherited/override assignment origin badge.
+  - Persistence status badge (same states as ModelAssignmentCard).
+  - Pin mapping and parameter binding counts.
+  - Missing/stale diagnostics display.
+- Backend report section `ModelPersistence` in `AdvancedReportService`:
+  - Added to `ReportSectionKind` enum and `default_section_capabilities()`.
+  - Builder `build_model_persistence()` generates `Model Persistence & Package Integrity` section.
+  - Includes model catalog counts (assets, SPICE models, subcircuits, Touchstone datasets).
+  - Includes assignment counts (component, instance, missing references, stale assignments).
+  - Includes diagnostics list with severity mapping.
+  - Markdown, HTML, JSON, and CSV summary renderers support the new section.
+- API facade `build_model_persistence_summary()` helper method for `AdvancedReportContext` population.
+- Frontend tests: 9 new tests across `ModelAssignmentCard` and `SchematicSelectionInspector` for persistence states.
+- Rust tests: 5 new tests for `ModelPersistence` report section in core, application, and API layers.
+
+### Changed
+- `AdvancedReportContext` extended with `model_persistence_summary: Option<ProjectModelPersistenceSummary>`.
+- `validate_project_model_persistence` refactored to use shared `build_model_persistence_summary` helper.
+- Acceptance matrix updated: MP-036, MP-037, MP-038 changed from DEFERRED to PASS.
+- README roadmap stage updated to `v3.4 ACCEPTED WITH DOCUMENTED LIMITATIONS`.
+
 ## [v3.4] — Model Persistence & Project Package Hardening
 
 ### Added

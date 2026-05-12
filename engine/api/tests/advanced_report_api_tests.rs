@@ -480,3 +480,98 @@ fn export_csv_summary_format_returns_csv_lines() {
     let lines: Vec<&str> = result.content.lines().collect();
     assert!(lines.len() >= 2);
 }
+
+#[test]
+fn report_includes_model_persistence_section() {
+    let api = fake_api();
+    let request = AdvancedReportRequestDto {
+        report_id: "test-mp".to_string(),
+        title: "Model Persistence Test".to_string(),
+        report_type: "ProjectSummary".to_string(),
+        included_sections: vec!["ModelPersistence".to_string()],
+        export_options: hotsas_api::ReportExportOptionsDto {
+            include_source_references: true,
+            include_graph_references: true,
+            include_assumptions: true,
+            max_table_rows: None,
+        },
+        metadata: Default::default(),
+    };
+    let report = api.generate_advanced_report(request).unwrap();
+    let section = report
+        .sections
+        .iter()
+        .find(|s| s.kind == "ModelPersistence")
+        .expect("model persistence section should exist");
+    assert_eq!(section.title, "Model Persistence & Package Integrity");
+
+    let export_request = AdvancedReportExportRequestDto {
+        report_id: "test-mp".to_string(),
+        format: "markdown".to_string(),
+        output_path: None,
+    };
+    let result = api.export_advanced_report(export_request).unwrap();
+    assert!(result
+        .content
+        .contains("Model Persistence & Package Integrity"));
+}
+
+#[test]
+fn report_markdown_includes_model_persistence_summary() {
+    let api = fake_api();
+    let request = AdvancedReportRequestDto {
+        report_id: "test-mp-md".to_string(),
+        title: "Markdown MP Test".to_string(),
+        report_type: "ProjectSummary".to_string(),
+        included_sections: vec!["ModelPersistence".to_string()],
+        export_options: hotsas_api::ReportExportOptionsDto {
+            include_source_references: true,
+            include_graph_references: true,
+            include_assumptions: true,
+            max_table_rows: None,
+        },
+        metadata: Default::default(),
+    };
+    api.generate_advanced_report(request).unwrap();
+
+    let export_request = AdvancedReportExportRequestDto {
+        report_id: "test-mp-md".to_string(),
+        format: "markdown".to_string(),
+        output_path: None,
+    };
+    let result = api.export_advanced_report(export_request).unwrap();
+    assert!(result.success);
+    assert!(result
+        .content
+        .contains("Model Persistence & Package Integrity"));
+}
+
+#[test]
+fn report_html_includes_model_persistence_summary() {
+    let api = fake_api();
+    let request = AdvancedReportRequestDto {
+        report_id: "test-mp-html".to_string(),
+        title: "HTML MP Test".to_string(),
+        report_type: "ProjectSummary".to_string(),
+        included_sections: vec!["ModelPersistence".to_string()],
+        export_options: hotsas_api::ReportExportOptionsDto {
+            include_source_references: true,
+            include_graph_references: true,
+            include_assumptions: true,
+            max_table_rows: None,
+        },
+        metadata: Default::default(),
+    };
+    api.generate_advanced_report(request).unwrap();
+
+    let export_request = AdvancedReportExportRequestDto {
+        report_id: "test-mp-html".to_string(),
+        format: "html".to_string(),
+        output_path: None,
+    };
+    let result = api.export_advanced_report(export_request).unwrap();
+    assert!(result.success);
+    assert!(result
+        .content
+        .contains("Model Persistence &amp; Package Integrity"));
+}

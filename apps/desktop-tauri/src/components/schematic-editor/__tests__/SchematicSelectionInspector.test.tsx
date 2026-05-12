@@ -132,4 +132,94 @@ describe("SchematicSelectionInspector", () => {
     await user.click(screen.getByText("Update"));
     expect(onUpdateParameter).toHaveBeenCalledWith("R1", "resistance", "4.7k");
   });
+
+  it("shows inherited assignment persistence status", () => {
+    render(
+      <SchematicSelectionInspector
+        entity={{ kind: "component", id: "R1" }}
+        details={{
+          ...mockDetailsWithModel,
+          model_assignment_origin: "inherited",
+          model_assignment: {
+            ...mockDetailsWithModel.model_assignment!,
+            model_ref: {
+              ...mockDetailsWithModel.model_assignment!.model_ref!,
+              source: "imported",
+              status: "available",
+            },
+          },
+        }}
+        onDeleteWire={vi.fn()}
+        onUpdateParameter={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("inherited")).toBeInTheDocument();
+    expect(screen.getByText("Persisted")).toBeInTheDocument();
+  });
+
+  it("shows instance override persistence status", () => {
+    render(
+      <SchematicSelectionInspector
+        entity={{ kind: "component", id: "R1" }}
+        details={mockDetailsWithModel}
+        onDeleteWire={vi.fn()}
+        onUpdateParameter={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("override")).toBeInTheDocument();
+    expect(screen.getByText("Derived builtin")).toBeInTheDocument();
+  });
+
+  it("shows missing/stale diagnostics for selected instance", () => {
+    render(
+      <SchematicSelectionInspector
+        entity={{ kind: "component", id: "R1" }}
+        details={{
+          ...mockDetailsWithModel,
+          model_assignment: {
+            ...mockDetailsWithModel.model_assignment!,
+            model_ref: {
+              ...mockDetailsWithModel.model_assignment!.model_ref!,
+              source: "imported",
+              status: "missing",
+            },
+            diagnostics: [
+              {
+                code: "MISSING_ASSET",
+                severity: "warning",
+                title: "Model asset missing",
+                message: "The referenced model asset is no longer available.",
+                suggested_fix: "Reimport the model.",
+                related_component_id: "R1",
+                related_model_id: "missing_model",
+              },
+            ],
+          },
+        }}
+        onDeleteWire={vi.fn()}
+        onUpdateParameter={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Missing asset")).toBeInTheDocument();
+    expect(
+      screen.getByText(/missing or stale model asset references detected/i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not crash when persistence data is absent/legacy/unknown", () => {
+    render(
+      <SchematicSelectionInspector
+        entity={{ kind: "component", id: "R1" }}
+        details={mockDetails}
+        onDeleteWire={vi.fn()}
+        onUpdateParameter={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("R1")).toBeInTheDocument();
+    expect(screen.queryByText("Model assignment")).not.toBeInTheDocument();
+  });
 });

@@ -512,6 +512,9 @@ impl AdvancedReportService {
             ReportSectionKind::ModelMappingReadiness => {
                 self.build_model_mapping_readiness(context, report_warnings, source_refs)
             }
+            ReportSectionKind::ModelPersistence => {
+                self.build_model_persistence(context, report_warnings, source_refs)
+            }
             ReportSectionKind::ExportHistory => {
                 self.build_export_history(context, report_warnings, source_refs)
             }
@@ -1337,6 +1340,121 @@ impl AdvancedReportService {
             ReportSection {
                 kind: ReportSectionKind::ModelMappingReadiness,
                 title: "Model Mapping Readiness".to_string(),
+                status: ReportSectionStatus::Unavailable,
+                blocks,
+                warnings,
+            }
+        }
+    }
+
+    fn build_model_persistence(
+        &self,
+        context: &AdvancedReportContext,
+        _report_warnings: &mut Vec<ReportWarning>,
+        _source_refs: &mut Vec<ReportSourceReference>,
+    ) -> ReportSection {
+        let mut blocks: Vec<ReportContentBlock> = Vec::new();
+        let mut warnings: Vec<ReportWarning> = Vec::new();
+
+        if let Some(ref summary) = context.model_persistence_summary {
+            blocks.push(ReportContentBlock::KeyValueTable {
+                title: "Model Catalog".to_string(),
+                rows: vec![
+                    ReportKeyValueRow {
+                        key: "Total Assets".to_string(),
+                        value: summary.asset_count.to_string(),
+                        unit: None,
+                    },
+                    ReportKeyValueRow {
+                        key: "SPICE Models".to_string(),
+                        value: summary.spice_model_count.to_string(),
+                        unit: None,
+                    },
+                    ReportKeyValueRow {
+                        key: "Subcircuits".to_string(),
+                        value: summary.subcircuit_count.to_string(),
+                        unit: None,
+                    },
+                    ReportKeyValueRow {
+                        key: "Touchstone Datasets".to_string(),
+                        value: summary.touchstone_dataset_count.to_string(),
+                        unit: None,
+                    },
+                ],
+            });
+
+            blocks.push(ReportContentBlock::KeyValueTable {
+                title: "Assignments".to_string(),
+                rows: vec![
+                    ReportKeyValueRow {
+                        key: "Component Assignments".to_string(),
+                        value: summary.component_assignment_count.to_string(),
+                        unit: None,
+                    },
+                    ReportKeyValueRow {
+                        key: "Instance Assignments".to_string(),
+                        value: summary.instance_assignment_count.to_string(),
+                        unit: None,
+                    },
+                    ReportKeyValueRow {
+                        key: "Missing Asset References".to_string(),
+                        value: summary.missing_asset_reference_count.to_string(),
+                        unit: None,
+                    },
+                    ReportKeyValueRow {
+                        key: "Stale Assignments".to_string(),
+                        value: summary.stale_assignment_count.to_string(),
+                        unit: None,
+                    },
+                ],
+            });
+
+            if !summary.diagnostics.is_empty() {
+                let diagnostic_items: Vec<ReportWarning> = summary
+                    .diagnostics
+                    .iter()
+                    .map(|d| ReportWarning {
+                        severity: match d.severity.as_str() {
+                            "error" | "blocking" => ReportWarningSeverity::Error,
+                            "warning" => ReportWarningSeverity::Warning,
+                            _ => ReportWarningSeverity::Info,
+                        },
+                        code: d.code.clone(),
+                        message: d.message.clone(),
+                        section_kind: Some(ReportSectionKind::ModelPersistence),
+                    })
+                    .collect();
+                blocks.push(ReportContentBlock::WarningList {
+                    items: diagnostic_items,
+                });
+            }
+
+            let status = if summary.ready {
+                ReportSectionStatus::Included
+            } else {
+                ReportSectionStatus::Empty
+            };
+
+            ReportSection {
+                kind: ReportSectionKind::ModelPersistence,
+                title: "Model Persistence & Package Integrity".to_string(),
+                status,
+                blocks,
+                warnings,
+            }
+        } else {
+            warnings.push(ReportWarning {
+                severity: ReportWarningSeverity::Info,
+                code: "MODEL_PERSISTENCE_UNAVAILABLE".to_string(),
+                message: "No model persistence summary available.".to_string(),
+                section_kind: Some(ReportSectionKind::ModelPersistence),
+            });
+            blocks.push(ReportContentBlock::Paragraph {
+                text: "No model persistence data available.".to_string(),
+            });
+            ReportSection {
+                kind: ReportSectionKind::ModelPersistence,
+                title: "Model Persistence & Package Integrity".to_string(),
                 status: ReportSectionStatus::Unavailable,
                 blocks,
                 warnings,

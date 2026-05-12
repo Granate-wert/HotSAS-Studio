@@ -10,6 +10,25 @@ type Props = {
   onAssignModel: (modelId: string) => void;
 };
 
+function getPersistenceStatusLabel(modelRef: SpiceModelReferenceDto | null | undefined): {
+  label: string;
+  color: string;
+} {
+  if (!modelRef) return { label: "No model", color: "gray" };
+  const status = modelRef.status?.toLowerCase() ?? "";
+  const source = modelRef.source?.toLowerCase() ?? "";
+  if (status === "missing" || status === "stale") return { label: "Missing asset", color: "red" };
+  if (source === "builtin" || source === "derived_builtin")
+    return { label: "Derived builtin", color: "blue" };
+  if (source === "imported" || source === "user_assigned")
+    return { label: "Persisted", color: "green" };
+  if (status === "available" || status === "present")
+    return { label: "Package backed", color: "teal" };
+  if (source === "generated" || source === "generated_fallback")
+    return { label: "Session only", color: "orange" };
+  return { label: "Unknown", color: "gray" };
+}
+
 export function ModelAssignmentCard({
   assignment,
   availableModels,
@@ -39,12 +58,22 @@ export function ModelAssignmentCard({
     );
   }
 
+  const persistence = getPersistenceStatusLabel(assignment.model_ref);
+  const hasMissingOrStale = assignment.diagnostics.some(
+    (d) => d.severity === "blocking" || d.severity === "error" || d.severity === "warning",
+  );
+
   return (
     <Card withBorder radius="sm">
       <Stack gap="sm">
         <Group justify="space-between" align="center">
           <Text fw={500}>Model Assignment</Text>
-          <Badge variant="light">{formatLabel(assignment.status)}</Badge>
+          <Group gap="xs">
+            <Badge variant="light">{formatLabel(assignment.status)}</Badge>
+            <Badge color={persistence.color} variant="filled" size="sm">
+              {persistence.label}
+            </Badge>
+          </Group>
         </Group>
 
         <SimulationReadinessBadge readiness={assignment.readiness} />
@@ -54,6 +83,11 @@ export function ModelAssignmentCard({
             Current model
           </Text>
           <Text size="sm">{assignment.model_ref?.display_name ?? "No model assigned"}</Text>
+          {assignment.model_ref?.source && (
+            <Text size="xs" c="dimmed">
+              Source: {formatLabel(assignment.model_ref.source)}
+            </Text>
+          )}
         </Stack>
 
         {modelOptions.length > 0 && (
@@ -109,6 +143,12 @@ export function ModelAssignmentCard({
               </Text>
             ))}
           </Stack>
+        )}
+
+        {hasMissingOrStale && (
+          <Alert color="yellow" title="Persistence warning">
+            <Text size="sm">This assignment has missing or stale model asset references.</Text>
+          </Alert>
         )}
 
         {assignment.diagnostics.map((diagnostic) => (

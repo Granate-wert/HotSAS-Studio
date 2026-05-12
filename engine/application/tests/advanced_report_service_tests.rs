@@ -37,6 +37,7 @@ fn empty_context() -> AdvancedReportContext {
         netlist: None,
         export_history: vec![],
         imported_models_summary: vec![],
+        model_persistence_summary: None,
     }
 }
 
@@ -196,6 +197,80 @@ fn model_mapping_readiness_section_renders_to_markdown_and_json() {
         parsed["sections"][0]["kind"],
         serde_json::Value::String("ModelMappingReadiness".to_string())
     );
+}
+
+#[test]
+fn model_persistence_section_renders_with_summary() {
+    let service = make_service();
+    let request = make_request(
+        AdvancedReportType::ProjectSummary,
+        vec![ReportSectionKind::ModelPersistence],
+    );
+    let summary = hotsas_core::ProjectModelPersistenceSummary {
+        asset_count: 3,
+        spice_model_count: 2,
+        subcircuit_count: 1,
+        touchstone_dataset_count: 0,
+        component_assignment_count: 1,
+        instance_assignment_count: 2,
+        missing_asset_reference_count: 1,
+        stale_assignment_count: 0,
+        diagnostics: vec![hotsas_core::ModelAssetValidationDiagnostic {
+            code: "MISSING_ASSET".to_string(),
+            severity: "warning".to_string(),
+            title: "Asset missing".to_string(),
+            message: "Asset is missing".to_string(),
+            asset_id: Some("a1".to_string()),
+            assignment_id: None,
+        }],
+        ready: false,
+    };
+    let context = AdvancedReportContext {
+        model_persistence_summary: Some(summary),
+        ..empty_context()
+    };
+
+    let report = service.generate_report(request, &context).unwrap();
+    let section = report
+        .sections
+        .iter()
+        .find(|s| s.kind == ReportSectionKind::ModelPersistence)
+        .expect("model persistence section should exist");
+
+    assert_eq!(section.status, ReportSectionStatus::Empty); // ready=false
+    assert!(section.blocks.iter().any(|b| match b {
+        hotsas_core::advanced_report::ReportContentBlock::KeyValueTable { title, .. } =>
+            title == "Model Catalog",
+        _ => false,
+    }));
+
+    let markdown = service.render_report_markdown(&report).unwrap();
+    assert!(markdown.contains("Model Persistence & Package Integrity"));
+    assert!(markdown.contains("Total Assets"));
+    assert!(markdown.contains("3"));
+    assert!(markdown.contains("MISSING_ASSET"));
+
+    let html = service.render_report_html(&report).unwrap();
+    assert!(html.contains("Model Persistence &amp; Package Integrity"));
+    assert!(html.contains("SPICE Models"));
+}
+
+#[test]
+fn model_persistence_section_is_unavailable_without_summary() {
+    let service = make_service();
+    let request = make_request(
+        AdvancedReportType::ProjectSummary,
+        vec![ReportSectionKind::ModelPersistence],
+    );
+    let context = empty_context();
+    let report = service.generate_report(request, &context).unwrap();
+    let section = report
+        .sections
+        .iter()
+        .find(|s| s.kind == ReportSectionKind::ModelPersistence)
+        .expect("model persistence section should exist");
+
+    assert_eq!(section.status, ReportSectionStatus::Unavailable);
 }
 
 #[test]

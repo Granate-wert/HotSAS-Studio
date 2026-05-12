@@ -19,6 +19,8 @@ git branch --show-current:
 main
 
 git log --oneline -5:
+5c3ed08 v3.4-fix — Model Persistence UI and Report Integration
+ed500fb docs(v3.4): finalize model persistence verification and roadmap status
 e067035 feat(v3.4): Model Persistence & Project Package Hardening
 efd8dcf docs(post-v3.3): remove final audit placeholders
 0696b83 docs(post-v3.3): finalize audit gate metadata
@@ -51,8 +53,8 @@ e06703558f57ff2239a4808f9541929c3ce4f01f	refs/heads/main
 [x] Adapter model persistence tests (4/4)
 [x] Application model persistence service tests
 [x] Documentation and acceptance matrix
-[-] Frontend UI components display persisted/missing/stale status (DEFERRED)
-[-] Report/export section for model persistence (DEFERRED)
+[x] Frontend UI components display persisted/missing/stale status
+[x] Report/export section for model persistence
 ```
 
 ## Rust checks
@@ -94,7 +96,7 @@ npm.cmd run tauri:build
 ```text
 npm.cmd run format:check: PASS (prettier, 0 issues)
 npm.cmd run typecheck: PASS (tsc --noEmit, 0 errors)
-npm.cmd run test: PASS (39 test files, 187 tests, 0 failed; 1 flaky timeout on SchematicScreen.test.tsx resolved on rerun)
+npm.cmd run test: PASS (39 test files, 196 tests, 0 failed; 1 flaky timeout on SchematicScreen.test.tsx resolved on rerun)
 npm.cmd run build: PASS (vite build completed in ~21s, chunk size warning only)
 npm.cmd run tauri:build: PASS (desktop EXE built in ~4m06s, chunk size warning only)
 ```
@@ -139,8 +141,8 @@ git diff --check: PASS (no whitespace errors)
 [x] No regressions in existing tests
 [x] Backward compatibility preserved for legacy packages
 [x] Architecture rule preserved: no frontend math or package parsing
-[-] Frontend UI components display persisted/missing/stale status (DEFERRED)
-[-] Report/export section for model persistence (DEFERRED)
+[x] Frontend UI components display persisted/missing/stale status
+[x] Report/export section for model persistence
 ```
 
 ## Manual UI smoke
@@ -174,6 +176,7 @@ See docs/testing/acceptance_matrices/v3.4_model_persistence_project_package_hard
 
 ```text
 Implementation commit: e067035
+Verification/docs commit: 5c3ed08
 Push: PASS / origin/main OK
 ```
 
@@ -181,7 +184,7 @@ Push: PASS / origin/main OK
 
 ```text
 v3.4 status: ACCEPT WITH DOCUMENTED LIMITATIONS
-Ready for next stage: YES (backend complete; UI/report deferred)
+Ready for next stage: YES
 Reason: All backend domain models, persistence logic, adapters, application services, API, CLI, and frontend types/store implemented and tested. New Rust tests pass. No regressions. Build artifacts verified. Backward compatibility preserved. Frontend UI indicators and report/export sections for model persistence are deferred to v3.4.x / v3.5.
 ```
 

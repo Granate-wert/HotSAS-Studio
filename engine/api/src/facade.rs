@@ -303,6 +303,14 @@ impl HotSasApi {
         &self,
     ) -> Result<crate::ProjectModelPersistenceSummaryDto, ApiError> {
         let project = self.current_project()?;
+        let summary = self.build_model_persistence_summary(&project);
+        Ok(crate::ProjectModelPersistenceSummaryDto::from(&summary))
+    }
+
+    fn build_model_persistence_summary(
+        &self,
+        project: &CircuitProject,
+    ) -> ProjectModelPersistenceSummary {
         let catalog = project.imported_model_catalog.clone().unwrap_or_default();
         let assignments = &project.persisted_model_assignments;
         let mut diagnostics = Vec::new();
@@ -361,7 +369,7 @@ impl HotSasApi {
             });
         }
 
-        let summary = ProjectModelPersistenceSummary {
+        ProjectModelPersistenceSummary {
             asset_count: catalog.assets.len(),
             spice_model_count: catalog
                 .assets
@@ -397,9 +405,7 @@ impl HotSasApi {
             stale_assignment_count: stale_count,
             diagnostics,
             ready: missing_count == 0 && stale_count == 0,
-        };
-
-        Ok(crate::ProjectModelPersistenceSummaryDto::from(&summary))
+        }
     }
 
     pub fn get_selected_component(
@@ -1369,6 +1375,9 @@ impl HotSasApi {
         };
         let project = self.current_project().ok();
         let project_id = project.as_ref().map(|p| p.id.clone());
+        let model_persistence_summary = project
+            .as_ref()
+            .map(|p| self.build_model_persistence_summary(p));
         let context = hotsas_core::advanced_report::AdvancedReportContext {
             project,
             notebook: Some(
@@ -1383,6 +1392,7 @@ impl HotSasApi {
             export_history: vec![],
             netlist: None,
             imported_models_summary: vec![],
+            model_persistence_summary,
         };
         let report = self
             .services

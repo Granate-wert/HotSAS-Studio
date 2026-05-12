@@ -55,6 +55,7 @@ pub enum ReportSectionKind {
     Bom,
     ImportedModels,
     ModelMappingReadiness,
+    ModelPersistence,
     ExportHistory,
     WarningsAndAssumptions,
 }
@@ -75,6 +76,7 @@ impl std::fmt::Display for ReportSectionKind {
             ReportSectionKind::Bom => write!(f, "Bom"),
             ReportSectionKind::ImportedModels => write!(f, "ImportedModels"),
             ReportSectionKind::ModelMappingReadiness => write!(f, "ModelMappingReadiness"),
+            ReportSectionKind::ModelPersistence => write!(f, "ModelPersistence"),
             ReportSectionKind::ExportHistory => write!(f, "ExportHistory"),
             ReportSectionKind::WarningsAndAssumptions => write!(f, "WarningsAndAssumptions"),
         }
@@ -99,6 +101,7 @@ impl std::str::FromStr for ReportSectionKind {
             "Bom" => Ok(ReportSectionKind::Bom),
             "ImportedModels" => Ok(ReportSectionKind::ImportedModels),
             "ModelMappingReadiness" => Ok(ReportSectionKind::ModelMappingReadiness),
+            "ModelPersistence" => Ok(ReportSectionKind::ModelPersistence),
             "ExportHistory" => Ok(ReportSectionKind::ExportHistory),
             "WarningsAndAssumptions" => Ok(ReportSectionKind::WarningsAndAssumptions),
             other => Err(format!("unknown section kind: {other}")),
@@ -262,6 +265,7 @@ pub struct AdvancedReportContext {
     pub export_history: Vec<crate::ExportHistoryEntry>,
     pub netlist: Option<String>,
     pub imported_models_summary: Vec<String>,
+    pub model_persistence_summary: Option<crate::ProjectModelPersistenceSummary>,
 }
 
 pub fn default_section_capabilities() -> Vec<ReportSectionCapability> {
@@ -394,6 +398,17 @@ pub fn default_section_capabilities() -> Vec<ReportSectionCapability> {
             supported_report_types: vec![
                 AdvancedReportType::ProjectSummary,
                 AdvancedReportType::SimulationReport,
+                AdvancedReportType::FullProjectReport,
+            ],
+        },
+        ReportSectionCapability {
+            kind: ReportSectionKind::ModelPersistence,
+            title: "Model Persistence & Package Integrity".to_string(),
+            description: "Persisted model catalog, assignments, and package diagnostics"
+                .to_string(),
+            default_enabled: true,
+            supported_report_types: vec![
+                AdvancedReportType::ProjectSummary,
                 AdvancedReportType::FullProjectReport,
             ],
         },

@@ -146,4 +146,106 @@ describe("ModelAssignmentCard", () => {
     expect(screen.getByText("1 blocking")).toBeInTheDocument();
     expect(screen.getByText("MISSING_MODEL")).toBeInTheDocument();
   });
+
+  it("shows persisted status for imported model", () => {
+    render(
+      <ModelAssignmentCard
+        assignment={{
+          ...assignment,
+          model_ref: { ...assignedModel, source: "imported", status: "available" },
+          status: "mapped",
+        }}
+        availableModels={[{ ...assignedModel, source: "imported", status: "available" }]}
+        onAssignModel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Persisted")).toBeInTheDocument();
+  });
+
+  it("shows derived builtin status for builtin model", () => {
+    render(
+      <ModelAssignmentCard
+        assignment={assignment}
+        availableModels={[assignedModel]}
+        onAssignModel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Derived builtin")).toBeInTheDocument();
+  });
+
+  it("shows missing asset warning when model ref status is missing", () => {
+    render(
+      <ModelAssignmentCard
+        assignment={{
+          ...assignment,
+          model_ref: { ...assignedModel, source: "imported", status: "missing" },
+          status: "invalid",
+          diagnostics: [
+            {
+              code: "MISSING_ASSET",
+              severity: "warning",
+              title: "Model asset missing",
+              message: "The referenced model asset is no longer available.",
+              suggested_fix: "Reimport the model.",
+              related_component_id: "R1",
+              related_model_id: "missing_model",
+            },
+          ],
+        }}
+        availableModels={[{ ...assignedModel, source: "imported", status: "missing" }]}
+        onAssignModel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Missing asset")).toBeInTheDocument();
+    expect(screen.getByText(/missing or stale model asset references/i)).toBeInTheDocument();
+  });
+
+  it("shows stale reference warning when model ref status is stale", () => {
+    render(
+      <ModelAssignmentCard
+        assignment={{
+          ...assignment,
+          model_ref: { ...assignedModel, source: "imported", status: "stale" },
+          status: "invalid",
+          diagnostics: [
+            {
+              code: "STALE_ASSIGNMENT",
+              severity: "warning",
+              title: "Stale assignment",
+              message: "Assignment references a model that has changed.",
+              suggested_fix: "Reassign the model.",
+              related_component_id: "R1",
+              related_model_id: "stale_model",
+            },
+          ],
+        }}
+        availableModels={[{ ...assignedModel, source: "imported", status: "stale" }]}
+        onAssignModel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Missing asset")).toBeInTheDocument();
+  });
+
+  it("does not crash when persistence data is absent/legacy", () => {
+    render(
+      <ModelAssignmentCard
+        assignment={{
+          ...assignment,
+          model_ref: null,
+          status: "unknown",
+          diagnostics: [],
+        }}
+        availableModels={[]}
+        onAssignModel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Model Assignment")).toBeInTheDocument();
+    expect(screen.getByText("No model assigned")).toBeInTheDocument();
+    expect(screen.getByText("unknown")).toBeInTheDocument();
+  });
 });
