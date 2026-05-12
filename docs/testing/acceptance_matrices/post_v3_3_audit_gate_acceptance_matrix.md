@@ -23,7 +23,7 @@ Statuses: `PASS`, `PARTIAL`, `FAIL`, `DEFERRED`, `OUT OF SCOPE`, `NOT RUN`.
 | AUD-017 | Repository hygiene clean                      | No EXE/ZIP/temp/context files committed                                  | `.gitignore` improved; generated EXE/target/dist artifacts remain ignored       | PASS    | Final staging must include only audit/code/doc files.   |
 | AUD-018 | Verification log created                      | `docs/testing/verification_logs/post_v3_3_audit_gate.md`                 | File created and updated with command results                                   | PASS    | Includes EXE hashes.                                    |
 | AUD-019 | `latest_verification_log` / `TESTING` updated | docs/testing evidence                                                    | Both files updated                                                              | PASS    | Post-v3.3 audit gate section added.                     |
-| AUD-020 | Commit/push completed after verification      | Commit hashes + push status                                              | Pending final git protocol                                                      | NOT RUN | Requires final verification first.                      |
+| AUD-020 | Commit/push completed after verification      | Commit hashes + push status                                              | eb6cdae pushed to origin/main                                                   | PASS    | Final metadata commit follows this matrix update.       |
 
 ## Blockers
 
