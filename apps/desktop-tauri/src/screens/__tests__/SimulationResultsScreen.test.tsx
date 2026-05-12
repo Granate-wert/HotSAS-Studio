@@ -80,6 +80,13 @@ vi.mock("../../../api", () => ({
 }));
 
 describe("SimulationScreen", () => {
+  it("uses the standard screen shell for scrollable layout", () => {
+    const { container } = renderWithMantine(<SimulationScreen />);
+
+    expect(container.querySelector(".screen-panel")).toBeInTheDocument();
+    expect(container.querySelector(".screen-content")).toBeInTheDocument();
+  });
+
   it("renders Simulation Dashboard", async () => {
     renderWithMantine(<SimulationScreen />);
     await waitFor(() => {

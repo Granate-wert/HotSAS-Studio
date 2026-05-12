@@ -22,7 +22,9 @@ describe("ImportModelsScreen", () => {
   });
 
   it("renders tabs for SPICE, Touchstone, and Library", () => {
-    render(<ImportModelsScreen />);
+    const { container } = render(<ImportModelsScreen />);
+    expect(container.querySelector(".screen-panel")).toBeInTheDocument();
+    expect(container.querySelector(".screen-content")).toBeInTheDocument();
     expect(screen.getByText("SPICE Model / Subcircuit")).toBeInTheDocument();
     expect(screen.getByText("Touchstone S-Parameters")).toBeInTheDocument();
     expect(screen.getByText("Imported Library")).toBeInTheDocument();

@@ -1,5 +1,11 @@
 import { SimulationDashboard } from "../components/simulation/SimulationDashboard";
 
 export function SimulationScreen() {
-  return <SimulationDashboard />;
+  return (
+    <section className="screen-panel">
+      <div className="screen-content wide">
+        <SimulationDashboard />
+      </div>
+    </section>
+  );
 }

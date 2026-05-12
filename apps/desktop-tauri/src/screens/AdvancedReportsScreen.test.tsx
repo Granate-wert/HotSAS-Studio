@@ -108,7 +108,9 @@ function renderScreen(props: Partial<React.ComponentProps<typeof AdvancedReports
 
 describe("AdvancedReportsScreen", () => {
   it("renders title and description", () => {
-    renderScreen();
+    const { container } = renderScreen();
+    expect(container.querySelector(".screen-panel")).toBeInTheDocument();
+    expect(container.querySelector(".screen-content")).toBeInTheDocument();
     expect(screen.getByText("Advanced Reports")).toBeInTheDocument();
     expect(screen.getByText(/Generate structured, multi-section reports/)).toBeInTheDocument();
   });

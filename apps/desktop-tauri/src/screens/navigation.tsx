@@ -36,7 +36,7 @@ export const navigationItems: Array<{ id: ScreenId; label: string; icon: ReactNo
   { id: "schematic", label: "Schematic", icon: <CircuitBoard size={18} /> },
   { id: "notebook", label: "Engineering Notebook", icon: <Calculator size={18} /> },
   { id: "formulas", label: "Formula Library", icon: <Sigma size={18} /> },
-  { id: "components", label: "E Component Library", icon: <TableProperties size={18} /> },
+  { id: "components", label: "Component Library", icon: <TableProperties size={18} /> },
   { id: "simulation", label: "Simulation Dashboard", icon: <Activity size={18} /> },
   { id: "filter-analysis", label: "Filter Analysis", icon: <Filter size={18} /> },
   { id: "s-parameter-analysis", label: "S-Parameters", icon: <Radio size={18} /> },

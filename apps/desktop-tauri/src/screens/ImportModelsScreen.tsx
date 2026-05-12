@@ -103,117 +103,121 @@ export function ImportModelsScreen() {
   const isLoading = busy || localBusy;
 
   return (
-    <Stack gap="md" p="md">
-      <Text size="xl" fw={700}>
-        Import Models
-      </Text>
-      <Text size="sm" c="dimmed">
-        Paste SPICE model definitions (.model / .subckt) or Touchstone S-parameter data (.s1p /
-        .s2p) to import them into the project.
-      </Text>
+    <section className="screen-panel">
+      <div className="screen-content">
+        <Stack gap="md" p="md">
+          <Text size="xl" fw={700}>
+            Import Models
+          </Text>
+          <Text size="sm" c="dimmed">
+            Paste SPICE model definitions (.model / .subckt) or Touchstone S-parameter data (.s1p /
+            .s2p) to import them into the project.
+          </Text>
 
-      <Tabs value={activeTab} onChange={setActiveTab}>
-        <Tabs.List>
-          <Tabs.Tab value="spice">SPICE Model / Subcircuit</Tabs.Tab>
-          <Tabs.Tab value="touchstone">Touchstone S-Parameters</Tabs.Tab>
-          <Tabs.Tab value="library">Imported Library</Tabs.Tab>
-        </Tabs.List>
+          <Tabs value={activeTab} onChange={setActiveTab}>
+            <Tabs.List>
+              <Tabs.Tab value="spice">SPICE Model / Subcircuit</Tabs.Tab>
+              <Tabs.Tab value="touchstone">Touchstone S-Parameters</Tabs.Tab>
+              <Tabs.Tab value="library">Imported Library</Tabs.Tab>
+            </Tabs.List>
 
-        <Tabs.Panel value="spice" pt="md">
-          <Stack gap="md">
-            <Textarea
-              label="SPICE content"
-              description="Paste .model or .subckt definitions"
-              placeholder=".model 1N4148 D(IS=2.52n RS=0.568 N=1.752 CJO=4p M=0.4 TT=20n)"
-              minRows={8}
-              maxRows={16}
-              value={spiceContent}
-              onChange={(e) => setSpiceContent(e.currentTarget.value)}
-            />
-            <Group>
-              <Button
-                leftSection={<Upload size={16} />}
-                onClick={handleImportSpice}
-                loading={isLoading}
-                disabled={!spiceContent.trim()}
-              >
-                Import SPICE
-              </Button>
-            </Group>
-            {spiceImportReport && <SpiceReportView report={spiceImportReport} />}
-          </Stack>
-        </Tabs.Panel>
+            <Tabs.Panel value="spice" pt="md">
+              <Stack gap="md">
+                <Textarea
+                  label="SPICE content"
+                  description="Paste .model or .subckt definitions"
+                  placeholder=".model 1N4148 D(IS=2.52n RS=0.568 N=1.752 CJO=4p M=0.4 TT=20n)"
+                  minRows={8}
+                  maxRows={16}
+                  value={spiceContent}
+                  onChange={(e) => setSpiceContent(e.currentTarget.value)}
+                />
+                <Group>
+                  <Button
+                    leftSection={<Upload size={16} />}
+                    onClick={handleImportSpice}
+                    loading={isLoading}
+                    disabled={!spiceContent.trim()}
+                  >
+                    Import SPICE
+                  </Button>
+                </Group>
+                {spiceImportReport && <SpiceReportView report={spiceImportReport} />}
+              </Stack>
+            </Tabs.Panel>
 
-        <Tabs.Panel value="touchstone" pt="md">
-          <Stack gap="md">
-            <Textarea
-              label="Touchstone content"
-              description="Paste .s1p or .s2p data"
-              placeholder="# GHz S MA R 50\n1.0 0.95 -0.32"
-              minRows={8}
-              maxRows={16}
-              value={touchstoneContent}
-              onChange={(e) => setTouchstoneContent(e.currentTarget.value)}
-            />
-            <Group>
-              <Button
-                leftSection={<Upload size={16} />}
-                onClick={handleImportTouchstone}
-                loading={isLoading}
-                disabled={!touchstoneContent.trim()}
-              >
-                Import Touchstone
-              </Button>
-            </Group>
-            {touchstoneImportReport && <TouchstoneReportView report={touchstoneImportReport} />}
-          </Stack>
-        </Tabs.Panel>
+            <Tabs.Panel value="touchstone" pt="md">
+              <Stack gap="md">
+                <Textarea
+                  label="Touchstone content"
+                  description="Paste .s1p or .s2p data"
+                  placeholder="# GHz S MA R 50\n1.0 0.95 -0.32"
+                  minRows={8}
+                  maxRows={16}
+                  value={touchstoneContent}
+                  onChange={(e) => setTouchstoneContent(e.currentTarget.value)}
+                />
+                <Group>
+                  <Button
+                    leftSection={<Upload size={16} />}
+                    onClick={handleImportTouchstone}
+                    loading={isLoading}
+                    disabled={!touchstoneContent.trim()}
+                  >
+                    Import Touchstone
+                  </Button>
+                </Group>
+                {touchstoneImportReport && <TouchstoneReportView report={touchstoneImportReport} />}
+              </Stack>
+            </Tabs.Panel>
 
-        <Tabs.Panel value="library" pt="md">
-          <Stack gap="md">
-            <Group>
-              <Button variant="light" onClick={refreshList} loading={isLoading}>
-                Refresh List
-              </Button>
-            </Group>
-            {importedModels.length === 0 ? (
-              <Text c="dimmed" size="sm">
-                No imported models yet. Use the SPICE or Touchstone tabs to import.
-              </Text>
-            ) : (
-              <ScrollArea>
-                <Table striped highlightOnHover>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Name</Table.Th>
-                      <Table.Th>Kind</Table.Th>
-                      <Table.Th>Source</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {importedModels.map((m) => (
-                      <Table.Tr
-                        key={m.id}
-                        data-testid={`model-row-${m.id}`}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => handleSelectModel(m.id)}
-                      >
-                        <Table.Td>{m.name}</Table.Td>
-                        <Table.Td>
-                          <Badge size="sm">{m.kind}</Badge>
-                        </Table.Td>
-                        <Table.Td>{m.source_format}</Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              </ScrollArea>
-            )}
-            {selectedImportedModel && <ModelDetailsView model={selectedImportedModel} />}
-          </Stack>
-        </Tabs.Panel>
-      </Tabs>
-    </Stack>
+            <Tabs.Panel value="library" pt="md">
+              <Stack gap="md">
+                <Group>
+                  <Button variant="light" onClick={refreshList} loading={isLoading}>
+                    Refresh List
+                  </Button>
+                </Group>
+                {importedModels.length === 0 ? (
+                  <Text c="dimmed" size="sm">
+                    No imported models yet. Use the SPICE or Touchstone tabs to import.
+                  </Text>
+                ) : (
+                  <ScrollArea>
+                    <Table striped highlightOnHover>
+                      <Table.Thead>
+                        <Table.Tr>
+                          <Table.Th>Name</Table.Th>
+                          <Table.Th>Kind</Table.Th>
+                          <Table.Th>Source</Table.Th>
+                        </Table.Tr>
+                      </Table.Thead>
+                      <Table.Tbody>
+                        {importedModels.map((m) => (
+                          <Table.Tr
+                            key={m.id}
+                            data-testid={`model-row-${m.id}`}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => handleSelectModel(m.id)}
+                          >
+                            <Table.Td>{m.name}</Table.Td>
+                            <Table.Td>
+                              <Badge size="sm">{m.kind}</Badge>
+                            </Table.Td>
+                            <Table.Td>{m.source_format}</Table.Td>
+                          </Table.Tr>
+                        ))}
+                      </Table.Tbody>
+                    </Table>
+                  </ScrollArea>
+                )}
+                {selectedImportedModel && <ModelDetailsView model={selectedImportedModel} />}
+              </Stack>
+            </Tabs.Panel>
+          </Tabs>
+        </Stack>
+      </div>
+    </section>
   );
 }
 

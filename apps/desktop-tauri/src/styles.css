@@ -14,7 +14,7 @@
 
 body {
   margin: 0;
-  min-width: 1100px;
+  min-width: 0;
   background: #0e1117;
 }
 
@@ -36,11 +36,16 @@ body {
 .toolbar {
   min-height: 64px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 16px;
   padding: 12px 16px;
   border-bottom: 1px solid #263244;
   background: #111722;
+}
+
+.toolbar > * {
+  min-width: 0;
 }
 
 .save-path {
@@ -106,6 +111,7 @@ body {
 
 .screen-content {
   max-width: 1120px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -113,6 +119,10 @@ body {
 
 .screen-content.wide {
   max-width: none;
+}
+
+.screen-container {
+  width: 100%;
 }
 
 .metric-grid {

@@ -41,7 +41,7 @@ function makeReport(overrides?: Partial<AppDiagnosticsReportDto>): AppDiagnostic
 
 describe("DiagnosticsScreen", () => {
   it("renders diagnostics title", () => {
-    render(
+    const { container } = render(
       <DiagnosticsScreen
         diagnostics={makeReport()}
         readinessResult={null}
@@ -51,6 +51,8 @@ describe("DiagnosticsScreen", () => {
         onRunSelfCheck={vi.fn()}
       />,
     );
+    expect(container.querySelector(".screen-panel")).toBeInTheDocument();
+    expect(container.querySelector(".screen-content")).toBeInTheDocument();
     expect(screen.getByText(/Internal Alpha \/ Diagnostics/i)).toBeInTheDocument();
   });
 

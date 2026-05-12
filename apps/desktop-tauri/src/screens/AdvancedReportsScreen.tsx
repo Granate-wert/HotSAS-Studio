@@ -245,211 +245,217 @@ export function AdvancedReportsScreen({
   };
 
   return (
-    <ScrollArea className="screen-container">
-      <Stack gap="md" p="md">
-        <Title order={2}>Advanced Reports</Title>
-        <Text size="sm" c="dimmed">
-          Generate structured, multi-section reports from project data, calculations, simulations,
-          and design analyses.
-        </Text>
-
-        <Group gap="xs">
-          <Button
-            variant="default"
-            size="xs"
-            leftSection={loading ? <Loader2 size={14} className="spin" /> : <RefreshCw size={14} />}
-            onClick={onLoadCapabilities}
-            disabled={loading}
-          >
-            Refresh Capabilities
-          </Button>
-        </Group>
-
-        {error && (
-          <Alert color="red" icon={<AlertCircle size={16} />}>
-            <Text size="sm">{error}</Text>
-          </Alert>
-        )}
-
-        <Card withBorder shadow="sm" padding="md" radius="md">
-          <Stack gap="sm">
-            <Text size="sm" fw={500}>
-              Report Configuration
+    <section className="screen-panel">
+      <div className="screen-content">
+        <ScrollArea className="screen-container">
+          <Stack gap="md" p="md">
+            <Title order={2}>Advanced Reports</Title>
+            <Text size="sm" c="dimmed">
+              Generate structured, multi-section reports from project data, calculations,
+              simulations, and design analyses.
             </Text>
-            <Select
-              label="Report Type"
-              value={reportType}
-              onChange={(v) => setReportType(v ?? "ProjectSummary")}
-              data={REPORT_TYPE_OPTIONS}
-              disabled={loading}
-            />
-            <TextInput
-              label="Title (optional)"
-              placeholder="Auto-generated from type if empty"
-              value={reportTitle}
-              onChange={(e) => setReportTitle(e.currentTarget.value)}
-              disabled={loading}
-            />
-          </Stack>
-        </Card>
 
-        {capabilities.length > 0 && (
-          <Card withBorder shadow="sm" padding="md" radius="md">
-            <Stack gap="sm">
-              <Text size="sm" fw={500}>
-                Sections ({includedSections.length}/{capabilities.length} selected)
-              </Text>
-              <Group gap="xs">
-                <Button
-                  variant="default"
-                  size="xs"
-                  onClick={() => setIncludedSections(capabilities.map((c) => c.kind))}
-                >
-                  Select All
-                </Button>
-                <Button variant="default" size="xs" onClick={() => setIncludedSections([])}>
-                  Clear All
-                </Button>
-              </Group>
-              <Stack gap="xs">
-                {capabilities.map((cap) => {
-                  const selected = includedSections.includes(cap.kind);
-                  return (
-                    <Group key={cap.kind} gap="xs" wrap="nowrap">
-                      <Checkbox
-                        checked={selected}
-                        onChange={() => handleToggleSection(cap.kind)}
-                        disabled={loading}
-                      />
-                      <Tooltip label={cap.description}>
-                        <Text size="sm" style={{ flex: 1 }}>
-                          {cap.title}
-                        </Text>
-                      </Tooltip>
-                      <Badge size="xs" variant="light" color="gray">
-                        {cap.supported_report_types.slice(0, 3).join(", ")}
-                        {cap.supported_report_types.length > 3 ? "…" : ""}
-                      </Badge>
-                    </Group>
-                  );
-                })}
-              </Stack>
-            </Stack>
-          </Card>
-        )}
+            <Group gap="xs">
+              <Button
+                variant="default"
+                size="xs"
+                leftSection={
+                  loading ? <Loader2 size={14} className="spin" /> : <RefreshCw size={14} />
+                }
+                onClick={onLoadCapabilities}
+                disabled={loading}
+              >
+                Refresh Capabilities
+              </Button>
+            </Group>
 
-        <Group gap="xs">
-          <Button
-            leftSection={<Eye size={16} />}
-            onClick={handleGenerate}
-            disabled={!hasProject || loading || includedSections.length === 0}
-            loading={loading}
-          >
-            Generate Report
-          </Button>
-        </Group>
+            {error && (
+              <Alert color="red" icon={<AlertCircle size={16} />}>
+                <Text size="sm">{error}</Text>
+              </Alert>
+            )}
 
-        {activeReport && (
-          <>
             <Card withBorder shadow="sm" padding="md" radius="md">
               <Stack gap="sm">
-                <Group justify="space-between">
-                  <Text size="sm" fw={500}>
-                    Export Report
-                  </Text>
-                  <Group gap="xs">
-                    <Badge size="sm" variant="light">
-                      {activeReport.report_type}
-                    </Badge>
-                    <Badge size="sm" variant="outline" color="green">
-                      {activeReport.sections.length} sections
-                    </Badge>
-                  </Group>
-                </Group>
+                <Text size="sm" fw={500}>
+                  Report Configuration
+                </Text>
                 <Select
-                  label="Format"
-                  value={exportFormat}
-                  onChange={(v) => setExportFormat(v ?? "markdown")}
-                  data={[
-                    { value: "markdown", label: "Markdown" },
-                    { value: "html", label: "HTML" },
-                    { value: "json", label: "JSON" },
-                    { value: "csv_summary", label: "CSV Summary" },
-                  ]}
+                  label="Report Type"
+                  value={reportType}
+                  onChange={(v) => setReportType(v ?? "ProjectSummary")}
+                  data={REPORT_TYPE_OPTIONS}
                   disabled={loading}
                 />
                 <TextInput
-                  label="Output Path (optional)"
-                  placeholder="Leave empty for in-memory export"
-                  value={exportPath}
-                  onChange={(e) => setExportPath(e.currentTarget.value)}
+                  label="Title (optional)"
+                  placeholder="Auto-generated from type if empty"
+                  value={reportTitle}
+                  onChange={(e) => setReportTitle(e.currentTarget.value)}
                   disabled={loading}
                 />
-                <Button
-                  leftSection={<Download size={16} />}
-                  variant="light"
-                  onClick={handleExport}
-                  disabled={loading}
-                  loading={loading}
-                >
-                  Export
-                </Button>
-                {exportResult && (
-                  <Alert color="green" icon={<CheckCircle size={16} />}>
-                    <Text size="sm">{exportResult}</Text>
-                  </Alert>
-                )}
               </Stack>
             </Card>
 
-            <Card withBorder shadow="sm" padding="md" radius="md">
-              <Stack gap="sm">
-                <Group justify="space-between">
+            {capabilities.length > 0 && (
+              <Card withBorder shadow="sm" padding="md" radius="md">
+                <Stack gap="sm">
                   <Text size="sm" fw={500}>
-                    Report Preview: {activeReport.title}
+                    Sections ({includedSections.length}/{capabilities.length} selected)
                   </Text>
-                  {activeReport.generated_at && (
-                    <Text size="xs" c="dimmed">
-                      Generated: {activeReport.generated_at}
-                    </Text>
-                  )}
-                </Group>
+                  <Group gap="xs">
+                    <Button
+                      variant="default"
+                      size="xs"
+                      onClick={() => setIncludedSections(capabilities.map((c) => c.kind))}
+                    >
+                      Select All
+                    </Button>
+                    <Button variant="default" size="xs" onClick={() => setIncludedSections([])}>
+                      Clear All
+                    </Button>
+                  </Group>
+                  <Stack gap="xs">
+                    {capabilities.map((cap) => {
+                      const selected = includedSections.includes(cap.kind);
+                      return (
+                        <Group key={cap.kind} gap="xs" wrap="nowrap">
+                          <Checkbox
+                            checked={selected}
+                            onChange={() => handleToggleSection(cap.kind)}
+                            disabled={loading}
+                          />
+                          <Tooltip label={cap.description}>
+                            <Text size="sm" style={{ flex: 1 }}>
+                              {cap.title}
+                            </Text>
+                          </Tooltip>
+                          <Badge size="xs" variant="light" color="gray">
+                            {cap.supported_report_types.slice(0, 3).join(", ")}
+                            {cap.supported_report_types.length > 3 ? "…" : ""}
+                          </Badge>
+                        </Group>
+                      );
+                    })}
+                  </Stack>
+                </Stack>
+              </Card>
+            )}
 
-                {activeReport.warnings.length > 0 && (
-                  <Alert color="yellow" icon={<AlertCircle size={16} />}>
-                    <Stack gap={2}>
-                      {activeReport.warnings.map((w, i) => (
-                        <Text key={i} size="xs">
-                          [{w.severity}] {w.message}
+            <Group gap="xs">
+              <Button
+                leftSection={<Eye size={16} />}
+                onClick={handleGenerate}
+                disabled={!hasProject || loading || includedSections.length === 0}
+                loading={loading}
+              >
+                Generate Report
+              </Button>
+            </Group>
+
+            {activeReport && (
+              <>
+                <Card withBorder shadow="sm" padding="md" radius="md">
+                  <Stack gap="sm">
+                    <Group justify="space-between">
+                      <Text size="sm" fw={500}>
+                        Export Report
+                      </Text>
+                      <Group gap="xs">
+                        <Badge size="sm" variant="light">
+                          {activeReport.report_type}
+                        </Badge>
+                        <Badge size="sm" variant="outline" color="green">
+                          {activeReport.sections.length} sections
+                        </Badge>
+                      </Group>
+                    </Group>
+                    <Select
+                      label="Format"
+                      value={exportFormat}
+                      onChange={(v) => setExportFormat(v ?? "markdown")}
+                      data={[
+                        { value: "markdown", label: "Markdown" },
+                        { value: "html", label: "HTML" },
+                        { value: "json", label: "JSON" },
+                        { value: "csv_summary", label: "CSV Summary" },
+                      ]}
+                      disabled={loading}
+                    />
+                    <TextInput
+                      label="Output Path (optional)"
+                      placeholder="Leave empty for in-memory export"
+                      value={exportPath}
+                      onChange={(e) => setExportPath(e.currentTarget.value)}
+                      disabled={loading}
+                    />
+                    <Button
+                      leftSection={<Download size={16} />}
+                      variant="light"
+                      onClick={handleExport}
+                      disabled={loading}
+                      loading={loading}
+                    >
+                      Export
+                    </Button>
+                    {exportResult && (
+                      <Alert color="green" icon={<CheckCircle size={16} />}>
+                        <Text size="sm">{exportResult}</Text>
+                      </Alert>
+                    )}
+                  </Stack>
+                </Card>
+
+                <Card withBorder shadow="sm" padding="md" radius="md">
+                  <Stack gap="sm">
+                    <Group justify="space-between">
+                      <Text size="sm" fw={500}>
+                        Report Preview: {activeReport.title}
+                      </Text>
+                      {activeReport.generated_at && (
+                        <Text size="xs" c="dimmed">
+                          Generated: {activeReport.generated_at}
                         </Text>
+                      )}
+                    </Group>
+
+                    {activeReport.warnings.length > 0 && (
+                      <Alert color="yellow" icon={<AlertCircle size={16} />}>
+                        <Stack gap={2}>
+                          {activeReport.warnings.map((w, i) => (
+                            <Text key={i} size="xs">
+                              [{w.severity}] {w.message}
+                            </Text>
+                          ))}
+                        </Stack>
+                      </Alert>
+                    )}
+
+                    {activeReport.assumptions.length > 0 && (
+                      <Stack gap={2}>
+                        <Text size="xs" fw={500} c="dimmed">
+                          Assumptions:
+                        </Text>
+                        {activeReport.assumptions.map((a, i) => (
+                          <Text key={i} size="xs" c="dimmed">
+                            • {a}
+                          </Text>
+                        ))}
+                      </Stack>
+                    )}
+
+                    <Stack gap="sm">
+                      {activeReport.sections.map((section, i) => (
+                        <SectionCard key={i} section={section} />
                       ))}
                     </Stack>
-                  </Alert>
-                )}
-
-                {activeReport.assumptions.length > 0 && (
-                  <Stack gap={2}>
-                    <Text size="xs" fw={500} c="dimmed">
-                      Assumptions:
-                    </Text>
-                    {activeReport.assumptions.map((a, i) => (
-                      <Text key={i} size="xs" c="dimmed">
-                        • {a}
-                      </Text>
-                    ))}
                   </Stack>
-                )}
-
-                <Stack gap="sm">
-                  {activeReport.sections.map((section, i) => (
-                    <SectionCard key={i} section={section} />
-                  ))}
-                </Stack>
-              </Stack>
-            </Card>
-          </>
-        )}
-      </Stack>
-    </ScrollArea>
+                </Card>
+              </>
+            )}
+          </Stack>
+        </ScrollArea>
+      </div>
+    </section>
   );
 }

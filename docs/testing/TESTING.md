@@ -1080,9 +1080,57 @@ Applied in commit `398f8f6`:
 
 ---
 
-## Test Summary
+## Post-v3.3 Audit Gate
 
-As of v3.0, the Rust workspace runs **~400+ tests** across all crates with **zero failures**, and the frontend runs **157 UI tests** with **zero failures**.
+### New / updated frontend regression tests
+
+- `src/screens/navigation.test.tsx`
+  - Verifies the Component Library navigation label is exactly `Component Library`.
+- `src/styles.test.ts`
+  - Verifies the global CSS no longer forces `body { min-width: 1100px; }`.
+  - Verifies the top toolbar can wrap in narrow desktop windows.
+- `src/screens/__tests__/SimulationResultsScreen.test.tsx`
+  - Verifies Simulation uses the standard `screen-panel` and `screen-content` shell.
+- `src/screens/ImportModelsScreen.test.tsx`
+  - Verifies Import Models uses the standard screen shell.
+- `src/screens/__tests__/DiagnosticsScreen.test.tsx`
+  - Verifies Diagnostics uses the standard screen shell.
+- `src/screens/AdvancedReportsScreen.test.tsx`
+  - Verifies Advanced Reports uses the standard screen shell.
+
+### Targeted audit regression command
+
+```powershell
+cd "D:\Р”РѕРєСѓРјРµРЅС‚С‹\vscode\HotSAS Studio\apps\desktop-tauri"
+npm.cmd run test -- styles.test.ts navigation.test.tsx SimulationResultsScreen.test.tsx ImportModelsScreen.test.tsx DiagnosticsScreen.test.tsx AdvancedReportsScreen.test.tsx
+```
+
+Expected result:
+
+```text
+6 test files PASS
+32 tests PASS
+```
+
+### Manual / browser smoke
+
+1. Start Vite:
+
+   ```powershell
+   cd "D:\Р”РѕРєСѓРјРµРЅС‚С‹\vscode\HotSAS Studio\apps\desktop-tauri"
+   npm.cmd run dev
+   ```
+
+2. Open `http://127.0.0.1:1420/` at 1024x768.
+3. Verify the sidebar contains `Component Library` and does not contain `E Component Library`.
+4. Open **Simulation Dashboard**, **Import Models**, **Diagnostics**, and **Advanced Reports**.
+5. Verify each screen renders without blank content or browser console errors.
+
+Native Tauri interactive window smoke remains a manual follow-up if the environment cannot open a desktop window.
+
+---
+
+As of the post-v3.3 audit gate, the targeted audit regression suite runs **32 frontend tests** with **zero failures**. Full workspace totals are recorded in `docs/testing/verification_logs/post_v3_3_audit_gate.md`.
 
 ---
 

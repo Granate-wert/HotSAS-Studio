@@ -42,12 +42,31 @@ DIALOG_*.md
 ANALYSIS_*.md
 PROMT*.txt
 roadmap.txt
+HotSAS_New_Roadmap.md
+HotSAS_post_*
+codex_history*.txt
+kimi-export*.md
+.gitcommitmsg*
+qwen/
+review_vneshnoe/
 история чата.txt
 ТЗ*.txt
 тз*.txt
 
 # Root-level technical specification and verification templates
 HotSAS_v*_TZ_*.md
+HotSAS_v*_TZ*.md
 HotSAS_v*_verification_log_template.md
 HotSAS_v*_verification_log.md
+HotSAS_v*_verification_cleanup_prompt.md
 HotSAS_v*_acceptance_matrix_template.md
+
+# Temporary local fix scripts and scratch reports
+fix_*.py
+update_tests.py
+write_plan.py
+temp_writer.py
+plan_test.txt
+test-report-*.md
+/*.txt
+/*репорт/
