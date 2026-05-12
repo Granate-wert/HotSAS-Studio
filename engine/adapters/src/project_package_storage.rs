@@ -1,6 +1,7 @@
 use hotsas_core::{
-    CircuitModel, CircuitProject, ProjectPackageFiles, ProjectPackageManifest,
-    ProjectPackageValidationReport, ReportIndex, ResultIndex,
+    CircuitModel, CircuitProject, PersistedInstanceModelAssignment, PersistedModelCatalog,
+    ProjectPackageFiles, ProjectPackageManifest, ProjectPackageValidationReport, ReportIndex,
+    ResultIndex,
 };
 use hotsas_ports::{PortError, ProjectPackageStoragePort};
 use std::fs;
@@ -22,6 +23,10 @@ impl CircuitProjectPackageStorage {
     fn write_json<T: serde::Serialize>(path: &Path, value: &T) -> Result<(), PortError> {
         let json = serde_json::to_string_pretty(value)
             .map_err(|e| PortError::Storage(format!("JSON serialization error: {e}")))?;
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| PortError::Storage(format!("create dir error: {e}")))?;
+        }
         fs::write(path, json).map_err(|e| PortError::Storage(format!("write error: {e}")))
     }
 
@@ -30,6 +35,15 @@ impl CircuitProjectPackageStorage {
             fs::read_to_string(path).map_err(|e| PortError::Storage(format!("read error: {e}")))?;
         serde_json::from_str(&json)
             .map_err(|e| PortError::Storage(format!("JSON deserialization error: {e}")))
+    }
+
+    fn read_json_optional<T: serde::de::DeserializeOwned>(
+        path: &Path,
+    ) -> Result<Option<T>, PortError> {
+        if !path.exists() {
+            return Ok(None);
+        }
+        Self::read_json(path).map(Some)
     }
 }
 
@@ -117,6 +131,16 @@ impl ProjectPackageStoragePort for CircuitProjectPackageStorage {
             },
         )?;
 
+        // model catalog
+        let catalog = project.imported_model_catalog.clone().unwrap_or_default();
+        Self::write_json(&package_dir.join(&files.model_catalog), &catalog)?;
+
+        // model assignments
+        Self::write_json(
+            &package_dir.join(&files.model_assignments),
+            &project.persisted_model_assignments,
+        )?;
+
         // Write manifest last
         Self::write_json(&package_dir.join("project.json"), &manifest)?;
 
@@ -134,6 +158,13 @@ impl ProjectPackageStoragePort for CircuitProjectPackageStorage {
         let simulation_profiles: Vec<hotsas_core::SimulationProfile> =
             Self::read_json(&package_dir.join(&manifest.files.simulation_profiles))?;
 
+        let imported_model_catalog =
+            Self::read_json_optional(&package_dir.join(&manifest.files.model_catalog))?;
+
+        let persisted_model_assignments =
+            Self::read_json_optional(&package_dir.join(&manifest.files.model_assignments))?
+                .unwrap_or_default();
+
         Ok(CircuitProject {
             id: manifest.project_id,
             name: manifest.project_name,
@@ -146,6 +177,8 @@ impl ProjectPackageStoragePort for CircuitProjectPackageStorage {
             simulation_profiles,
             linked_libraries: vec![],
             reports: vec![],
+            imported_model_catalog,
+            persisted_model_assignments,
         })
     }
 
@@ -187,6 +220,45 @@ impl ProjectPackageStoragePort for CircuitProjectPackageStorage {
                             report.errors.push(format!("Missing required file: {path}"));
                         }
                     }
+
+                    // v3.4 model catalog is optional for backward compatibility
+                    let catalog_path = package_dir.join(&manifest.files.model_catalog);
+                    if !catalog_path.exists() {
+                        report.warnings.push(
+                            "Legacy package: model catalog (models/catalog.json) not found; model assets may not be persisted"
+                                .to_string(),
+                        );
+                    } else {
+                        match Self::read_json::<PersistedModelCatalog>(&catalog_path) {
+                            Ok(catalog) => {
+                                for asset in &catalog.assets {
+                                    if let Some(asset_path) = &asset.package_asset_path {
+                                        let full = package_dir.join(asset_path);
+                                        if !full.exists() {
+                                            report.warnings.push(format!(
+                                                "Model asset '{}' references missing package file: {}",
+                                                asset.id, asset_path
+                                            ));
+                                        }
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                report.errors.push(format!(
+                                    "Invalid model catalog (models/catalog.json): {e}"
+                                ));
+                            }
+                        }
+                    }
+
+                    // v3.4 model assignments are optional for backward compatibility
+                    let assignments_path = package_dir.join(&manifest.files.model_assignments);
+                    if !assignments_path.exists() {
+                        report.warnings.push(
+                            "Legacy package: model assignments (model_assignments.json) not found; assignments may not be persisted"
+                                .to_string(),
+                        );
+                    }
                 }
                 Err(e) => {
                     report.errors.push(format!("Invalid project.json: {e}"));
@@ -199,5 +271,45 @@ impl ProjectPackageStoragePort for CircuitProjectPackageStorage {
         }
 
         Ok(report)
+    }
+
+    fn save_model_catalog(
+        &self,
+        package_dir: &Path,
+        catalog: &PersistedModelCatalog,
+    ) -> Result<(), PortError> {
+        let package_dir = Self::ensure_circuit_extension(package_dir)?;
+        fs::create_dir_all(&package_dir)
+            .map_err(|e| PortError::Storage(format!("create dir error: {e}")))?;
+        let files = ProjectPackageFiles::default();
+        Self::write_json(&package_dir.join(&files.model_catalog), catalog)
+    }
+
+    fn load_model_catalog(&self, package_dir: &Path) -> Result<PersistedModelCatalog, PortError> {
+        let package_dir = Self::ensure_circuit_extension(package_dir)?;
+        let files = ProjectPackageFiles::default();
+        Self::read_json(&package_dir.join(&files.model_catalog))
+    }
+
+    fn save_model_assignments(
+        &self,
+        package_dir: &Path,
+        assignments: &[PersistedInstanceModelAssignment],
+    ) -> Result<(), PortError> {
+        let package_dir = Self::ensure_circuit_extension(package_dir)?;
+        let files = ProjectPackageFiles::default();
+        Self::write_json(
+            &package_dir.join(&files.model_assignments),
+            &assignments.to_vec(),
+        )
+    }
+
+    fn load_model_assignments(
+        &self,
+        package_dir: &Path,
+    ) -> Result<Vec<PersistedInstanceModelAssignment>, PortError> {
+        let package_dir = Self::ensure_circuit_extension(package_dir)?;
+        let files = ProjectPackageFiles::default();
+        Self::read_json(&package_dir.join(&files.model_assignments))
     }
 }

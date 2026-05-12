@@ -29,6 +29,8 @@ fn empty_project() -> CircuitProject {
         simulation_profiles: vec![],
         linked_libraries: vec![],
         reports: vec![],
+        imported_model_catalog: None,
+        persisted_model_assignments: vec![],
     }
 }
 

@@ -1543,3 +1543,42 @@ export type AnalyzeTouchstoneRequest = {
   source_name: string | null;
   content: string;
 };
+
+// v3.4 Model Persistence
+export type ModelAssetDto = {
+  id: string;
+  name: string;
+  kind: string;
+  source: string;
+  source_file_name: string | null;
+  content_hash: string | null;
+  package_asset_path: string | null;
+  status: string;
+  warnings: string[];
+};
+
+export type ModelCatalogDto = {
+  assets: ModelAssetDto[];
+};
+
+export type ModelPersistenceDiagnosticDto = {
+  code: string;
+  severity: string;
+  title: string;
+  message: string;
+  asset_id: string | null;
+  assignment_id: string | null;
+};
+
+export type ProjectModelPersistenceSummaryDto = {
+  asset_count: number;
+  spice_model_count: number;
+  subcircuit_count: number;
+  touchstone_dataset_count: number;
+  component_assignment_count: number;
+  instance_assignment_count: number;
+  missing_asset_reference_count: number;
+  stale_assignment_count: number;
+  diagnostics: ModelPersistenceDiagnosticDto[];
+  ready: boolean;
+};

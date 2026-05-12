@@ -2,6 +2,38 @@
 
 All notable changes to HotSAS Studio are documented in this file.
 
+## [v3.4] — Model Persistence & Project Package Hardening
+
+### Added
+- Core domain models for model persistence in `hotsas_core::model_persistence`:
+  - `PersistedModelAsset` — kind, source, status, content hash, package path, raw content, warnings.
+  - `PersistedModelCatalog` — container for persisted model assets.
+  - `PersistedInstanceModelAssignment` — pin mappings, parameter bindings, status, source.
+  - `ProjectModelPersistenceSummary` — asset counts, assignment counts, diagnostics.
+- `CircuitProject` hardening with `imported_model_catalog` and `persisted_model_assignments` fields (backward-compatible serde defaults).
+- `ProjectPackageStoragePort` extension with `save/load_model_catalog` and `save/load_model_assignments`.
+- Adapter `.circuit` package storage writes `models/catalog.json` and `models/assignments.json` inside packages.
+- Adapter validation detects missing model assets and stale assignment references with diagnostics.
+- Application service integration:
+  - `ModelImportService.build_persisted_model_catalog()` converts imported models to persisted catalog.
+  - `ComponentModelMappingService.build_persisted_instance_assignment()` converts runtime assignments to persisted form.
+  - `AppServices` wires persistence into save/load project package flow.
+- API facade methods: `get_project_model_catalog`, `validate_project_model_persistence`, `get_project_model_persistence_summary`.
+- Tauri commands for model catalog and persistence validation.
+- CLI integration: `validate` and `model-check` commands include model persistence diagnostics.
+- Frontend TypeScript types (`ModelCatalogDto`, `ModelAssetDto`, etc.) and Zustand store extensions.
+- Adapter model persistence tests: 4 new tests (catalog roundtrip, assignments roundtrip, missing asset diagnostic, legacy backward compatibility).
+- Application model persistence service tests.
+- Documentation: verification log and acceptance matrix for v3.4.
+
+### Changed
+- `CircuitProjectPackageStorage` now manages `models/` subdirectory inside `.circuit` packages.
+- `FakeProjectPackageStorage` implementations across test files updated with new trait methods.
+
+### Fixed
+- Malformed multi-line `use` statements in test files caused by automated replacements.
+- Missing trait method implementations in fake storages across ~25 test files.
+
 ## [v2.7] — CLI / Headless Mode Foundation
 
 ### Added

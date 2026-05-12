@@ -1,8 +1,8 @@
 use hotsas_core::{
-    CircuitProject, CircuitQueryService, EngineeringUnit, FormulaDefinition, FormulaEquation,
-    FormulaEvaluationResult, FormulaExample, FormulaExpressionValidationResult, FormulaOutput,
-    FormulaPack, FormulaVariable, GraphPoint, GraphSeries, ReportModel, SimulationProfile,
-    SimulationResult, SimulationStatus, SimulationType, ValueWithUnit,
+    rc_low_pass_project, CircuitProject, CircuitQueryService, EngineeringUnit, FormulaDefinition,
+    FormulaEquation, FormulaEvaluationResult, FormulaExample, FormulaExpressionValidationResult,
+    FormulaOutput, FormulaPack, FormulaVariable, GraphPoint, GraphSeries, ReportModel,
+    SimulationProfile, SimulationResult, SimulationStatus, SimulationType, ValueWithUnit,
 };
 use hotsas_ports::{
     FormulaEnginePort, NetlistExporterPort, PortError, ReportExporterPort, SimulationEnginePort,
@@ -851,7 +851,6 @@ fn format_si(value: f64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hotsas_core::{rc_low_pass_project, EngineeringUnit};
 
     #[test]
     fn calculates_rc_low_pass_formula() {

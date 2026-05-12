@@ -3,8 +3,9 @@ use hotsas_core::{
     CircuitProject, ComponentDefinition, ComponentInstance, ComponentLibrary,
     ComponentModelAssignment, ComponentModelAssignmentStatus, ComponentPinMapping,
     ComponentPinRole, ImportedModelDetails, ModelMappingDiagnostic, ModelMappingSeverity,
-    ModelParameterBinding, ProjectSimulationReadiness, SimulationModel, SimulationModelKind,
-    SimulationReadiness, SpiceModelReference, SpiceModelReferenceKind, SpiceModelSource,
+    ModelParameterBinding, PersistedInstanceModelAssignment, ProjectSimulationReadiness,
+    SimulationModel, SimulationModelKind, SimulationReadiness, SpiceModelReference,
+    SpiceModelReferenceKind, SpiceModelSource,
 };
 use std::collections::BTreeMap;
 
@@ -185,6 +186,38 @@ impl ComponentModelMappingService {
             blocking_count,
             warning_count,
             components,
+        }
+    }
+
+    pub fn build_persisted_instance_assignment(
+        &self,
+        assignment: &ComponentModelAssignment,
+    ) -> Option<PersistedInstanceModelAssignment> {
+        let instance_id = assignment.component_instance_id.clone()?;
+        let model_asset_id = assignment.model_ref.as_ref()?.id.clone();
+        Some(PersistedInstanceModelAssignment {
+            instance_id,
+            component_definition_id: assignment.component_definition_id.clone(),
+            model_asset_id,
+            pin_mappings: assignment.pin_mappings.clone(),
+            parameter_bindings: assignment.parameter_bindings.clone(),
+        })
+    }
+
+    pub fn apply_persisted_assignments(
+        &self,
+        project: &mut CircuitProject,
+        assignments: &[PersistedInstanceModelAssignment],
+    ) {
+        for persisted in assignments {
+            if let Some(instance) = project
+                .schematic
+                .components
+                .iter_mut()
+                .find(|c| c.instance_id == persisted.instance_id)
+            {
+                instance.selected_simulation_model_id = Some(persisted.model_asset_id.clone());
+            }
         }
     }
 }

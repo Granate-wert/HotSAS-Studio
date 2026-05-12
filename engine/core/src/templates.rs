@@ -57,6 +57,8 @@ pub fn rc_low_pass_project() -> CircuitProject {
         simulation_profiles: vec![rc_low_pass_ac_profile()],
         linked_libraries: vec!["basic-electronics".to_string(), "filters".to_string()],
         reports: vec![],
+        imported_model_catalog: None,
+        persisted_model_assignments: vec![],
     }
 }
 

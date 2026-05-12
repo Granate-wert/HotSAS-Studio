@@ -143,6 +143,25 @@ impl ComponentLibraryService {
             })
     }
 
+    pub fn find_definition(&self, definition_id: &str) -> Option<ComponentDefinition> {
+        self.library_port
+            .load_builtin_library()
+            .ok()
+            .and_then(|lib| {
+                lib.components
+                    .iter()
+                    .find(|c| c.id == definition_id)
+                    .cloned()
+            })
+            .or_else(|| {
+                hotsas_core::built_in_component_library()
+                    .components
+                    .iter()
+                    .find(|c| c.id == definition_id)
+                    .cloned()
+            })
+    }
+
     pub fn get_symbol_for_component(
         &self,
         library: &ComponentLibrary,

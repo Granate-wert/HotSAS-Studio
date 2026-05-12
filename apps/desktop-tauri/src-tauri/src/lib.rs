@@ -31,6 +31,7 @@ use hotsas_api::{
     UserCircuitSimulationProfileDto, UserCircuitSimulationRunDto, VerticalSliceDto,
     CircuitAnalysisPortDto, FilterAnalysisDiagnosticDto, FilterNetworkAnalysisRequestDto,
     FilterNetworkAnalysisResultDto, AnalyzeTouchstoneRequestDto, SParameterAnalysisResultDto,
+    ModelCatalogDto, ProjectModelPersistenceSummaryDto,
 };
 use hotsas_application::{AppServices, ApplicationError};
 use log::LevelFilter;
@@ -424,6 +425,26 @@ fn validate_project_package(
         .validate_project_package(package_dir)
         .map_err(tauri_error);
     log_command_result("validate_project_package", &result);
+    result
+}
+
+#[tauri::command]
+fn get_project_model_catalog(api: State<'_, HotSasApi>) -> Result<ModelCatalogDto, String> {
+    log::info!("COMMAND get_project_model_catalog");
+    let result = api.get_project_model_catalog().map_err(tauri_error);
+    log_command_result("get_project_model_catalog", &result);
+    result
+}
+
+#[tauri::command]
+fn validate_project_model_persistence(
+    api: State<'_, HotSasApi>,
+) -> Result<ProjectModelPersistenceSummaryDto, String> {
+    log::info!("COMMAND validate_project_model_persistence");
+    let result = api
+        .validate_project_model_persistence()
+        .map_err(tauri_error);
+    log_command_result("validate_project_model_persistence", &result);
     result
 }
 
@@ -1403,6 +1424,8 @@ pub fn run() {
             save_project_package,
             load_project_package,
             validate_project_package,
+            get_project_model_catalog,
+            validate_project_model_persistence,
             run_vertical_slice_preview,
             get_selected_component,
             update_component_parameter,

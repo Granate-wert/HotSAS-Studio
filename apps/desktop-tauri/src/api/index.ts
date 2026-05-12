@@ -98,6 +98,8 @@ import type {
   FilterNetworkAnalysisResult,
   SParameterAnalysisResult,
   AnalyzeTouchstoneRequest,
+  ModelCatalogDto,
+  ProjectModelPersistenceSummaryDto,
 } from "../types";
 
 async function invokeCommand<T>(command: string, args?: Record<string, unknown>) {
@@ -340,4 +342,8 @@ export const backend = {
   getLastSParameterAnalysis: () =>
     invokeCommand<SParameterAnalysisResult | null>("get_last_s_parameter_analysis"),
   clearLastSParameterAnalysis: () => invokeCommand<void>("clear_last_s_parameter_analysis"),
+  // v3.4 model persistence
+  getProjectModelCatalog: () => invokeCommand<ModelCatalogDto>("get_project_model_catalog"),
+  validateProjectModelPersistence: () =>
+    invokeCommand<ProjectModelPersistenceSummaryDto>("validate_project_model_persistence"),
 };

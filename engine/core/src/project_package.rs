@@ -13,6 +13,8 @@ pub struct ProjectPackageFiles {
     pub simulation_profiles: String,
     pub reports_index: String,
     pub results_index: String,
+    pub model_catalog: String,
+    pub model_assignments: String,
 }
 
 impl Default for ProjectPackageFiles {
@@ -24,6 +26,8 @@ impl Default for ProjectPackageFiles {
             simulation_profiles: "simulation_profiles.json".to_string(),
             reports_index: "reports/index.json".to_string(),
             results_index: "results/index.json".to_string(),
+            model_catalog: "models/catalog.json".to_string(),
+            model_assignments: "model_assignments.json".to_string(),
         }
     }
 }

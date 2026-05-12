@@ -160,6 +160,28 @@ pub trait ProjectPackageStoragePort: Send + Sync {
         &self,
         package_dir: &Path,
     ) -> Result<ProjectPackageValidationReport, PortError>;
+
+    fn save_model_catalog(
+        &self,
+        package_dir: &Path,
+        catalog: &hotsas_core::PersistedModelCatalog,
+    ) -> Result<(), PortError>;
+
+    fn load_model_catalog(
+        &self,
+        package_dir: &Path,
+    ) -> Result<hotsas_core::PersistedModelCatalog, PortError>;
+
+    fn save_model_assignments(
+        &self,
+        package_dir: &Path,
+        assignments: &[hotsas_core::PersistedInstanceModelAssignment],
+    ) -> Result<(), PortError>;
+
+    fn load_model_assignments(
+        &self,
+        package_dir: &Path,
+    ) -> Result<Vec<hotsas_core::PersistedInstanceModelAssignment>, PortError>;
 }
 
 pub trait BomExporterPort: Send + Sync {

@@ -32,8 +32,9 @@ use hotsas_application::{
 use hotsas_core::{
     rc_low_pass_formula, CircuitProject, ComponentAssignment, ComponentDefinition,
     ComponentLibrary, ComponentLibraryQuery, EngineeringNotebook, EngineeringUnit,
-    FormulaDefinition, FormulaPack, NotebookBlock, NotebookEvaluationStatus, NotebookHistoryEntry,
-    ValueWithUnit,
+    FormulaDefinition, FormulaPack, ModelAssetValidationDiagnostic, NotebookBlock,
+    NotebookEvaluationStatus, NotebookHistoryEntry, PersistedModelAssetStatus,
+    ProjectModelPersistenceSummary, ValueWithUnit,
 };
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -264,14 +265,17 @@ impl HotSasApi {
         let project = self.current_project()?;
         let manifest = self
             .services
-            .save_project_package(Path::new(&package_dir), &project)?;
+            .save_project_package_with_models(Path::new(&package_dir), &project)?;
+        self.services
+            .project_session_service()
+            .set_current_project(&project, Some(package_dir));
         Ok(ProjectPackageManifestDto::from(&manifest))
     }
 
     pub fn load_project_package(&self, package_dir: String) -> Result<ProjectDto, ApiError> {
         let project = self
             .services
-            .load_project_package(Path::new(&package_dir))?;
+            .load_project_package_with_models(Path::new(&package_dir))?;
         self.replace_current_project(project.clone())?;
         self.services
             .project_session_service()
@@ -287,6 +291,115 @@ impl HotSasApi {
             .services
             .validate_project_package(Path::new(&package_dir))?;
         Ok(ProjectPackageValidationReportDto::from(&report))
+    }
+
+    pub fn get_project_model_catalog(&self) -> Result<crate::ModelCatalogDto, ApiError> {
+        let project = self.current_project()?;
+        let catalog = project.imported_model_catalog.clone().unwrap_or_default();
+        Ok(crate::ModelCatalogDto::from(&catalog))
+    }
+
+    pub fn validate_project_model_persistence(
+        &self,
+    ) -> Result<crate::ProjectModelPersistenceSummaryDto, ApiError> {
+        let project = self.current_project()?;
+        let catalog = project.imported_model_catalog.clone().unwrap_or_default();
+        let assignments = &project.persisted_model_assignments;
+        let mut diagnostics = Vec::new();
+        let mut missing_count = 0usize;
+        let mut stale_count = 0usize;
+
+        for assignment in assignments {
+            let asset_exists = catalog
+                .assets
+                .iter()
+                .any(|a| a.id == assignment.model_asset_id);
+            if !asset_exists {
+                missing_count += 1;
+                diagnostics.push(ModelAssetValidationDiagnostic {
+                    code: "STALE_ASSIGNMENT".to_string(),
+                    severity: "warning".to_string(),
+                    title: "Assignment references missing model asset".to_string(),
+                    message: format!(
+                        "Instance '{}' references model asset '{}' which is not in the catalog.",
+                        assignment.instance_id, assignment.model_asset_id
+                    ),
+                    asset_id: Some(assignment.model_asset_id.clone()),
+                    assignment_id: Some(assignment.instance_id.clone()),
+                });
+            }
+        }
+
+        for asset in &catalog.assets {
+            if matches!(
+                asset.status,
+                PersistedModelAssetStatus::Missing | PersistedModelAssetStatus::Stale
+            ) {
+                stale_count += 1;
+                diagnostics.push(ModelAssetValidationDiagnostic {
+                    code: "MISSING_ASSET".to_string(),
+                    severity: "warning".to_string(),
+                    title: "Model asset is missing or stale".to_string(),
+                    message: format!(
+                        "Asset '{}' ({}) status is {:?}.",
+                        asset.id, asset.name, asset.status
+                    ),
+                    asset_id: Some(asset.id.clone()),
+                    assignment_id: None,
+                });
+            }
+        }
+
+        if catalog.assets.is_empty() && !assignments.is_empty() {
+            diagnostics.push(ModelAssetValidationDiagnostic {
+                code: "LEGACY_PACKAGE".to_string(),
+                severity: "info".to_string(),
+                title: "Legacy package without model catalog".to_string(),
+                message: "Project has persisted assignments but no model catalog. This is acceptable for backward compatibility.".to_string(),
+                asset_id: None,
+                assignment_id: None,
+            });
+        }
+
+        let summary = ProjectModelPersistenceSummary {
+            asset_count: catalog.assets.len(),
+            spice_model_count: catalog
+                .assets
+                .iter()
+                .filter(|a| matches!(a.kind, hotsas_core::PersistedModelAssetKind::SpiceModel))
+                .count(),
+            subcircuit_count: catalog
+                .assets
+                .iter()
+                .filter(|a| {
+                    matches!(
+                        a.kind,
+                        hotsas_core::PersistedModelAssetKind::SpiceSubcircuit
+                    )
+                })
+                .count(),
+            touchstone_dataset_count: catalog
+                .assets
+                .iter()
+                .filter(|a| {
+                    matches!(
+                        a.kind,
+                        hotsas_core::PersistedModelAssetKind::TouchstoneDataset
+                    )
+                })
+                .count(),
+            component_assignment_count: assignments
+                .iter()
+                .filter(|a| a.instance_id.is_empty())
+                .count(),
+            instance_assignment_count: assignments.len(),
+            missing_asset_reference_count: missing_count,
+            stale_assignment_count: stale_count,
+            diagnostics,
+            ready: missing_count == 0 && stale_count == 0,
+        };
+
+        Ok(crate::ProjectModelPersistenceSummaryDto::from(&summary))
     }
 
     pub fn get_selected_component(

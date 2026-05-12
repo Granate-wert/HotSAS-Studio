@@ -1,5 +1,6 @@
 use hotsas_api::{HotSasApi, SimulationRunRequestDto};
 use hotsas_application::AppServices;
+use hotsas_core::{CircuitProject, ProjectPackageManifest, ProjectPackageValidationReport};
 use hotsas_ports::SimulationEnginePort;
 use std::sync::Arc;
 
@@ -131,6 +132,36 @@ impl hotsas_ports::ProjectPackageStoragePort for FakeProjectPackageStorage {
             warnings: vec![],
             errors: vec![],
         })
+    }
+
+    fn save_model_catalog(
+        &self,
+        _package_dir: &std::path::Path,
+        _catalog: &hotsas_core::PersistedModelCatalog,
+    ) -> Result<(), hotsas_ports::PortError> {
+        Ok(())
+    }
+
+    fn load_model_catalog(
+        &self,
+        _package_dir: &std::path::Path,
+    ) -> Result<hotsas_core::PersistedModelCatalog, hotsas_ports::PortError> {
+        Ok(Default::default())
+    }
+
+    fn save_model_assignments(
+        &self,
+        _package_dir: &std::path::Path,
+        _assignments: &[hotsas_core::PersistedInstanceModelAssignment],
+    ) -> Result<(), hotsas_ports::PortError> {
+        Ok(())
+    }
+
+    fn load_model_assignments(
+        &self,
+        _package_dir: &std::path::Path,
+    ) -> Result<Vec<hotsas_core::PersistedInstanceModelAssignment>, hotsas_ports::PortError> {
+        Ok(vec![])
     }
 }
 

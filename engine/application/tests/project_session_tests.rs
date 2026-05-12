@@ -1,5 +1,5 @@
 use hotsas_application::ProjectSessionService;
-use hotsas_core::CircuitProject;
+use hotsas_core::{CircuitProject, ProjectPackageManifest, ProjectPackageValidationReport};
 use hotsas_ports::PortError;
 use std::path::Path;
 use std::path::PathBuf;
@@ -47,6 +47,36 @@ impl hotsas_ports::ProjectPackageStoragePort for FakeProjectPackageStorage {
             warnings: vec![],
             errors: vec![],
         })
+    }
+
+    fn save_model_catalog(
+        &self,
+        _package_dir: &Path,
+        _catalog: &hotsas_core::PersistedModelCatalog,
+    ) -> Result<(), PortError> {
+        Ok(())
+    }
+
+    fn load_model_catalog(
+        &self,
+        _package_dir: &Path,
+    ) -> Result<hotsas_core::PersistedModelCatalog, PortError> {
+        Ok(Default::default())
+    }
+
+    fn save_model_assignments(
+        &self,
+        _package_dir: &Path,
+        _assignments: &[hotsas_core::PersistedInstanceModelAssignment],
+    ) -> Result<(), PortError> {
+        Ok(())
+    }
+
+    fn load_model_assignments(
+        &self,
+        _package_dir: &Path,
+    ) -> Result<Vec<hotsas_core::PersistedInstanceModelAssignment>, PortError> {
+        Ok(vec![])
     }
 }
 

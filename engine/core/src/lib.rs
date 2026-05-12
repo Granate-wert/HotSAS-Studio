@@ -10,6 +10,8 @@ pub mod dcdc;
 pub mod error;
 pub mod export;
 pub mod model_import;
+pub mod model_persistence;
+pub use model_persistence::*;
 pub mod models;
 pub mod ngspice;
 pub mod notebook;

@@ -1,6 +1,6 @@
 use hotsas_core::{
-    CircuitProject, ComponentInstance, ComponentModelAssignment, SimulationModel,
-    SimulationModelKind, SpiceModelReferenceKind, ValueWithUnit,
+    CircuitModel, CircuitProject, ComponentInstance, ComponentModelAssignment, ConnectedPin, Net,
+    Point, SimulationModel, SimulationModelKind, SpiceModelReferenceKind, ValueWithUnit,
 };
 use hotsas_ports::{NetlistExporterPort, PortError};
 use std::collections::BTreeMap;
@@ -434,7 +434,6 @@ fn sanitize(id: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hotsas_core::{CircuitModel, CircuitProject, ComponentInstance, ConnectedPin, Net, Point};
     use std::collections::BTreeMap;
 
     fn make_project() -> CircuitProject {
@@ -459,6 +458,8 @@ mod tests {
             simulation_profiles: vec![],
             linked_libraries: vec![],
             reports: vec![],
+            imported_model_catalog: None,
+            persisted_model_assignments: vec![],
         }
     }
 

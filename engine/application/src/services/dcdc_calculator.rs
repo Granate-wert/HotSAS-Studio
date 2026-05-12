@@ -2,7 +2,7 @@ use crate::ApplicationError;
 use hotsas_core::{
     DcdcCalculationResult, DcdcComputedValue, DcdcInput, DcdcOperatingMode, DcdcSimulationPlan,
     DcdcTemplateDefinition, DcdcTopology, DcdcWarning, DcdcWarningSeverity, EngineeringUnit,
-    ValueWithUnit,
+    GraphPoint, GraphSeries, SimulationResult, SimulationStatus, ValueWithUnit,
 };
 use std::collections::BTreeMap;
 
@@ -568,8 +568,6 @@ impl DcdcCalculatorService {
         &self,
         result: &DcdcCalculationResult,
     ) -> Result<hotsas_core::SimulationResult, ApplicationError> {
-        use hotsas_core::{GraphPoint, GraphSeries, SimulationResult, SimulationStatus};
-
         let fs = result.inputs.switching_frequency.si_value();
         let t_stop = 5.0 / fs;
         let n_points = 200;

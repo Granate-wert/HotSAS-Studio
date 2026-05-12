@@ -13,8 +13,8 @@ use crate::{
     TwoPortFilterAnalysisService,
 };
 use hotsas_core::{
-    CircuitProject, PreferredValueResult, ProjectPackageManifest, ProjectPackageValidationReport,
-    ReportModel, SimulationResult, ValueWithUnit,
+    CircuitProject, ComponentDefinition, PreferredValueResult, ProjectPackageManifest,
+    ProjectPackageValidationReport, ReportModel, SimulationResult, ValueWithUnit,
 };
 use hotsas_ports::{
     BomExporterPort, ComponentLibraryExporterPort, ComponentLibraryPort, FormulaEnginePort,
@@ -356,12 +356,73 @@ impl AppServices {
             .save_project_package(package_dir, project)
     }
 
+    pub fn save_project_package_with_models(
+        &self,
+        package_dir: &Path,
+        project: &CircuitProject,
+    ) -> Result<ProjectPackageManifest, ApplicationError> {
+        let mut project = project.clone();
+        project.imported_model_catalog =
+            Some(self.model_import_service.build_persisted_model_catalog()?);
+        let assignments: Vec<_> = project
+            .schematic
+            .components
+            .iter()
+            .filter_map(|instance| {
+                let def = self
+                    .component_library_service
+                    .find_definition(&instance.definition_id)
+                    .unwrap_or_else(|| ComponentDefinition {
+                        id: instance.definition_id.clone(),
+                        name: instance.definition_id.clone(),
+                        category: "unknown".to_string(),
+                        manufacturer: None,
+                        part_number: None,
+                        description: None,
+                        parameters: std::collections::BTreeMap::new(),
+                        ratings: std::collections::BTreeMap::new(),
+                        symbol_ids: vec![],
+                        footprint_ids: vec![],
+                        simulation_models: vec![],
+                        datasheets: vec![],
+                        tags: vec![],
+                        metadata: std::collections::BTreeMap::new(),
+                    });
+                let assignment = self
+                    .component_model_mapping_service
+                    .get_instance_model_assignment(instance, &def);
+                self.component_model_mapping_service
+                    .build_persisted_instance_assignment(&assignment)
+            })
+            .collect();
+        project.persisted_model_assignments = assignments;
+        self.project_package_service
+            .save_project_package(package_dir, &project)
+    }
+
     pub fn load_project_package(
         &self,
         package_dir: &Path,
     ) -> Result<CircuitProject, ApplicationError> {
         self.project_package_service
             .load_project_package(package_dir)
+    }
+
+    pub fn load_project_package_with_models(
+        &self,
+        package_dir: &Path,
+    ) -> Result<CircuitProject, ApplicationError> {
+        let mut project = self
+            .project_package_service
+            .load_project_package(package_dir)?;
+        if let Some(ref catalog) = project.imported_model_catalog {
+            self.model_import_service
+                .restore_imported_models_from_catalog(catalog)?;
+        }
+        let persisted = project.persisted_model_assignments.clone();
+        self.component_model_mapping_service
+            .apply_persisted_assignments(&mut project, &persisted);
+        Ok(project)
     }
 
     pub fn validate_project_package(

@@ -4,6 +4,7 @@ use hotsas_api::{
     UserCircuitSimulationProfileDto,
 };
 use hotsas_application::AppServices;
+use hotsas_core::{CircuitProject, ProjectPackageManifest, ProjectPackageValidationReport};
 use hotsas_ports::{
     BomExporterPort, ComponentLibraryExporterPort, ComponentLibraryPort, NetlistExporterPort,
     PortError, ProjectPackageStoragePort, ReportExporterPort, SchematicExporterPort,
@@ -39,21 +40,23 @@ impl ProjectPackageStoragePort for FakeProjectPackageStorage {
     fn save_project_package(
         &self,
         _package_dir: &std::path::Path,
-        project: &hotsas_core::CircuitProject,
+        _project: &CircuitProject,
     ) -> Result<hotsas_core::ProjectPackageManifest, PortError> {
-        Ok(hotsas_core::ProjectPackageManifest::new(
-            project.id.clone(),
-            project.name.clone(),
-            "2024-01-01T00:00:00Z".to_string(),
-            "2024-01-01T00:00:00Z".to_string(),
+        Ok(ProjectPackageManifest::new(
+            "test".to_string(),
+            "Test".to_string(),
+            "now".to_string(),
+            "now".to_string(),
         ))
     }
+
     fn load_project_package(
         &self,
         _package_dir: &std::path::Path,
-    ) -> Result<hotsas_core::CircuitProject, PortError> {
-        Ok(hotsas_core::rc_low_pass_project())
+    ) -> Result<CircuitProject, PortError> {
+        Err(PortError::Storage("not implemented".to_string()))
     }
+
     fn validate_project_package(
         &self,
         _package_dir: &std::path::Path,
@@ -65,6 +68,36 @@ impl ProjectPackageStoragePort for FakeProjectPackageStorage {
             warnings: vec![],
             errors: vec![],
         })
+    }
+
+    fn save_model_catalog(
+        &self,
+        _package_dir: &std::path::Path,
+        _catalog: &hotsas_core::PersistedModelCatalog,
+    ) -> Result<(), PortError> {
+        Ok(())
+    }
+
+    fn load_model_catalog(
+        &self,
+        _package_dir: &std::path::Path,
+    ) -> Result<hotsas_core::PersistedModelCatalog, PortError> {
+        Ok(Default::default())
+    }
+
+    fn save_model_assignments(
+        &self,
+        _package_dir: &std::path::Path,
+        _assignments: &[hotsas_core::PersistedInstanceModelAssignment],
+    ) -> Result<(), PortError> {
+        Ok(())
+    }
+
+    fn load_model_assignments(
+        &self,
+        _package_dir: &std::path::Path,
+    ) -> Result<Vec<hotsas_core::PersistedInstanceModelAssignment>, PortError> {
+        Ok(vec![])
     }
 }
 

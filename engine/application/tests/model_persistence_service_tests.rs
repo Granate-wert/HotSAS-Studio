@@ -1,41 +1,36 @@
-use hotsas_api::HotSasApi;
-use hotsas_application::AppServices;
-use hotsas_core::{CircuitProject, ProjectPackageManifest, ProjectPackageValidationReport};
+use hotsas_application::{AppServices, ComponentModelMappingService, ModelImportService};
+use hotsas_core::{
+    ComponentModelAssignment, ComponentModelAssignmentStatus, PersistedInstanceModelAssignment,
+    SimulationReadiness, SpiceModelReference, SpiceModelReferenceKind, SpiceModelSource,
+};
 use hotsas_ports::{
-    BomExporterPort, ComponentLibraryExporterPort, FormulaEnginePort, NetlistExporterPort,
-    PortError, ProjectPackageStoragePort, ReportExporterPort, SchematicExporterPort,
-    SimulationDataExporterPort, SimulationEnginePort, StoragePort,
+    BomExporterPort, ComponentLibraryExporterPort, ComponentLibraryPort, FormulaEnginePort,
+    NetlistExporterPort, PortError, ProjectPackageStoragePort, ReportExporterPort,
+    SchematicExporterPort, SimulationDataExporterPort, SimulationEnginePort, SpiceModelParserPort,
+    StoragePort, TouchstoneParserPort,
 };
 use std::path::Path;
 use std::sync::Arc;
 
-#[derive(Debug, Default)]
-struct FakeComponentLibraryStorage;
-
-impl hotsas_ports::ComponentLibraryPort for FakeComponentLibraryStorage {
-    fn load_builtin_library(
-        &self,
-    ) -> Result<hotsas_core::ComponentLibrary, hotsas_ports::PortError> {
-        Ok(hotsas_core::built_in_component_library())
-    }
-    fn load_library_from_path(
-        &self,
-        _path: &std::path::Path,
-    ) -> Result<hotsas_core::ComponentLibrary, hotsas_ports::PortError> {
-        Err(hotsas_ports::PortError::Storage(
-            "not implemented".to_string(),
-        ))
-    }
-    fn save_library_to_path(
-        &self,
-        _path: &std::path::Path,
-        _library: &hotsas_core::ComponentLibrary,
-    ) -> Result<(), hotsas_ports::PortError> {
-        Ok(())
-    }
+fn fake_services() -> AppServices {
+    AppServices::new(
+        Arc::new(FakeStorage),
+        Arc::new(FakeProjectPackageStorage::default()),
+        Arc::new(FakeFormulaEngine),
+        Arc::new(FakeNetlistExporter),
+        Arc::new(FakeSimulationEngine),
+        Arc::new(FakeSimulationEngine),
+        Arc::new(FakeReportExporter),
+        Arc::new(FakeComponentLibraryStorage),
+        Arc::new(FakeBomExporter),
+        Arc::new(FakeSimulationDataExporter),
+        Arc::new(FakeComponentLibraryExporter),
+        Arc::new(FakeSchematicExporter),
+        Arc::new(FakeSpiceParser),
+        Arc::new(FakeTouchstoneParser),
+    )
 }
 
-#[derive(Debug, Default)]
 struct FakeStorage;
 
 impl StoragePort for FakeStorage {
@@ -57,27 +52,25 @@ struct FakeProjectPackageStorage;
 impl ProjectPackageStoragePort for FakeProjectPackageStorage {
     fn save_project_package(
         &self,
-        _package_dir: &std::path::Path,
-        _project: &CircuitProject,
+        _package_dir: &Path,
+        _project: &hotsas_core::CircuitProject,
     ) -> Result<hotsas_core::ProjectPackageManifest, PortError> {
-        Ok(ProjectPackageManifest::new(
+        Ok(hotsas_core::ProjectPackageManifest::new(
             "test".to_string(),
             "Test".to_string(),
             "now".to_string(),
             "now".to_string(),
         ))
     }
-
     fn load_project_package(
         &self,
-        _package_dir: &std::path::Path,
-    ) -> Result<CircuitProject, PortError> {
+        _package_dir: &Path,
+    ) -> Result<hotsas_core::CircuitProject, PortError> {
         Err(PortError::Storage("not implemented".to_string()))
     }
-
     fn validate_project_package(
         &self,
-        _package_dir: &std::path::Path,
+        _package_dir: &Path,
     ) -> Result<hotsas_core::ProjectPackageValidationReport, PortError> {
         Ok(hotsas_core::ProjectPackageValidationReport {
             valid: true,
@@ -87,39 +80,34 @@ impl ProjectPackageStoragePort for FakeProjectPackageStorage {
             errors: vec![],
         })
     }
-
     fn save_model_catalog(
         &self,
-        _package_dir: &std::path::Path,
+        _package_dir: &Path,
         _catalog: &hotsas_core::PersistedModelCatalog,
     ) -> Result<(), PortError> {
         Ok(())
     }
-
     fn load_model_catalog(
         &self,
-        _package_dir: &std::path::Path,
+        _package_dir: &Path,
     ) -> Result<hotsas_core::PersistedModelCatalog, PortError> {
         Ok(Default::default())
     }
-
     fn save_model_assignments(
         &self,
-        _package_dir: &std::path::Path,
+        _package_dir: &Path,
         _assignments: &[hotsas_core::PersistedInstanceModelAssignment],
     ) -> Result<(), PortError> {
         Ok(())
     }
-
     fn load_model_assignments(
         &self,
-        _package_dir: &std::path::Path,
+        _package_dir: &Path,
     ) -> Result<Vec<hotsas_core::PersistedInstanceModelAssignment>, PortError> {
         Ok(vec![])
     }
 }
 
-#[derive(Debug, Default)]
 struct FakeFormulaEngine;
 
 impl FormulaEnginePort for FakeFormulaEngine {
@@ -132,7 +120,6 @@ impl FormulaEnginePort for FakeFormulaEngine {
     }
 }
 
-#[derive(Debug, Default)]
 struct FakeNetlistExporter;
 
 impl NetlistExporterPort for FakeNetlistExporter {
@@ -140,11 +127,10 @@ impl NetlistExporterPort for FakeNetlistExporter {
         &self,
         _project: &hotsas_core::CircuitProject,
     ) -> Result<String, PortError> {
-        Err(PortError::Export("not implemented".to_string()))
+        Ok("".to_string())
     }
 }
 
-#[derive(Debug, Default)]
 struct FakeSimulationEngine;
 
 impl SimulationEnginePort for FakeSimulationEngine {
@@ -160,19 +146,38 @@ impl SimulationEnginePort for FakeSimulationEngine {
     }
 }
 
-#[derive(Debug, Default)]
 struct FakeReportExporter;
 
 impl ReportExporterPort for FakeReportExporter {
     fn export_markdown(&self, _report: &hotsas_core::ReportModel) -> Result<String, PortError> {
-        Err(PortError::Export("not implemented".to_string()))
+        Ok("".to_string())
     }
     fn export_html(&self, _report: &hotsas_core::ReportModel) -> Result<String, PortError> {
-        Err(PortError::Export("not implemented".to_string()))
+        Ok("".to_string())
     }
 }
 
-#[derive(Debug, Default)]
+struct FakeComponentLibraryStorage;
+
+impl ComponentLibraryPort for FakeComponentLibraryStorage {
+    fn load_builtin_library(&self) -> Result<hotsas_core::ComponentLibrary, PortError> {
+        Ok(hotsas_core::built_in_component_library())
+    }
+    fn load_library_from_path(
+        &self,
+        _path: &Path,
+    ) -> Result<hotsas_core::ComponentLibrary, PortError> {
+        Ok(hotsas_core::built_in_component_library())
+    }
+    fn save_library_to_path(
+        &self,
+        _path: &Path,
+        _library: &hotsas_core::ComponentLibrary,
+    ) -> Result<(), PortError> {
+        Ok(())
+    }
+}
+
 struct FakeBomExporter;
 
 impl BomExporterPort for FakeBomExporter {
@@ -184,7 +189,6 @@ impl BomExporterPort for FakeBomExporter {
     }
 }
 
-#[derive(Debug, Default)]
 struct FakeSimulationDataExporter;
 
 impl SimulationDataExporterPort for FakeSimulationDataExporter {
@@ -196,7 +200,6 @@ impl SimulationDataExporterPort for FakeSimulationDataExporter {
     }
 }
 
-#[derive(Debug, Default)]
 struct FakeComponentLibraryExporter;
 
 impl ComponentLibraryExporterPort for FakeComponentLibraryExporter {
@@ -208,7 +211,6 @@ impl ComponentLibraryExporterPort for FakeComponentLibraryExporter {
     }
 }
 
-#[derive(Debug, Default)]
 struct FakeSchematicExporter;
 
 impl SchematicExporterPort for FakeSchematicExporter {
@@ -220,10 +222,9 @@ impl SchematicExporterPort for FakeSchematicExporter {
     }
 }
 
-#[derive(Debug, Default)]
 struct FakeSpiceParser;
 
-impl hotsas_ports::SpiceModelParserPort for FakeSpiceParser {
+impl SpiceModelParserPort for FakeSpiceParser {
     fn parse_spice_models_from_str(
         &self,
         _source_name: Option<String>,
@@ -233,7 +234,7 @@ impl hotsas_ports::SpiceModelParserPort for FakeSpiceParser {
             status: hotsas_core::ModelImportStatus::Parsed,
             source: hotsas_core::ImportedModelSource {
                 file_name: None,
-                file_path: None,
+                file_path: Some("".to_string()),
                 source_format: "spice".to_string(),
                 content_hash: None,
             },
@@ -245,10 +246,9 @@ impl hotsas_ports::SpiceModelParserPort for FakeSpiceParser {
     }
 }
 
-#[derive(Debug, Default)]
 struct FakeTouchstoneParser;
 
-impl hotsas_ports::TouchstoneParserPort for FakeTouchstoneParser {
+impl TouchstoneParserPort for FakeTouchstoneParser {
     fn parse_touchstone_from_str(
         &self,
         _source_name: Option<String>,
@@ -263,76 +263,61 @@ impl hotsas_ports::TouchstoneParserPort for FakeTouchstoneParser {
     }
 }
 
-fn test_api() -> HotSasApi {
-    let mut services = AppServices::new(
-        Arc::new(FakeStorage),
-        Arc::new(FakeProjectPackageStorage::default()),
-        Arc::new(FakeFormulaEngine),
-        Arc::new(FakeNetlistExporter),
-        Arc::new(FakeSimulationEngine),
-        Arc::new(FakeSimulationEngine),
-        Arc::new(FakeReportExporter),
-        Arc::new(FakeComponentLibraryStorage),
-        Arc::new(FakeBomExporter),
-        Arc::new(FakeSimulationDataExporter),
-        Arc::new(FakeComponentLibraryExporter),
-        Arc::new(FakeSchematicExporter),
-        Arc::new(FakeSpiceParser),
-        Arc::new(FakeTouchstoneParser),
+#[test]
+fn model_import_service_builds_catalog_from_imported_models() {
+    let parser = Arc::new(FakeSpiceParser);
+    let touchstone = Arc::new(FakeTouchstoneParser);
+    let model_import = ModelImportService::new(parser, touchstone);
+
+    // Initially empty
+    let catalog = model_import.build_persisted_model_catalog().unwrap();
+    assert_eq!(catalog.assets.len(), 0);
+}
+
+#[test]
+fn component_model_mapping_builds_persisted_assignment() {
+    let mapping = ComponentModelMappingService::new();
+    let assignment = ComponentModelAssignment {
+        component_definition_id: "resistor".to_string(),
+        component_instance_id: Some("R1".to_string()),
+        model_ref: Some(SpiceModelReference {
+            id: "builtin_resistor_primitive".to_string(),
+            display_name: "Resistor".to_string(),
+            model_kind: SpiceModelReferenceKind::PrimitiveModel,
+            source: SpiceModelSource::Builtin,
+            status: ComponentModelAssignmentStatus::AssignedBuiltin,
+            limitations: vec![],
+            warnings: vec![],
+        }),
+        pin_mappings: vec![],
+        parameter_bindings: vec![],
+        status: ComponentModelAssignmentStatus::AssignedBuiltin,
+        readiness: SimulationReadiness::ready(),
+        diagnostics: vec![],
+    };
+
+    let persisted = mapping.build_persisted_instance_assignment(&assignment);
+    assert!(persisted.is_some());
+    let p = persisted.unwrap();
+    assert_eq!(p.instance_id, "R1");
+    assert_eq!(p.model_asset_id, "builtin_resistor_primitive");
+}
+
+#[test]
+fn component_model_mapping_applies_persisted_assignments() {
+    let mapping = ComponentModelMappingService::new();
+    let mut project = hotsas_core::rc_low_pass_project();
+    let persisted = vec![PersistedInstanceModelAssignment {
+        instance_id: project.schematic.components[0].instance_id.clone(),
+        component_definition_id: project.schematic.components[0].definition_id.clone(),
+        model_asset_id: "custom_model".to_string(),
+        pin_mappings: vec![],
+        parameter_bindings: vec![],
+    }];
+
+    mapping.apply_persisted_assignments(&mut project, &persisted);
+    assert_eq!(
+        project.schematic.components[0].selected_simulation_model_id,
+        Some("custom_model".to_string())
     );
-    let nonce = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    let temp = std::env::temp_dir().join(format!(
-        "hotsas_api_test_{}_{}.json",
-        std::process::id(),
-        nonce
-    ));
-    let _ = std::fs::remove_file(&temp);
-    services.set_project_session_settings_path(temp);
-    HotSasApi::new(services)
-}
-
-#[test]
-fn get_project_session_state_returns_clean_initially() {
-    let api = test_api();
-    let state = api.get_project_session_state().unwrap();
-    assert!(!state.dirty);
-    assert!(state.current_project_id.is_none());
-}
-
-#[test]
-fn save_project_as_requires_project() {
-    let api = test_api();
-    let result = api.save_project_as("test.circuit".to_string());
-    assert!(result.is_err());
-}
-
-#[test]
-fn open_project_package_without_confirm_on_dirty_fails() {
-    let api = test_api();
-    api.create_rc_low_pass_demo_project().unwrap();
-    api.save_project_as("demo.circuit".to_string()).unwrap();
-    // add component to make dirty
-    let _ = api.add_schematic_component(hotsas_api::AddComponentRequestDto {
-        component_kind: "resistor".to_string(),
-        component_definition_id: None,
-        instance_id: None,
-        x: 100.0,
-        y: 100.0,
-        rotation_deg: 0.0,
-    });
-    let result = api.open_project_package(hotsas_api::ProjectOpenRequestDto {
-        path: "demo.circuit".to_string(),
-        confirm_discard_unsaved: false,
-    });
-    assert!(result.is_err());
-}
-
-#[test]
-fn list_recent_projects_works() {
-    let api = test_api();
-    let result = api.list_recent_projects().unwrap();
-    assert!(result.is_empty());
 }

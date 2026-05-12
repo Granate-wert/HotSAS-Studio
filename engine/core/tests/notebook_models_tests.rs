@@ -1,6 +1,6 @@
 use hotsas_core::{
-    EngineeringNotebook, NotebookBlock, NotebookBlockKind, NotebookEvaluationResult,
-    NotebookEvaluationStatus, NotebookHistoryEntry,
+    EngineeringNotebook, EngineeringUnit, NotebookBlock, NotebookBlockKind,
+    NotebookEvaluationResult, NotebookEvaluationStatus, NotebookHistoryEntry, ValueWithUnit,
 };
 
 #[test]
@@ -29,7 +29,6 @@ fn notebook_block_stores_result() {
 
 #[test]
 fn notebook_evaluation_result_stores_outputs() {
-    use hotsas_core::{EngineeringUnit, ValueWithUnit};
     use std::collections::BTreeMap;
 
     let mut outputs = BTreeMap::new();

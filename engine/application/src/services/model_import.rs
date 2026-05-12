@@ -1,8 +1,9 @@
 use crate::ApplicationError;
 use hotsas_core::{
     AttachImportedModelRequest, ComponentDefinition, ImportedModelDetails, ImportedModelSummary,
-    SpiceImportReport, SpicePinMappingRequest, SpicePinMappingValidationReport,
-    TouchstoneImportReport,
+    PersistedModelAsset, PersistedModelAssetKind, PersistedModelAssetSource,
+    PersistedModelAssetStatus, PersistedModelCatalog, SpiceImportReport, SpicePinMappingRequest,
+    SpicePinMappingValidationReport, TouchstoneImportReport,
 };
 use hotsas_ports::{PortError, SpiceModelParserPort, TouchstoneParserPort};
 use std::sync::{Arc, Mutex};
@@ -214,6 +215,100 @@ impl ModelImportService {
                 kind: hotsas_core::SimulationModelKind::Model,
             });
 
+        Ok(())
+    }
+
+    pub fn build_persisted_model_catalog(&self) -> Result<PersistedModelCatalog, ApplicationError> {
+        let guard = self
+            .imported_models
+            .lock()
+            .map_err(|_| ApplicationError::State("imported models lock poisoned".to_string()))?;
+        let assets = guard
+            .iter()
+            .map(|m| PersistedModelAsset {
+                id: m.id.clone(),
+                name: m.name.clone(),
+                kind: match m.kind {
+                    hotsas_core::ImportedModelKind::SpiceModel => {
+                        PersistedModelAssetKind::SpiceModel
+                    }
+                    hotsas_core::ImportedModelKind::SpiceSubcircuit => {
+                        PersistedModelAssetKind::SpiceSubcircuit
+                    }
+                    hotsas_core::ImportedModelKind::TouchstoneNetwork => {
+                        PersistedModelAssetKind::TouchstoneDataset
+                    }
+                    hotsas_core::ImportedModelKind::Unknown => PersistedModelAssetKind::SpiceModel,
+                },
+                source: PersistedModelAssetSource::ImportedFile,
+                source_file_name: m.source.file_name.clone(),
+                content_hash: m.source.content_hash.clone(),
+                package_asset_path: None,
+                status: PersistedModelAssetStatus::Present,
+                warnings: m
+                    .spice_model
+                    .as_ref()
+                    .map(|sm| sm.warnings.clone())
+                    .or_else(|| m.spice_subcircuit.as_ref().map(|sc| sc.warnings.clone()))
+                    .unwrap_or_default(),
+                compatibility: std::collections::BTreeMap::new(),
+            })
+            .collect();
+        Ok(PersistedModelCatalog { assets })
+    }
+
+    pub fn restore_imported_models_from_catalog(
+        &self,
+        catalog: &PersistedModelCatalog,
+    ) -> Result<(), ApplicationError> {
+        let mut guard = self
+            .imported_models
+            .lock()
+            .map_err(|_| ApplicationError::State("imported models lock poisoned".to_string()))?;
+        for asset in &catalog.assets {
+            if guard.iter().any(|m| m.id == asset.id) {
+                continue;
+            }
+            // We cannot fully reconstruct ImportedModelDetails without raw content,
+            // so we create a stub reference that will be resolved later.
+            guard.push(ImportedModelDetails {
+                id: asset.id.clone(),
+                kind: match asset.kind {
+                    PersistedModelAssetKind::SpiceModel => {
+                        hotsas_core::ImportedModelKind::SpiceModel
+                    }
+                    PersistedModelAssetKind::SpiceSubcircuit => {
+                        hotsas_core::ImportedModelKind::SpiceSubcircuit
+                    }
+                    PersistedModelAssetKind::TouchstoneDataset => {
+                        hotsas_core::ImportedModelKind::TouchstoneNetwork
+                    }
+                },
+                name: asset.name.clone(),
+                source: hotsas_core::ImportedModelSource {
+                    file_name: asset.source_file_name.clone(),
+                    file_path: asset.package_asset_path.clone(),
+                    source_format: match asset.kind {
+                        PersistedModelAssetKind::SpiceModel => "spice".to_string(),
+                        PersistedModelAssetKind::SpiceSubcircuit => "spice".to_string(),
+                        PersistedModelAssetKind::TouchstoneDataset => "touchstone".to_string(),
+                    },
+                    content_hash: asset.content_hash.clone(),
+                },
+                spice_model: None,
+                spice_subcircuit: None,
+                touchstone_network: None,
+            });
+        }
+        Ok(())
+    }
+
+    pub fn clear_imported_models(&self) -> Result<(), ApplicationError> {
+        let mut guard = self
+            .imported_models
+            .lock()
+            .map_err(|_| ApplicationError::State("imported models lock poisoned".to_string()))?;
+        guard.clear();
         Ok(())
     }
 }

@@ -15,6 +15,11 @@ pub struct CircuitProject {
     pub simulation_profiles: Vec<SimulationProfile>,
     pub linked_libraries: Vec<String>,
     pub reports: Vec<ReportModel>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub imported_model_catalog: Option<crate::model_persistence::PersistedModelCatalog>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub persisted_model_assignments:
+        Vec<crate::model_persistence::PersistedInstanceModelAssignment>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

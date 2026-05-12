@@ -52,6 +52,8 @@ import type {
   FilterNetworkAnalysisResult,
   SParameterAnalysisResult,
   SParameterDiagnostic,
+  ModelCatalogDto,
+  ProjectModelPersistenceSummaryDto,
 } from "../types";
 
 type HotSasState = {
@@ -279,6 +281,15 @@ type HotSasState = {
   setSParameterAnalysisLoading: (sParameterAnalysisLoading: boolean) => void;
   setSParameterAnalysisError: (sParameterAnalysisError: string | null) => void;
   setSParameterAnalysisCsvExport: (sParameterAnalysisCsvExport: string | null) => void;
+  // v3.4 model persistence
+  modelCatalog: ModelCatalogDto | null;
+  modelPersistenceSummary: ProjectModelPersistenceSummaryDto | null;
+  modelPersistenceLoading: boolean;
+  modelPersistenceError: string | null;
+  setModelCatalog: (catalog: ModelCatalogDto | null) => void;
+  setModelPersistenceSummary: (summary: ProjectModelPersistenceSummaryDto | null) => void;
+  setModelPersistenceLoading: (loading: boolean) => void;
+  setModelPersistenceError: (error: string | null) => void;
 };
 
 export const useHotSasStore = create<HotSasState>((set) => ({
@@ -390,6 +401,11 @@ export const useHotSasStore = create<HotSasState>((set) => ({
   sParameterAnalysisLoading: false,
   sParameterAnalysisError: null,
   sParameterAnalysisCsvExport: null,
+  // v3.4 model persistence
+  modelCatalog: null,
+  modelPersistenceSummary: null,
+  modelPersistenceLoading: false,
+  modelPersistenceError: null,
   setProject: (project) => set({ project }),
   setFormulaResult: (formulaResult) => set({ formulaResult }),
   setPreferredValue: (preferredValue) => set({ preferredValue }),
@@ -546,4 +562,9 @@ export const useHotSasStore = create<HotSasState>((set) => ({
     set({ sParameterAnalysisError }),
   setSParameterAnalysisCsvExport: (sParameterAnalysisCsvExport: string | null) =>
     set({ sParameterAnalysisCsvExport }),
+  // v3.4 model persistence
+  setModelCatalog: (catalog) => set({ modelCatalog: catalog }),
+  setModelPersistenceSummary: (summary) => set({ modelPersistenceSummary: summary }),
+  setModelPersistenceLoading: (loading) => set({ modelPersistenceLoading: loading }),
+  setModelPersistenceError: (error) => set({ modelPersistenceError: error }),
 }));

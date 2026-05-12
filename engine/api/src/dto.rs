@@ -1,7 +1,8 @@
 use hotsas_core::{
     CircuitProject, EngineeringNotebook, FormulaDefinition, FormulaEquation, FormulaOutput,
-    FormulaPackMetadata, FormulaVariable, GraphSeries, NotebookEvaluationResult,
-    NotebookHistoryEntry, PreferredValueResult, ProjectPackageManifest,
+    FormulaPackMetadata, FormulaVariable, GraphSeries, ModelAssetValidationDiagnostic,
+    NotebookEvaluationResult, NotebookHistoryEntry, PersistedModelAsset, PersistedModelCatalog,
+    PreferredValueResult, ProjectModelPersistenceSummary, ProjectPackageManifest,
     ProjectPackageValidationReport, SimulationResult, ValueWithUnit,
 };
 use serde::{Deserialize, Serialize};
@@ -573,6 +574,102 @@ impl From<&GraphSeries> for GraphSeriesDto {
                 .iter()
                 .map(|point| [point.x, point.y])
                 .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelAssetDto {
+    pub id: String,
+    pub name: String,
+    pub kind: String,
+    pub source: String,
+    pub source_file_name: Option<String>,
+    pub content_hash: Option<String>,
+    pub package_asset_path: Option<String>,
+    pub status: String,
+    pub warnings: Vec<String>,
+}
+
+impl From<&PersistedModelAsset> for ModelAssetDto {
+    fn from(asset: &PersistedModelAsset) -> Self {
+        Self {
+            id: asset.id.clone(),
+            name: asset.name.clone(),
+            kind: format!("{:?}", asset.kind).to_lowercase(),
+            source: format!("{:?}", asset.source).to_lowercase(),
+            source_file_name: asset.source_file_name.clone(),
+            content_hash: asset.content_hash.clone(),
+            package_asset_path: asset.package_asset_path.clone(),
+            status: format!("{:?}", asset.status).to_lowercase(),
+            warnings: asset.warnings.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelCatalogDto {
+    pub assets: Vec<ModelAssetDto>,
+}
+
+impl From<&PersistedModelCatalog> for ModelCatalogDto {
+    fn from(catalog: &PersistedModelCatalog) -> Self {
+        Self {
+            assets: catalog.assets.iter().map(ModelAssetDto::from).collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelPersistenceDiagnosticDto {
+    pub code: String,
+    pub severity: String,
+    pub title: String,
+    pub message: String,
+    pub asset_id: Option<String>,
+    pub assignment_id: Option<String>,
+}
+
+impl From<&ModelAssetValidationDiagnostic> for ModelPersistenceDiagnosticDto {
+    fn from(d: &ModelAssetValidationDiagnostic) -> Self {
+        Self {
+            code: d.code.clone(),
+            severity: d.severity.clone(),
+            title: d.title.clone(),
+            message: d.message.clone(),
+            asset_id: d.asset_id.clone(),
+            assignment_id: d.assignment_id.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectModelPersistenceSummaryDto {
+    pub asset_count: usize,
+    pub spice_model_count: usize,
+    pub subcircuit_count: usize,
+    pub touchstone_dataset_count: usize,
+    pub component_assignment_count: usize,
+    pub instance_assignment_count: usize,
+    pub missing_asset_reference_count: usize,
+    pub stale_assignment_count: usize,
+    pub diagnostics: Vec<ModelPersistenceDiagnosticDto>,
+    pub ready: bool,
+}
+
+impl From<&ProjectModelPersistenceSummary> for ProjectModelPersistenceSummaryDto {
+    fn from(summary: &ProjectModelPersistenceSummary) -> Self {
+        Self {
+            asset_count: summary.asset_count,
+            spice_model_count: summary.spice_model_count,
+            subcircuit_count: summary.subcircuit_count,
+            touchstone_dataset_count: summary.touchstone_dataset_count,
+            component_assignment_count: summary.component_assignment_count,
+            instance_assignment_count: summary.instance_assignment_count,
+            missing_asset_reference_count: summary.missing_asset_reference_count,
+            stale_assignment_count: summary.stale_assignment_count,
+            diagnostics: summary.diagnostics.iter().map(|d| d.into()).collect(),
+            ready: summary.ready,
         }
     }
 }

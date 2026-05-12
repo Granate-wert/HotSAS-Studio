@@ -83,7 +83,7 @@ pub enum ComponentPinRole {
 }
 
 /// Mapping between a component pin and a model pin.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ComponentPinMapping {
     pub component_pin_id: String,
     pub model_pin_name: String,
@@ -93,7 +93,7 @@ pub struct ComponentPinMapping {
 }
 
 /// Binding between a model parameter and a component parameter.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ModelParameterBinding {
     pub model_parameter_name: String,
     pub component_parameter_id: String,

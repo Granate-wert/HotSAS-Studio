@@ -44,6 +44,8 @@ fn project_with_components(components: Vec<ComponentInstance>) -> CircuitProject
         simulation_profiles: vec![],
         linked_libraries: vec![],
         reports: vec![],
+        imported_model_catalog: None,
+        persisted_model_assignments: vec![],
     }
 }
 

@@ -56,19 +56,65 @@ struct FakeProjectPackageStorage;
 impl ProjectPackageStoragePort for FakeProjectPackageStorage {
     fn save_project_package(
         &self,
-        _package_dir: &Path,
+        _package_dir: &std::path::Path,
         _project: &CircuitProject,
     ) -> Result<ProjectPackageManifest, PortError> {
+        Ok(ProjectPackageManifest::new(
+            "test".to_string(),
+            "Test".to_string(),
+            "now".to_string(),
+            "now".to_string(),
+        ))
+    }
+
+    fn load_project_package(
+        &self,
+        _package_dir: &std::path::Path,
+    ) -> Result<CircuitProject, PortError> {
         Err(PortError::Storage("not implemented".to_string()))
     }
-    fn load_project_package(&self, _package_dir: &Path) -> Result<CircuitProject, PortError> {
-        Err(PortError::Storage("not implemented".to_string()))
-    }
+
     fn validate_project_package(
         &self,
-        _package_dir: &Path,
+        _package_dir: &std::path::Path,
     ) -> Result<ProjectPackageValidationReport, PortError> {
-        Err(PortError::Storage("not implemented".to_string()))
+        Ok(ProjectPackageValidationReport {
+            valid: true,
+            package_dir: "".to_string(),
+            missing_files: vec![],
+            warnings: vec![],
+            errors: vec![],
+        })
+    }
+
+    fn save_model_catalog(
+        &self,
+        _package_dir: &std::path::Path,
+        _catalog: &hotsas_core::PersistedModelCatalog,
+    ) -> Result<(), PortError> {
+        Ok(())
+    }
+
+    fn load_model_catalog(
+        &self,
+        _package_dir: &std::path::Path,
+    ) -> Result<hotsas_core::PersistedModelCatalog, PortError> {
+        Ok(Default::default())
+    }
+
+    fn save_model_assignments(
+        &self,
+        _package_dir: &std::path::Path,
+        _assignments: &[hotsas_core::PersistedInstanceModelAssignment],
+    ) -> Result<(), PortError> {
+        Ok(())
+    }
+
+    fn load_model_assignments(
+        &self,
+        _package_dir: &std::path::Path,
+    ) -> Result<Vec<hotsas_core::PersistedInstanceModelAssignment>, PortError> {
+        Ok(vec![])
     }
 }
 

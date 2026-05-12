@@ -806,6 +806,7 @@ pub fn handle_model_check(api: &HotSasApi, path: String, json: bool) -> i32 {
                 })
                 .collect::<Vec<_>>();
 
+            let persistence = api.validate_project_model_persistence().ok();
             let data = serde_json::json!({
                 "project_id": readiness.project_id,
                 "can_simulate": readiness.can_simulate,
@@ -818,7 +819,18 @@ pub fn handle_model_check(api: &HotSasApi, path: String, json: bool) -> i32 {
                     "invalid": readiness.invalid_count,
                     "blocking": readiness.blocking_count,
                     "warning": readiness.warning_count,
-                }
+                },
+                "model_persistence": persistence.map(|p| serde_json::json!({
+                    "asset_count": p.asset_count,
+                    "spice_model_count": p.spice_model_count,
+                    "subcircuit_count": p.subcircuit_count,
+                    "touchstone_dataset_count": p.touchstone_dataset_count,
+                    "instance_assignment_count": p.instance_assignment_count,
+                    "missing_asset_reference_count": p.missing_asset_reference_count,
+                    "stale_assignment_count": p.stale_assignment_count,
+                    "ready": p.ready,
+                    "diagnostics": p.diagnostics,
+                })),
             });
 
             let status = if readiness.blocking_count > 0 || !errors.is_empty() {

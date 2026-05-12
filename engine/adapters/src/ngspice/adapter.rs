@@ -2,8 +2,8 @@ use super::{
     NgspiceBinaryResolver, NgspiceControlBlockBuilder, NgspiceOutputParser, NgspiceProcessRunner,
 };
 use hotsas_core::{
-    GraphSeries, NgspiceAvailability, NgspiceRunMetadata, SimulationAnalysisKind,
-    SimulationProfile, SimulationResult, SimulationStatus, ValueWithUnit,
+    CircuitQueryService, GraphSeries, NgspiceAvailability, NgspiceRunMetadata,
+    SimulationAnalysisKind, SimulationProfile, SimulationResult, SimulationStatus, ValueWithUnit,
 };
 use hotsas_ports::{PortError, SimulationEnginePort};
 use std::collections::BTreeMap;
@@ -386,7 +386,6 @@ impl hotsas_ports::NetlistExporterPort for SpiceNetlistExporterForNgspice {
         &self,
         project: &hotsas_core::CircuitProject,
     ) -> Result<String, PortError> {
-        use hotsas_core::CircuitQueryService;
         let resistance =
             CircuitQueryService::require_component_parameter(project, "R1", "resistance")
                 .map_err(|e| PortError::Export(e.to_string()))?;
