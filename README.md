@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v3.3 ACCEPTED WITH DOCUMENTED LIMITATIONS — Next: post-v3.3 audit gate / v3.4 planning**
+**Current roadmap stage: v3.4 PARTIAL — Backend persistence & package hardening ACCEPTED; UI indicators and report sections DEFERRED — Next: v3.4 UI completion / v3.5 planning**
 
 > App version (v0.1.4) and roadmap stage are different concepts.
 
@@ -33,6 +33,7 @@ Completed:
 - v3.1 — Component Model Mapping & SPICE Model Assignment (PARTIAL; imported model persistence deferred)
 - v3.2 — Two-Port / Filter Network Analysis Foundation (ACCEPTED WITH DOCUMENTED LIMITATIONS)
 - v3.3 — S-Parameters & Touchstone Workflow (ACCEPTED WITH DOCUMENTED LIMITATIONS)
+- v3.4 — Model Persistence & Project Package Hardening (PARTIAL — backend persistence complete; UI indicators and report sections deferred)
 
 ---
 

@@ -12,7 +12,8 @@ fn temp_package_dir() -> std::path::PathBuf {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_millis();
-    std::env::temp_dir().join(format!("hotsas_test_{ts}.circuit"))
+    let tid = std::thread::current().id();
+    std::env::temp_dir().join(format!("hotsas_test_{ts:?}_{tid:?}.circuit"))
 }
 
 #[test]
