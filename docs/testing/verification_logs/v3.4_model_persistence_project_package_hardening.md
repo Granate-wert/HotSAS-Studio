@@ -19,19 +19,18 @@ git branch --show-current:
 main
 
 git log --oneline -5:
-5c3ed08 v3.4-fix — Model Persistence UI and Report Integration
+8aa9dfa v3.4-fix — Model Persistence UI and Report Integration
+5c3ed08 v3.4-fix — Model Persistence UI and Report Integration (docs amend)
 ed500fb docs(v3.4): finalize model persistence verification and roadmap status
 e067035 feat(v3.4): Model Persistence & Project Package Hardening
 efd8dcf docs(post-v3.3): remove final audit placeholders
 0696b83 docs(post-v3.3): finalize audit gate metadata
-eb6cdae post-v3.3 audit gate: fix layout and document findings
-4bed401 style(v3.3): apply remaining prettier formatting and finalize verification log
 
 git rev-parse HEAD:
-e06703558f57ff2239a4808f9541929c3ce4f01f
+8aa9dfa6e6c8f6a0dbce98337b2f683822ea3
 
 git ls-remote origin main:
-e06703558f57ff2239a4808f9541929c3ce4f01f	refs/heads/main
+8aa9dfa6e6c8f6a0dbce98337b2f683822ea3	refs/heads/main
 ```
 
 ## Scope summary
@@ -165,9 +164,8 @@ docs/testing/acceptance_matrices/v3.4_model_persistence_project_package_hardenin
 ## Acceptance matrix summary
 
 ```text
-MP-001 through MP-035: PASS
-MP-036 through MP-038: DEFERRED
-Total: 38 criteria (35 PASS, 3 DEFERRED)
+MP-001 through MP-038: PASS
+Total: 38 criteria (38 PASS, 0 DEFERRED)
 Status: ACCEPT WITH DOCUMENTED LIMITATIONS
 See docs/testing/acceptance_matrices/v3.4_model_persistence_project_package_hardening_acceptance_matrix.md
 ```
@@ -175,8 +173,7 @@ See docs/testing/acceptance_matrices/v3.4_model_persistence_project_package_hard
 ## Git final state
 
 ```text
-Implementation commit: e067035
-Verification/docs commit: 5c3ed08
+Implementation/fix commit: 8aa9dfa
 Push: PASS / origin/main OK
 ```
 
@@ -185,14 +182,12 @@ Push: PASS / origin/main OK
 ```text
 v3.4 status: ACCEPT WITH DOCUMENTED LIMITATIONS
 Ready for next stage: YES
-Reason: All backend domain models, persistence logic, adapters, application services, API, CLI, and frontend types/store implemented and tested. New Rust tests pass. No regressions. Build artifacts verified. Backward compatibility preserved. Frontend UI indicators and report/export sections for model persistence are deferred to v3.4.x / v3.5.
+Reason: All backend domain models, persistence logic, adapters, application services, API, CLI, frontend types/store, UI components, and report/export sections implemented and tested. New Rust and frontend tests pass. No regressions. Build artifacts verified. Backward compatibility preserved.
 ```
 
 ## Remaining limitations / deferred work
 
 ```text
-- Frontend UI components (ModelAssignmentCard, SchematicSelectionInspector) not yet wired to display persisted/missing/stale status — DEFERRED to v3.4.x or v3.5 UI polish
-- Report/export section for model persistence — DEFERRED to next iteration
 - No binary model asset embedding (only JSON metadata persistence in this version)
 - No automatic model asset repair/reimport on missing assets (diagnostics only)
 ```
