@@ -19,7 +19,7 @@
 ```text
 Version/stage: post-v3.3 audit gate
 Implementation/fix/audit commit: eb6cdae
-Final metadata commit: Pending final metadata commit
+Final metadata commit: this commit (see git log for hash)
 Branch: main
 Push status: PASS / origin/main OK for eb6cdae
 Date: 2026-05-12

@@ -4,7 +4,7 @@ Version/stage: post-v3.3 audit gate
 
 Implementation/fix/audit commit: eb6cdae
 
-Final metadata commit: Pending final metadata commit
+Final metadata commit: this commit (see git log for hash)
 
 Branch: main
 
