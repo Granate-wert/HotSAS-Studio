@@ -25,4 +25,19 @@ describe("InteractiveSchematicToolbar", () => {
     expect(screen.getByRole("button", { name: "Select" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Place" })).toBeDisabled();
   });
+
+  it("shows disabled reason tooltip when provided", async () => {
+    const user = userEvent.setup();
+    render(
+      <InteractiveSchematicToolbar
+        toolMode="select"
+        onSetToolMode={vi.fn()}
+        disabled
+        disabledReason="No project loaded"
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Select" });
+    await user.hover(button.parentElement!);
+    expect(await screen.findByText("No project loaded")).toBeInTheDocument();
+  });
 });

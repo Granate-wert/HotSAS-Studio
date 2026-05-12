@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Tabs } from "@mantine/core";
+import { Button, Paper, Stack, Tabs, Text, Tooltip } from "@mantine/core";
+import { CircuitBoard, FileInput, Play, Sigma } from "lucide-react";
 import { FormulaPanel } from "../components/FormulaPanel";
 import { LibraryPanel } from "../components/LibraryPanel";
 import { PreBlock } from "../components/PreBlock";
@@ -100,6 +101,9 @@ type SchematicScreenProps = ProjectMetricsData & {
   onSetSelectedSchematicEntity: (
     entity: { kind: "component" | "wire" | "net"; id: string } | null,
   ) => void;
+  // demo / project creation
+  onCreateDemoProject: () => void;
+  onLoadProjectPackage: () => void;
 };
 
 export function SchematicScreen({
@@ -153,6 +157,9 @@ export function SchematicScreen({
   onSetPendingPlaceComponent,
   onSetPendingWireStart,
   onSetSelectedSchematicEntity,
+  // demo
+  onCreateDemoProject,
+  onLoadProjectPackage,
 }: SchematicScreenProps) {
   const [showConnectionPanel, setShowConnectionPanel] = useState(false);
   const [showNetEditor, setShowNetEditor] = useState(false);
@@ -184,9 +191,11 @@ export function SchematicScreen({
   const validationWarnings = validationReport?.warnings ?? [];
   const validationErrors = validationReport?.errors ?? [];
 
+  const isEmptyProject = !project || project.schematic.components.length === 0;
+
   return (
-    <div className="grid" style={{ gridTemplateRows: "auto 1fr auto" }}>
-      <section>
+    <div className="grid">
+      <div className="schematic-topbar">
         <SchematicToolbar
           selectedComponentId={selectedInstanceId}
           onDelete={onDeleteComponent}
@@ -199,6 +208,13 @@ export function SchematicScreen({
           toolMode={schematicToolMode}
           onSetToolMode={onSetSchematicToolMode}
           disabled={!hasProject || schematicEditLoading || schematicInteractionLoading}
+          disabledReason={
+            !hasProject
+              ? "Open or create a project to use schematic tools"
+              : schematicEditLoading || schematicInteractionLoading
+                ? "Operation in progress..."
+                : undefined
+          }
         />
         <UndoRedoToolbar
           canUndo={undoRedoState?.can_undo ?? false}
@@ -245,37 +261,83 @@ export function SchematicScreen({
             {schematicInteractionError}
           </div>
         )}
-      </section>
+      </div>
 
-      <section className="schematic-panel">
-        <SchematicCanvas
-          project={project}
-          onSelectComponent={(id) => {
-            onSelectComponent(id);
-            onSetSelectedSchematicEntity({ kind: "component", id });
-            onGetSchematicSelectionDetails("component", id);
-          }}
-          onMoveComponent={onMoveComponent}
-          onSelectWire={(id) => {
-            onSetSelectedSchematicEntity({ kind: "wire", id });
-            onGetSchematicSelectionDetails("wire", id);
-          }}
-          onConnect={(req) => onConnectPins({ ...req, net_name: null })}
-          disabled={!hasProject || schematicEditLoading || schematicInteractionLoading}
-        />
-        {pendingPlaceComponent && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: 8,
-              left: 8,
-              padding: 8,
-              background: "#333",
-              borderRadius: 4,
-            }}
-          >
-            Click canvas to place {pendingPlaceComponent.name}
+      <section className="schematic-panel" style={{ position: "relative" }}>
+        {isEmptyProject ? (
+          <div className="schematic-empty-state">
+            <Paper p="xl" radius="md" bg="#121722" withBorder style={{ maxWidth: 420 }}>
+              <Stack gap="md" align="center">
+                <CircuitBoard size={48} color="#7db2ff" />
+                <Text fw={700} size="lg">
+                  Schematic Editor
+                </Text>
+                <Text size="sm" c="dimmed">
+                  Create a new circuit project or load the RC low-pass demo to get started.
+                </Text>
+                <Stack gap="xs" w="100%">
+                  <Button
+                    leftSection={<Play size={16} />}
+                    onClick={onCreateDemoProject}
+                    disabled={schematicInteractionLoading}
+                    fullWidth
+                  >
+                    New RC Demo
+                  </Button>
+                  <Button
+                    leftSection={<FileInput size={16} />}
+                    onClick={onLoadProjectPackage}
+                    variant="light"
+                    disabled={schematicInteractionLoading}
+                    fullWidth
+                  >
+                    Open Project
+                  </Button>
+                </Stack>
+                <Text size="xs" c="dimmed">
+                  Workflow: place components → wire nets → edit values → validate → netlist →
+                  simulate
+                </Text>
+              </Stack>
+            </Paper>
           </div>
+        ) : (
+          <>
+            <SchematicCanvas
+              project={project}
+              toolMode={schematicToolMode}
+              pendingPlaceComponent={pendingPlaceComponent}
+              onSelectComponent={(id) => {
+                onSelectComponent(id);
+                onSetSelectedSchematicEntity({ kind: "component", id });
+                onGetSchematicSelectionDetails("component", id);
+              }}
+              onMoveComponent={onMoveComponent}
+              onDeleteComponent={onDeleteComponent}
+              onSelectWire={(id) => {
+                onSetSelectedSchematicEntity({ kind: "wire", id });
+                onGetSchematicSelectionDetails("wire", id);
+              }}
+              onDeleteWire={onDeleteSchematicWire}
+              onConnect={(req) => onConnectPins({ ...req, net_name: null })}
+              onPlaceSchematicComponent={onPlaceSchematicComponent}
+              disabled={!hasProject || schematicEditLoading || schematicInteractionLoading}
+            />
+            {pendingPlaceComponent && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 8,
+                  left: 8,
+                  padding: 8,
+                  background: "#333",
+                  borderRadius: 4,
+                }}
+              >
+                Click canvas to place {pendingPlaceComponent.name}
+              </div>
+            )}
+          </>
         )}
       </section>
 

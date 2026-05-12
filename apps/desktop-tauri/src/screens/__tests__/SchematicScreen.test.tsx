@@ -108,6 +108,8 @@ const baseProps = {
   onSetPendingPlaceComponent: vi.fn(),
   onSetPendingWireStart: vi.fn(),
   onSetSelectedSchematicEntity: vi.fn(),
+  onCreateDemoProject: vi.fn(),
+  onLoadProjectPackage: vi.fn(),
 };
 
 describe("SchematicScreen v2.5", () => {
@@ -156,5 +158,46 @@ describe("SchematicScreen v2.5", () => {
       />,
     );
     expect(screen.getByText("W1: Floating net")).toBeInTheDocument();
+  });
+});
+
+describe("SchematicScreen v3.5 empty states", () => {
+  it("shows empty state when no project", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} project={null} hasProject={false} />);
+    expect(
+      screen.getByText("Create a new circuit project or load the RC low-pass demo to get started."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("New RC Demo")).toBeInTheDocument();
+    expect(screen.getByText("Open Project")).toBeInTheDocument();
+  });
+
+  it("shows empty state when project has no components", () => {
+    const emptyProject = {
+      ...mockProject,
+      schematic: { ...mockProject.schematic, components: [] },
+    };
+    renderWithProvider(<SchematicScreen {...baseProps} project={emptyProject} />);
+    expect(screen.getByText("New RC Demo")).toBeInTheDocument();
+    expect(screen.getByText("Open Project")).toBeInTheDocument();
+  });
+
+  it("calls onCreateDemoProject when New RC Demo clicked", async () => {
+    const user = userEvent.setup();
+    const onCreate = vi.fn();
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        project={null}
+        hasProject={false}
+        onCreateDemoProject={onCreate}
+      />,
+    );
+    await user.click(screen.getByText("New RC Demo"));
+    expect(onCreate).toHaveBeenCalled();
+  });
+
+  it("does not render canvas when no project", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} project={null} hasProject={false} />);
+    expect(document.querySelector(".react-flow")).not.toBeInTheDocument();
   });
 });

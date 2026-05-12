@@ -65,8 +65,31 @@ body {
   flex: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
-  grid-template-rows: minmax(420px, 1fr) 330px;
+  grid-template-rows: auto 1fr auto;
   min-height: 0;
+}
+
+.schematic-topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #263244;
+  background: #111722;
+  min-height: 0;
+}
+
+.schematic-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px;
+  text-align: center;
+  height: 100%;
 }
 
 .schematic-panel {
@@ -79,6 +102,14 @@ body {
   width: 100%;
   height: 100%;
   background: #0f1520;
+}
+
+.canvas.cursor-crosshair .react-flow__pane {
+  cursor: crosshair !important;
+}
+
+.canvas.cursor-not-allowed .react-flow__pane {
+  cursor: not-allowed !important;
 }
 
 .side-panel {

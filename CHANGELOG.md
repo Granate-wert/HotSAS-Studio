@@ -2,6 +2,42 @@
 
 All notable changes to HotSAS Studio are documented in this file.
 
+## [v3.5] — Schematic Editor & Simulation Workflow Usability Gate
+
+### Added
+- Schematic Editor empty state: centered card with "New RC Demo", "Open Project" buttons and workflow guidance when no project or empty project.
+- Tool modes wired to `SchematicCanvas`:
+  - `place`: `onPaneClick` handler calls `onPlaceSchematicComponent` with click coordinates.
+  - `delete`: `handleNodeClick` and `handleEdgeClick` call `onDeleteComponent` / `onDeleteWire`.
+  - `wire`: native React Flow `onConnect` with cursor indicator.
+  - `select`: standard behavior unchanged.
+- Custom SVG component symbols in `GenericComponentNode`: resistor (zigzag), capacitor (plates), inductor (coil), voltage source (circle +/-), ground (earth), diode (triangle + bar).
+- Net name labels on edges: maps `wire.net_id` to `net.name` instead of raw UUID.
+- Disabled-state explanations via Mantine `Tooltip`:
+  - `InteractiveSchematicToolbar` shows reason when disabled (e.g. "Open or create a project").
+  - `SchematicToolbar` shows reasons for disabled Delete/Connect/Rename Net buttons.
+- Bottom tab empty states:
+  - `SimulationChart`: "No simulation results yet" with guidance.
+  - `FormulaPanel`: "No formula results yet" with guidance.
+  - `ReportPanel`: "No report generated yet" with guidance and disabled explanation.
+  - `LibraryPanel`: "Open Component Library" button.
+- `ProjectMetrics` circuit metrics: component count, net count, wire count.
+- Frontend tests:
+  - `SchematicScreen` empty state tests (no project, empty project, demo click).
+  - `InteractiveSchematicToolbar` disabled tooltip test.
+  - `SchematicScreen` canvas visibility test.
+
+### Changed
+- `SchematicScreen` layout refactored: top toolbar uses `schematic-topbar` flex row, canvas uses `flex: 1`, empty state replaces canvas when no components.
+- `styles.css` updated with `.schematic-topbar`, `.schematic-empty-state`, cursor classes for place/delete modes.
+- `GenericComponentNode` removed internal `onClick` to prevent double-fire with React Flow `onNodeClick`.
+- `Workbench.tsx` passes `onCreateDemoProject` and `onLoadProjectPackage` to `SchematicScreen`.
+- README roadmap stage updated to `v3.5 ACCEPTED WITH DOCUMENTED LIMITATIONS`.
+
+### Fixed
+- Double invocation of `onSelectComponent` on node click (removed node-internal onClick).
+- Edge labels showing raw net UUIDs instead of human-readable net names.
+
 ## [v3.4-ui-report-fix] — Model Persistence UI Indicators & Report Section
 
 ### Added

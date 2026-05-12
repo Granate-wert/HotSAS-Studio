@@ -1,5 +1,7 @@
 import * as echarts from "echarts";
 import { useEffect, useRef } from "react";
+import { Stack, Text } from "@mantine/core";
+import { BarChart3 } from "lucide-react";
 import type { GraphSeriesDto, SimulationResultDto } from "../types";
 
 export function SimulationChart({ simulation }: { simulation: SimulationResultDto | null }) {
@@ -45,6 +47,22 @@ export function SimulationChart({ simulation }: { simulation: SimulationResultDt
       chart.dispose();
     };
   }, [simulation]);
+
+  const hasData = simulation && simulation.graph_series && simulation.graph_series.length > 0;
+
+  if (!hasData) {
+    return (
+      <Stack align="center" justify="center" gap="sm" style={{ height: "100%", padding: 24 }}>
+        <BarChart3 size={32} color="#56657a" />
+        <Text size="sm" c="dimmed" ta="center">
+          No simulation results yet.
+        </Text>
+        <Text size="xs" c="dimmed" ta="center">
+          Run a simulation from the Simulation tab or Simulation Dashboard to see graphs here.
+        </Text>
+      </Stack>
+    );
+  }
 
   return <div ref={ref} className="chart" />;
 }

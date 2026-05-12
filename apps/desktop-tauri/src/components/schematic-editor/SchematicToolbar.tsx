@@ -1,4 +1,4 @@
-import { Button, Group, Text } from "@mantine/core";
+import { Button, Group, Text, Tooltip } from "@mantine/core";
 import { Trash2, Move, Plug, Tag, AlertTriangle } from "lucide-react";
 
 export function SchematicToolbar({
@@ -16,6 +16,12 @@ export function SchematicToolbar({
   disabled?: boolean;
   editError: string | null;
 }) {
+  const deleteReason = disabled
+    ? "Project loading"
+    : !selectedComponentId
+      ? "Select a component to delete"
+      : undefined;
+
   return (
     <div className="schematic-toolbar" style={{ padding: 8 }}>
       <Group gap="xs" justify="space-between">
@@ -23,37 +29,62 @@ export function SchematicToolbar({
           <Text size="sm" fw={600}>
             Schematic Editor
           </Text>
-          <Button
-            size="xs"
-            variant="light"
-            color="red"
-            leftSection={<Trash2 size={14} />}
-            disabled={!selectedComponentId || disabled}
-            onClick={() => selectedComponentId && onDelete(selectedComponentId)}
-            data-testid="delete-selected-component"
-          >
-            Delete
-          </Button>
-          <Button
-            size="xs"
-            variant="light"
-            leftSection={<Plug size={14} />}
-            disabled={disabled}
-            onClick={onConnect}
-            data-testid="connect-pins-button"
-          >
-            Connect
-          </Button>
-          <Button
-            size="xs"
-            variant="light"
-            leftSection={<Tag size={14} />}
-            disabled={disabled}
-            onClick={onRenameNet}
-            data-testid="rename-net-button"
-          >
-            Rename Net
-          </Button>
+          {deleteReason ? (
+            <Tooltip label={deleteReason}>
+              <span>
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="red"
+                  leftSection={<Trash2 size={14} />}
+                  disabled={true}
+                  data-testid="delete-selected-component"
+                >
+                  Delete
+                </Button>
+              </span>
+            </Tooltip>
+          ) : (
+            <Button
+              size="xs"
+              variant="light"
+              color="red"
+              leftSection={<Trash2 size={14} />}
+              disabled={!selectedComponentId || disabled}
+              onClick={() => selectedComponentId && onDelete(selectedComponentId)}
+              data-testid="delete-selected-component"
+            >
+              Delete
+            </Button>
+          )}
+          <Tooltip label={disabled ? "Project loading" : "Connect two component pins"}>
+            <span>
+              <Button
+                size="xs"
+                variant="light"
+                leftSection={<Plug size={14} />}
+                disabled={disabled}
+                onClick={onConnect}
+                data-testid="connect-pins-button"
+              >
+                Connect
+              </Button>
+            </span>
+          </Tooltip>
+          <Tooltip label={disabled ? "Project loading" : "Rename a net"}>
+            <span>
+              <Button
+                size="xs"
+                variant="light"
+                leftSection={<Tag size={14} />}
+                disabled={disabled}
+                onClick={onRenameNet}
+                data-testid="rename-net-button"
+              >
+                Rename Net
+              </Button>
+            </span>
+          </Tooltip>
         </Group>
         {editError && (
           <Text size="xs" c="red">

@@ -1,6 +1,6 @@
 import { Background, Controls, MiniMap, ReactFlow, type Edge, type Node } from "@xyflow/react";
 import { useCallback, useMemo } from "react";
-import type { ProjectDto } from "../types";
+import type { PlaceableComponentDto, ProjectDto } from "../types";
 import {
   CapacitorNode,
   GenericComponentNode,
@@ -34,26 +34,47 @@ function mapComponentKindToNodeType(kind: string): string {
 
 type SchematicCanvasProps = {
   project: ProjectDto | null;
+  toolMode?: "select" | "place" | "wire" | "delete";
+  pendingPlaceComponent?: PlaceableComponentDto | null;
   onSelectComponent?: (instanceId: string) => void;
   onMoveComponent?: (instanceId: string, x: number, y: number) => void;
+  onDeleteComponent?: (instanceId: string) => void;
   onSelectWire?: (wireId: string) => void;
+  onDeleteWire?: (wireId: string) => void;
   onConnect?: (request: {
     from_component_id: string;
     from_pin_id: string;
     to_component_id: string;
     to_pin_id: string;
   }) => void;
+  onPlaceSchematicComponent?: (request: {
+    component_definition_id: string;
+    x: number;
+    y: number;
+    rotation_deg: number;
+  }) => void;
   disabled?: boolean;
 };
 
 export function SchematicCanvas({
   project,
+  toolMode = "select",
+  pendingPlaceComponent,
   onSelectComponent,
   onMoveComponent,
+  onDeleteComponent,
   onSelectWire,
+  onDeleteWire,
   onConnect,
+  onPlaceSchematicComponent,
   disabled,
 }: SchematicCanvasProps) {
+  const netNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    project?.schematic.nets.forEach((net) => map.set(net.id, net.name));
+    return map;
+  }, [project]);
+
   const { nodes, edges } = useMemo(() => {
     if (!project) {
       return { nodes: [], edges: [] };
@@ -75,18 +96,22 @@ export function SchematicCanvas({
         id: wire.id,
         source: wire.from_component_id as string,
         target: wire.to_component_id as string,
-        label: wire.net_id,
+        label: netNameMap.get(wire.net_id) || wire.net_id,
         type: "smoothstep",
       }));
 
     return { nodes, edges };
-  }, [project, onSelectComponent]);
+  }, [project, onSelectComponent, netNameMap]);
 
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
+      if (toolMode === "delete") {
+        onDeleteComponent?.(node.id);
+        return;
+      }
       onSelectComponent?.(node.id);
     },
-    [onSelectComponent],
+    [toolMode, onSelectComponent, onDeleteComponent],
   );
 
   const handleNodeDragStop = useCallback(
@@ -100,11 +125,15 @@ export function SchematicCanvas({
 
   const handleEdgeClick = useCallback(
     (_event: React.MouseEvent, edge: Edge) => {
+      if (toolMode === "delete") {
+        onDeleteWire?.(edge.id);
+        return;
+      }
       if (!disabled && onSelectWire) {
         onSelectWire(edge.id);
       }
     },
-    [disabled, onSelectWire],
+    [toolMode, disabled, onSelectWire, onDeleteWire],
   );
 
   const handleConnect = useCallback(
@@ -133,8 +162,33 @@ export function SchematicCanvas({
     [disabled, onConnect],
   );
 
+  const handlePaneClick = useCallback(
+    (_event: React.MouseEvent) => {
+      if (toolMode === "place" && pendingPlaceComponent && onPlaceSchematicComponent) {
+        // Get click coordinates relative to canvas; React Flow does not expose
+        // pane click coordinates directly in the event. We use a heuristic:
+        // the native event contains offsetX/offsetY relative to the React Flow
+        // container. This is acceptable for placement UX.
+        const nativeEvent = _event.nativeEvent as MouseEvent;
+        const rect = (nativeEvent.target as HTMLElement).getBoundingClientRect();
+        const x = nativeEvent.offsetX;
+        const y = nativeEvent.offsetY;
+        onPlaceSchematicComponent({
+          component_definition_id: pendingPlaceComponent.definition_id,
+          x,
+          y,
+          rotation_deg: 0,
+        });
+      }
+    },
+    [toolMode, pendingPlaceComponent, onPlaceSchematicComponent],
+  );
+
+  const cursorClass =
+    toolMode === "place" ? "cursor-crosshair" : toolMode === "delete" ? "cursor-not-allowed" : "";
+
   return (
-    <div className="canvas">
+    <div className={`canvas ${cursorClass}`}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -143,7 +197,9 @@ export function SchematicCanvas({
         onNodeDragStop={handleNodeDragStop}
         onEdgeClick={handleEdgeClick}
         onConnect={handleConnect}
+        onPaneClick={handlePaneClick}
         fitView
+        fitViewOptions={{ maxZoom: 1.5, minZoom: 0.5 }}
       >
         <Background />
         <Controls />

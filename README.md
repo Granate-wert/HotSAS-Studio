@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v3.4 ACCEPTED WITH DOCUMENTED LIMITATIONS — Next: v3.5 planning**
+**Current roadmap stage: v3.5 ACCEPTED WITH DOCUMENTED LIMITATIONS**
 
 > App version (v0.1.4) and roadmap stage are different concepts.
 
@@ -34,6 +34,7 @@ Completed:
 - v3.2 — Two-Port / Filter Network Analysis Foundation (ACCEPTED WITH DOCUMENTED LIMITATIONS)
 - v3.3 — S-Parameters & Touchstone Workflow (ACCEPTED WITH DOCUMENTED LIMITATIONS)
 - v3.4 — Model Persistence & Project Package Hardening (ACCEPTED WITH DOCUMENTED LIMITATIONS)
+- v3.5 — Schematic Editor & Simulation Workflow Usability Gate (ACCEPTED WITH DOCUMENTED LIMITATIONS)
 
 ---
 

@@ -1043,6 +1043,8 @@ function renderScreen(
         onSetPendingPlaceComponent={context.actions.setPendingPlaceComponent}
         onSetPendingWireStart={context.actions.setPendingWireStart}
         onSetSelectedSchematicEntity={context.actions.setSelectedSchematicEntity}
+        onCreateDemoProject={context.actions.createDemoProject}
+        onLoadProjectPackage={context.actions.loadProjectPackage}
       />
     );
   }
