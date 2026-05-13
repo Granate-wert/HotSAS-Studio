@@ -2,6 +2,22 @@
 
 All notable changes to HotSAS Studio are documented in this file.
 
+## [v3.6-pre] — Practical Schematic Construction Flow
+
+### Added
+- Tauri ACL fix: added 45 missing schematic editing and analysis commands to `permissions/hotsas.toml`, resolving `Command add_schematic_component not allowed by ACL` and similar denials.
+- React Flow v12 placement coordinate fix: `SchematicCanvas` now wraps `ReactFlow` in `ReactFlowProvider` and uses `screenToFlowPosition` for accurate click-to-place coordinates.
+- Frontend tests for schematic interaction:
+  - Place mode hint rendering.
+  - User-friendly error display instead of raw ACL messages.
+  - Placeable palette item selection.
+
+### Fixed
+- `add_schematic_component` ACL denial — root cause was missing command entries in `permissions/hotsas.toml`.
+- `move_schematic_component` ACL denial — same root cause.
+- `place_schematic_component`, `delete_schematic_component`, `connect_schematic_pins`, `rename_schematic_net`, and 39 other commands now permitted by Tauri ACL.
+- Inaccurate component placement coordinates when canvas is panned/zoomed.
+
 ## [v3.5] — Schematic Editor & Simulation Workflow Usability Gate
 
 ### Added

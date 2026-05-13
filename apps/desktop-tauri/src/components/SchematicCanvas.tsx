@@ -1,4 +1,13 @@
-import { Background, Controls, MiniMap, ReactFlow, type Edge, type Node } from "@xyflow/react";
+import {
+  Background,
+  Controls,
+  MiniMap,
+  ReactFlow,
+  ReactFlowProvider,
+  useReactFlow,
+  type Edge,
+  type Node,
+} from "@xyflow/react";
 import { useCallback, useMemo } from "react";
 import type { PlaceableComponentDto, ProjectDto } from "../types";
 import {
@@ -56,7 +65,15 @@ type SchematicCanvasProps = {
   disabled?: boolean;
 };
 
-export function SchematicCanvas({
+export function SchematicCanvas(props: SchematicCanvasProps) {
+  return (
+    <ReactFlowProvider>
+      <SchematicCanvasInner {...props} />
+    </ReactFlowProvider>
+  );
+}
+
+function SchematicCanvasInner({
   project,
   toolMode = "select",
   pendingPlaceComponent,
@@ -69,6 +86,7 @@ export function SchematicCanvas({
   onPlaceSchematicComponent,
   disabled,
 }: SchematicCanvasProps) {
+  const { screenToFlowPosition } = useReactFlow();
   const netNameMap = useMemo(() => {
     const map = new Map<string, string>();
     project?.schematic.nets.forEach((net) => map.set(net.id, net.name));
@@ -165,14 +183,11 @@ export function SchematicCanvas({
   const handlePaneClick = useCallback(
     (_event: React.MouseEvent) => {
       if (toolMode === "place" && pendingPlaceComponent && onPlaceSchematicComponent) {
-        // Get click coordinates relative to canvas; React Flow does not expose
-        // pane click coordinates directly in the event. We use a heuristic:
-        // the native event contains offsetX/offsetY relative to the React Flow
-        // container. This is acceptable for placement UX.
         const nativeEvent = _event.nativeEvent as MouseEvent;
-        const rect = (nativeEvent.target as HTMLElement).getBoundingClientRect();
-        const x = nativeEvent.offsetX;
-        const y = nativeEvent.offsetY;
+        const { x, y } = screenToFlowPosition({
+          x: nativeEvent.clientX,
+          y: nativeEvent.clientY,
+        });
         onPlaceSchematicComponent({
           component_definition_id: pendingPlaceComponent.definition_id,
           x,
@@ -181,7 +196,7 @@ export function SchematicCanvas({
         });
       }
     },
-    [toolMode, pendingPlaceComponent, onPlaceSchematicComponent],
+    [toolMode, pendingPlaceComponent, onPlaceSchematicComponent, screenToFlowPosition],
   );
 
   const cursorClass =

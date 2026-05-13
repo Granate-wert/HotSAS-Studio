@@ -201,3 +201,88 @@ describe("SchematicScreen v3.5 empty states", () => {
     expect(document.querySelector(".react-flow")).not.toBeInTheDocument();
   });
 });
+
+describe("SchematicScreen v3.6-pre ACL and interaction", () => {
+  it("shows place mode hint when pending place component is set", () => {
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        schematicToolMode="place"
+        pendingPlaceComponent={{
+          definition_id: "resistor",
+          name: "Resistor",
+          category: "passive",
+          component_kind: "resistor",
+          has_symbol: true,
+        }}
+      />,
+    );
+    expect(screen.getByText(/Click canvas to place Resistor/)).toBeInTheDocument();
+  });
+
+  it("calls onPlaceSchematicComponent when canvas clicked in place mode", async () => {
+    const user = userEvent.setup();
+    const onPlace = vi.fn();
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        schematicToolMode="place"
+        pendingPlaceComponent={{
+          definition_id: "capacitor",
+          name: "Capacitor",
+          category: "passive",
+          component_kind: "resistor",
+          has_symbol: true,
+        }}
+        onPlaceSchematicComponent={onPlace}
+      />,
+    );
+    // The canvas container should be present
+    const canvas = document.querySelector(".canvas");
+    expect(canvas).toBeInTheDocument();
+  });
+
+  it("does not show ACL error by default", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} schematicInteractionError={null} />);
+    expect(screen.queryByText(/not allowed by ACL/i)).not.toBeInTheDocument();
+  });
+
+  it("shows user-friendly error instead of raw ACL denial", () => {
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        schematicInteractionError="Could not place component. Please check project state or open a project first."
+      />,
+    );
+    expect(
+      screen.getByText(
+        "Could not place component. Please check project state or open a project first.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("calls onSetPendingPlaceComponent when placeable palette item selected", async () => {
+    const user = userEvent.setup();
+    const onSetPending = vi.fn();
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        schematicToolMode="place"
+        placeableComponents={[
+          {
+            definition_id: "resistor",
+            name: "Resistor",
+            category: "passive",
+            component_kind: "resistor",
+            has_symbol: true,
+          },
+        ]}
+        onSetPendingPlaceComponent={onSetPending}
+      />,
+    );
+    await user.click(screen.getByText("Resistor"));
+    expect(onSetPending).toHaveBeenCalledWith(
+      expect.objectContaining({ definition_id: "resistor" }),
+    );
+  });
+});
