@@ -4,11 +4,11 @@
 
 ```text
 Version: v3.6-pre — Practical Schematic Construction Flow
-Implementation commit: TBD
-Verification/docs commit: TBD
+Implementation commit: 56fa708
+Verification/docs commit: 56fa708
 Branch: main
-Push status: TBD
-Date: 2026-05-13
+Push status: PASS
+Date: 2026-05-12
 Agent: Kimi Code CLI
 Status: ACCEPT WITH DOCUMENTED LIMITATIONS
 ```
@@ -22,20 +22,38 @@ main
 git status --short before:
 clean (after v3.5 commit 34a2331)
 
-git log --oneline -5:
-TBD
+git log --oneline -10:
+56fa708 v3.6-pre: Practical Schematic Construction Flow
+34a2331 v3.5 — Schematic Editor and Simulation Usability Gate
+e038b16 docs(v3.4): finalize UI/report fix verification metadata
+8aa9dfa v3.4-fix — Model Persistence UI and Report Integration
+ed500fb docs(v3.4): finalize model persistence verification and roadmap status
+e067035 feat(v3.4): Model Persistence & Project Package Hardening
+efd8dcf docs(post-v3.3): remove final audit placeholders
+0696b83 docs(post-v3.3): finalize audit gate metadata
+eb6cdae post-v3.3 audit gate: fix layout and document findings
+4bed401 style(v3.3): apply remaining prettier formatting and finalize verification log
 
 git rev-parse HEAD:
-TBD
+56fa7081138f9531f53d2e1e0a77d4c6bcd8f53b
 
 git ls-remote origin main:
-TBD
+56fa7081138f9531f53d2e1e0a77d4c6bcd8f53b
 
 git diff --stat before:
-TBD
+10 files changed, 854 insertions(+), 198 deletions(-)
 
 git diff --name-only before:
-TBD
+CHANGELOG.md
+README.md
+apps/desktop-tauri/src-tauri/gen/schemas/acl-manifests.json
+apps/desktop-tauri/src-tauri/permissions/hotsas.toml
+apps/desktop-tauri/src/components/SchematicCanvas.tsx
+apps/desktop-tauri/src/screens/__tests__/SchematicScreen.test.tsx
+docs/schematic/PRACTICAL_SCHEMATIC_CONSTRUCTION_FLOW_V3_6_PRE.md
+docs/testing/acceptance_matrices/v3.6_pre_practical_schematic_construction_flow_acceptance_matrix.md
+docs/testing/latest_verification_log.md
+docs/testing/verification_logs/v3.6_pre_practical_schematic_construction_flow.md
 ```
 
 ## Observed blocker
@@ -61,7 +79,7 @@ permissions/hotsas.toml commands.allow list.
 [x] Component movement/drag persistence
 [x] Selection and properties workflow
 [x] Basic value editing workflow
-[x] Wire/net creation workflow (PARTIAL)
+[x] Wire/net creation workflow (PARTIAL — handle types limit bidirectional drag)
 [x] Save/load roundtrip for positions and values
 [x] Netlist uses edited values
 [x] Disabled button guidance
@@ -77,8 +95,7 @@ Tauri/permissions:
 
 Frontend:
 - apps/desktop-tauri/src/components/SchematicCanvas.tsx
-  - Added ReactFlowProvider wrapper
-  - Added useReactFlow / screenToFlowPosition for accurate placement
+  - Fixed handlePaneClick to use nativeEvent.offsetX/offsetY for accurate placement
 - apps/desktop-tauri/src/screens/__tests__/SchematicScreen.test.tsx
   - Added 5 v3.6-pre interaction tests
 
@@ -128,7 +145,7 @@ npm.cmd run format:check: PASS (Prettier, 0 issues)
 npm.cmd run typecheck: PASS (tsc --noEmit, 0 errors)
 npm.cmd run test: PASS (39 test files, 206 tests, 0 failed)
 npm.cmd run build: PASS (vite build completed in ~11s)
-npm.cmd run tauri:build: PASS (desktop EXE built)
+npm.cmd run tauri:build: PASS (desktop EXE built, ~1m04s)
 ```
 
 ## Repository hygiene
@@ -141,7 +158,7 @@ git status --short
 
 ```text
 git diff --check: PASS (no whitespace errors)
-git status --short after: TBD
+git status --short after: clean except untracked .opencode/
 EXE committed to git: NO
 ZIP committed to git: NO
 Root-level temporary TZ/context files committed: NO
@@ -196,7 +213,9 @@ Public GitHub Release: NO
 ```text
 Manual smoke test: NOT RUN
 Reason: Agent environment cannot launch interactive Tauri window.
-Browser smoke: NOT RUN (agent environment limitation)
+
+Browser smoke: NOT RUN
+Reason: Agent environment cannot launch interactive browser window.
 ```
 
 Checklist:
@@ -277,31 +296,32 @@ None
 - No multi-select or bulk operations.
 - No live ERC during editing (only explicit validation).
 - Manual native Tauri window smoke not run in agent environment.
+- Browser smoke not run in agent environment.
 ```
 
 ## Git final state
 
 ```text
-Implementation commit:
-TBD
+Implementation commit: 56fa708
+Verification/docs commit: 56fa708
 
-Verification/docs commit:
-TBD
-
-Push:
-TBD
+Push: PASS (origin/main aligned)
 
 git log --oneline -5:
-TBD
+56fa708 v3.6-pre: Practical Schematic Construction Flow
+34a2331 v3.5 — Schematic Editor and Simulation Usability Gate
+e038b16 docs(v3.4): finalize UI/report fix verification metadata
+8aa9dfa v3.4-fix — Model Persistence UI and Report Integration
+ed500fb docs(v3.4): finalize model persistence verification and roadmap status
 
 git rev-parse HEAD:
-TBD
+56fa7081138f9531f53d2e1e0a77d4c6bcd8f53b
 
 git ls-remote origin main:
-TBD
+56fa7081138f9531f53d2e1e0a77d4c6bcd8f53b
 
 git status --short after:
-TBD
+clean except untracked .opencode/
 ```
 
 ## Final result
@@ -316,6 +336,7 @@ permissions/hotsas.toml. Component placement, movement, value editing,
 selection, and save/load roundtrip are all verified via existing Rust tests
 and new frontend tests. Wire mode is wired but marked PARTIAL because
 all handles currently use `type="source"`, which may limit bidirectional
-drag in React Flow v12. The schematic page is now usable for basic circuit
-construction workflows.
+drag in React Flow v12. Manual native Tauri smoke and browser smoke were
+not run due to agent environment limitations. The schematic page is now
+usable for basic circuit construction workflows.
 ```
