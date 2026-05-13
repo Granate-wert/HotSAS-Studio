@@ -2460,6 +2460,7 @@ pub struct SchematicEditableFieldDto {
     pub label: String,
     pub current_value: String,
     pub editable: bool,
+    pub unit: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

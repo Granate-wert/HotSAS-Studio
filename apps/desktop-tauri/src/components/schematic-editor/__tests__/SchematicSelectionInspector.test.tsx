@@ -9,8 +9,20 @@ const mockDetails: SchematicSelectionDetailsDto = {
   id: "R1",
   display_name: "R1",
   editable_fields: [
-    { field_id: "resistance", label: "Resistance", current_value: "10k", editable: true },
-    { field_id: "instance_id", label: "Instance ID", current_value: "R1", editable: false },
+    {
+      field_id: "resistance",
+      label: "Resistance",
+      current_value: "10k",
+      editable: true,
+      unit: "Ω",
+    },
+    {
+      field_id: "instance_id",
+      label: "Instance ID",
+      current_value: "R1",
+      editable: false,
+      unit: null,
+    },
   ],
 };
 

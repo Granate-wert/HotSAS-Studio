@@ -98,6 +98,38 @@ After v3.6-pre, the following workflow is expected to work:
 8. **Simulate** — Simulation tab runs mock/ngspice analysis
 9. **Save/load** — Save .circuit preserves all edits
 
+## v3.6-pre-fix: Component Parameter Editing
+
+After the initial v3.6-pre ACL fix, manual smoke testing revealed that practical component parameter editing was not working correctly in the user UI. The v3.6-pre-fix addresses this:
+
+### Problem
+
+- Selecting a component showed editable fields only for parameters already in `overridden_parameters`
+- Freshly placed components had empty `overridden_parameters`, so no editable fields appeared
+- The `update_component_quick_parameter` backend service parsed all values as `Unitless`, so `4.7k` for resistance became `4700` unitless instead of `4700 Ohm`
+- The netlist would show incorrect values after editing
+
+### Fix
+
+1. **`get_schematic_selection_details`** now includes default parameters from the component definition, not just instance overrides
+2. **`SchematicEditableFieldDto`** now includes a `unit` field for each parameter
+3. **`update_component_quick_parameter`** infers the correct engineering unit from the parameter ID:
+   - `resistance` → Ohm
+   - `capacitance` → Farad
+   - `inductance` → Henry
+   - `voltage` / `ac_magnitude` / `dc_voltage` → Volt
+   - `current` → Ampere
+   - `frequency` → Hertz
+4. **`QuickParameterEditor`** shows unit labels next to inputs and uses controlled values to prevent stale state
+5. Human-readable labels are used in the inspector (e.g., "Resistance" instead of "resistance")
+
+### Verification
+
+- Edit R1 resistance → netlist shows updated value
+- Edit C1 capacitance → netlist shows updated value
+- Save .circuit → load .circuit → edited values persist
+- Invalid values (e.g., "abc") show clear validation errors
+
 ## Known limitations
 
 - Wire mode: all handles use `type="source"`, which may limit bidirectional connection UX in React Flow v12. Connections still work via `isConnectableStart/End`.

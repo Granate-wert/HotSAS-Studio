@@ -1028,6 +1028,7 @@ export type SchematicEditableFieldDto = {
   label: string;
   current_value: string;
   editable: boolean;
+  unit: string | null;
 };
 
 export type SchematicSelectionDetailsDto = {

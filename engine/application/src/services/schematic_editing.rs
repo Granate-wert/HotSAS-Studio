@@ -397,11 +397,9 @@ impl SchematicEditingService {
             .find(|c| c.instance_id == request.component_id)
             .ok_or_else(|| format!("component '{}' not found", request.component_id))?;
 
-        let value = ValueWithUnit::parse_with_default(
-            &request.value,
-            hotsas_core::EngineeringUnit::Unitless,
-        )
-        .map_err(|e| format!("invalid value: {e}"))?;
+        let unit = parameter_unit(&request.parameter_id);
+        let value = ValueWithUnit::parse_with_default(&request.value, unit)
+            .map_err(|e| format!("invalid value: {e}"))?;
 
         component
             .overridden_parameters
@@ -423,5 +421,18 @@ impl SchematicEditingService {
     fn validate_after_edit(&self, schematic: &CircuitModel) -> CircuitValidationReport {
         let validator = crate::CircuitValidationService::new();
         validator.validate(schematic)
+    }
+}
+
+/// Infer the engineering unit for a parameter key.
+fn parameter_unit(parameter_id: &str) -> hotsas_core::EngineeringUnit {
+    match parameter_id {
+        "resistance" => hotsas_core::EngineeringUnit::Ohm,
+        "capacitance" => hotsas_core::EngineeringUnit::Farad,
+        "inductance" => hotsas_core::EngineeringUnit::Henry,
+        "voltage" | "ac_magnitude" | "dc_voltage" => hotsas_core::EngineeringUnit::Volt,
+        "current" => hotsas_core::EngineeringUnit::Ampere,
+        "frequency" => hotsas_core::EngineeringUnit::Hertz,
+        _ => hotsas_core::EngineeringUnit::Unitless,
     }
 }

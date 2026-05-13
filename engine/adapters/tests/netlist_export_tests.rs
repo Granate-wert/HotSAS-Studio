@@ -67,3 +67,28 @@ fn parameter_map_mut<'a>(
         .unwrap_or_else(|| panic!("missing component {component_id}"))
         .overridden_parameters
 }
+
+#[test]
+fn netlist_uses_updated_resistor_value() {
+    let mut project = rc_low_pass_project();
+    // Update R1 resistance via overridden_parameters
+    let r1 = project
+        .schematic
+        .components
+        .iter_mut()
+        .find(|c| c.instance_id == "R1")
+        .unwrap();
+    r1.overridden_parameters.insert(
+        "resistance".to_string(),
+        hotsas_core::ValueWithUnit::parse_with_default("4.7k", hotsas_core::EngineeringUnit::Ohm)
+            .unwrap(),
+    );
+
+    let exporter = hotsas_adapters::UserCircuitSpiceNetlistExporter;
+    let netlist = exporter.export_spice_netlist(&project).unwrap();
+    assert!(
+        netlist.contains("4700") || netlist.contains("4.7k"),
+        "netlist should contain updated resistor value, got: {}",
+        netlist
+    );
+}

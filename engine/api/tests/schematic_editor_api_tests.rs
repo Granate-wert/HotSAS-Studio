@@ -496,3 +496,51 @@ fn netlist_preview_uses_backend_netlist_service() {
             || preview.netlist.contains("V1")
     );
 }
+
+#[test]
+fn get_schematic_selection_details_includes_definition_defaults() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+    let details = api
+        .get_schematic_selection_details(hotsas_api::SchematicSelectionRequestDto {
+            kind: "component".to_string(),
+            id: "R1".to_string(),
+        })
+        .unwrap();
+    assert_eq!(details.kind, "component");
+    let resistance_field = details
+        .editable_fields
+        .iter()
+        .find(|f| f.field_id == "resistance")
+        .expect("resistance field should be present");
+    assert_eq!(resistance_field.label, "Resistance");
+    assert!(resistance_field.editable);
+    assert_eq!(resistance_field.unit.as_deref(), Some("Ohm"));
+}
+
+#[test]
+fn update_schematic_quick_parameter_updates_resistor_value() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+    let result = api
+        .update_schematic_quick_parameter(hotsas_api::UpdateQuickParameterRequestDto {
+            component_id: "R1".to_string(),
+            parameter_id: "resistance".to_string(),
+            value: "4.7k".to_string(),
+        })
+        .unwrap();
+    let r1 = result
+        .project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.instance_id == "R1")
+        .unwrap();
+    let resistance = r1
+        .parameters
+        .iter()
+        .find(|p| p.name == "resistance")
+        .unwrap();
+    assert_eq!(resistance.value.unit, "Ohm");
+    assert!(resistance.value.si_value - 4700.0 < 0.1);
+}

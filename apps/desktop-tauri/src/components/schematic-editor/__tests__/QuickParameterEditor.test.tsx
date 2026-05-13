@@ -5,8 +5,14 @@ import { QuickParameterEditor } from "../QuickParameterEditor";
 import type { SchematicEditableFieldDto } from "../../../types";
 
 const mockFields: SchematicEditableFieldDto[] = [
-  { field_id: "resistance", label: "Resistance", current_value: "10k", editable: true },
-  { field_id: "instance_id", label: "Instance ID", current_value: "R1", editable: false },
+  { field_id: "resistance", label: "Resistance", current_value: "10k", editable: true, unit: "Ω" },
+  {
+    field_id: "instance_id",
+    label: "Instance ID",
+    current_value: "R1",
+    editable: false,
+    unit: null,
+  },
 ];
 
 describe("QuickParameterEditor", () => {

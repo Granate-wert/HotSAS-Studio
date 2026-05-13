@@ -687,3 +687,79 @@ fn update_component_quick_parameter_rejects_invalid_value() {
     );
     assert!(result.is_err());
 }
+
+#[test]
+fn update_component_quick_parameter_parses_resistance_with_ohm_unit() {
+    let svc = SchematicEditingService::new();
+    let mut project = empty_project();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "resistor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("R1".to_string()),
+            position: Point::new(100.0, 100.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+
+    let result = svc.update_component_quick_parameter(
+        &mut project,
+        UpdateQuickParameterRequest {
+            component_id: "R1".to_string(),
+            parameter_id: "resistance".to_string(),
+            value: "4.7k".to_string(),
+        },
+    );
+    assert!(result.is_ok());
+    let edit = result.unwrap();
+    let r1 = edit
+        .project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.instance_id == "R1")
+        .unwrap();
+    let resistance = r1.overridden_parameters.get("resistance").unwrap();
+    assert_eq!(resistance.unit, hotsas_core::EngineeringUnit::Ohm);
+    assert_eq!(resistance.si_value(), 4700.0);
+}
+
+#[test]
+fn update_component_quick_parameter_parses_capacitance_with_farad_unit() {
+    let svc = SchematicEditingService::new();
+    let mut project = empty_project();
+    svc.add_component(
+        &mut project,
+        AddComponentRequest {
+            component_kind: "capacitor".to_string(),
+            component_definition_id: None,
+            instance_id: Some("C1".to_string()),
+            position: Point::new(100.0, 100.0),
+            rotation_deg: 0.0,
+        },
+    )
+    .unwrap();
+
+    let result = svc.update_component_quick_parameter(
+        &mut project,
+        UpdateQuickParameterRequest {
+            component_id: "C1".to_string(),
+            parameter_id: "capacitance".to_string(),
+            value: "220n".to_string(),
+        },
+    );
+    assert!(result.is_ok());
+    let edit = result.unwrap();
+    let c1 = edit
+        .project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.instance_id == "C1")
+        .unwrap();
+    let capacitance = c1.overridden_parameters.get("capacitance").unwrap();
+    assert_eq!(capacitance.unit, hotsas_core::EngineeringUnit::Farad);
+    assert!((capacitance.si_value() - 220e-9).abs() < 1e-18);
+}

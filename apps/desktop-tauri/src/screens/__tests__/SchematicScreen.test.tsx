@@ -286,3 +286,149 @@ describe("SchematicScreen v3.6-pre ACL and interaction", () => {
     );
   });
 });
+
+describe("SchematicScreen v3.6-pre-fix parameter editing", () => {
+  it("shows editable resistance field when resistor is selected", () => {
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        selectedSchematicEntity={{ kind: "component", id: "R1" }}
+        schematicSelectionDetails={{
+          kind: "component",
+          id: "R1",
+          display_name: "R1",
+          editable_fields: [
+            {
+              field_id: "instance_id",
+              label: "Instance ID",
+              current_value: "R1",
+              editable: false,
+              unit: null,
+            },
+            {
+              field_id: "resistance",
+              label: "Resistance",
+              current_value: "10k",
+              editable: true,
+              unit: "Ohm",
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText("Resistance")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("10k")).toBeInTheDocument();
+  });
+
+  it("calls onUpdateSchematicQuickParameter when resistance is updated", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn();
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        selectedSchematicEntity={{ kind: "component", id: "R1" }}
+        schematicSelectionDetails={{
+          kind: "component",
+          id: "R1",
+          display_name: "R1",
+          editable_fields: [
+            {
+              field_id: "instance_id",
+              label: "Instance ID",
+              current_value: "R1",
+              editable: false,
+              unit: null,
+            },
+            {
+              field_id: "resistance",
+              label: "Resistance",
+              current_value: "10k",
+              editable: true,
+              unit: "Ohm",
+            },
+          ],
+        }}
+        onUpdateSchematicQuickParameter={onUpdate}
+      />,
+    );
+    const input = screen.getByDisplayValue("10k");
+    await user.clear(input);
+    await user.type(input, "4.7k");
+    await user.click(screen.getByText("Update"));
+    expect(onUpdate).toHaveBeenCalledWith("R1", "resistance", "4.7k");
+  });
+
+  it("shows unit next to parameter input", () => {
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        selectedSchematicEntity={{ kind: "component", id: "C1" }}
+        schematicSelectionDetails={{
+          kind: "component",
+          id: "C1",
+          display_name: "C1",
+          editable_fields: [
+            {
+              field_id: "capacitance",
+              label: "Capacitance",
+              current_value: "100n",
+              editable: true,
+              unit: "F",
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText("Capacitance")).toBeInTheDocument();
+    expect(screen.getByText("F")).toBeInTheDocument();
+  });
+
+  it("shows no editable parameters message for unsupported component", () => {
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        selectedSchematicEntity={{ kind: "component", id: "D1" }}
+        schematicSelectionDetails={{
+          kind: "component",
+          id: "D1",
+          display_name: "D1",
+          editable_fields: [
+            {
+              field_id: "instance_id",
+              label: "Instance ID",
+              current_value: "D1",
+              editable: false,
+              unit: null,
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText("No editable parameters")).toBeInTheDocument();
+  });
+
+  it("shows validation error when parameter update fails", () => {
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        selectedSchematicEntity={{ kind: "component", id: "R1" }}
+        schematicSelectionDetails={{
+          kind: "component",
+          id: "R1",
+          display_name: "R1",
+          editable_fields: [
+            {
+              field_id: "resistance",
+              label: "Resistance",
+              current_value: "10k",
+              editable: true,
+              unit: "Ohm",
+            },
+          ],
+        }}
+        schematicInteractionError="invalid value: could not parse engineering value"
+      />,
+    );
+    expect(screen.getByText(/invalid value/)).toBeInTheDocument();
+  });
+});

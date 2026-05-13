@@ -2188,15 +2188,8 @@ impl HotSasApi {
                     label: "Instance ID".to_string(),
                     current_value: comp.instance_id.clone(),
                     editable: false,
+                    unit: None,
                 }];
-                for (key, value) in &comp.overridden_parameters {
-                    fields.push(SchematicEditableFieldDto {
-                        field_id: key.clone(),
-                        label: key.clone(),
-                        current_value: format!("{}", value),
-                        editable: true,
-                    });
-                }
                 let library = hotsas_core::built_in_component_library();
                 let definition = library
                     .components
@@ -2219,6 +2212,28 @@ impl HotSasApi {
                         tags: vec![],
                         metadata: std::collections::BTreeMap::new(),
                     });
+                // Build editable fields from definition defaults + instance overrides
+                let mut param_keys: std::collections::BTreeSet<String> =
+                    definition.parameters.keys().cloned().collect();
+                for key in comp.overridden_parameters.keys() {
+                    param_keys.insert(key.clone());
+                }
+                for key in param_keys {
+                    let value = comp
+                        .overridden_parameters
+                        .get(&key)
+                        .or_else(|| definition.parameters.get(&key));
+                    if let Some(value) = value {
+                        let (label, unit) = parameter_label_and_unit(&key, value);
+                        fields.push(SchematicEditableFieldDto {
+                            field_id: key.clone(),
+                            label,
+                            current_value: format!("{}", value),
+                            editable: true,
+                            unit: Some(unit),
+                        });
+                    }
+                }
                 let assignment = self
                     .services
                     .component_model_mapping_service()
@@ -2275,6 +2290,7 @@ impl HotSasApi {
                         label: "Net Name".to_string(),
                         current_value: net.name.clone(),
                         editable: true,
+                        unit: None,
                     }],
                     model_assignment: None,
                     model_assignment_origin: None,
@@ -3079,6 +3095,24 @@ fn parse_export_format(format: &str) -> Result<hotsas_core::ExportFormat, ApiErr
 fn parse_value(value: &str, unit: EngineeringUnit) -> Result<ValueWithUnit, ApiError> {
     ValueWithUnit::parse_with_default(value, unit)
         .map_err(|e| ApiError::InvalidInput(e.to_string()))
+}
+
+/// Return a human-readable label and SI unit symbol for a parameter key.
+fn parameter_label_and_unit(key: &str, value: &ValueWithUnit) -> (String, String) {
+    let label = match key {
+        "resistance" => "Resistance",
+        "capacitance" => "Capacitance",
+        "inductance" => "Inductance",
+        "voltage" => "Voltage",
+        "ac_magnitude" => "AC Magnitude",
+        "dc_voltage" => "DC Voltage",
+        "current" => "Current",
+        "frequency" => "Frequency",
+        _ => key,
+    }
+    .to_string();
+    let unit = value.unit.symbol().to_string();
+    (label, unit)
 }
 
 fn into_probe_dto(probe: hotsas_core::SimulationProbe) -> SimulationProbeDto {
