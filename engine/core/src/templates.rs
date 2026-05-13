@@ -76,7 +76,7 @@ pub fn rc_low_pass_template() -> CircuitTemplate {
     let components = vec![
         component(
             "V1",
-            "voltage_source",
+            "generic_voltage_source",
             80.0,
             210.0,
             vec![("p", "net_in"), ("n", "gnd")],
@@ -84,7 +84,7 @@ pub fn rc_low_pass_template() -> CircuitTemplate {
         ),
         component(
             "R1",
-            "resistor",
+            "generic_resistor",
             260.0,
             160.0,
             vec![("1", "net_in"), ("2", "net_out")],
@@ -92,7 +92,7 @@ pub fn rc_low_pass_template() -> CircuitTemplate {
         ),
         component(
             "C1",
-            "capacitor",
+            "generic_capacitor",
             430.0,
             240.0,
             vec![("1", "net_out"), ("2", "gnd")],

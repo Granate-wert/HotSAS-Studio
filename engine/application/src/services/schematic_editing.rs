@@ -35,12 +35,42 @@ impl SchematicEditingService {
             return Err(format!("duplicate instance id: {instance_id}"));
         }
 
-        let definition_id = request
+        let requested_id = request
             .component_definition_id
             .clone()
             .unwrap_or_else(|| request.component_kind.clone());
 
-        let symbol_id = hotsas_core::seed_symbol_for_kind(&definition_id).map(|s| s.id.clone());
+        // Resolve definition against the built-in library with fallback logic
+        let library = hotsas_core::built_in_component_library();
+        let definition = library
+            .components
+            .iter()
+            .find(|d| d.id == requested_id)
+            .or_else(|| {
+                library
+                    .components
+                    .iter()
+                    .find(|d| d.id == format!("generic_{}", requested_id))
+            });
+
+        let definition_id = definition
+            .map(|d| d.id.clone())
+            .unwrap_or_else(|| requested_id.clone());
+
+        // Copy default parameters from the library definition so the component
+        // is immediately editable in the UI.
+        let mut overridden_parameters = std::collections::BTreeMap::new();
+        if let Some(def) = definition {
+            for (name, value) in &def.parameters {
+                overridden_parameters.insert(name.clone(), value.clone());
+            }
+        }
+
+        // Resolve symbol: prefer the library definition's symbol_ids, then fall
+        // back to the legacy seed_symbol_for_kind lookup.
+        let symbol_id = definition
+            .and_then(|d| d.symbol_ids.first().cloned())
+            .or_else(|| hotsas_core::seed_symbol_for_kind(&definition_id).map(|s| s.id.clone()));
 
         let component = ComponentInstance {
             instance_id: instance_id.clone(),
@@ -51,7 +81,7 @@ impl SchematicEditingService {
             position: request.position,
             rotation_degrees: request.rotation_deg,
             connected_nets: vec![],
-            overridden_parameters: std::collections::BTreeMap::new(),
+            overridden_parameters,
             notes: None,
         };
 

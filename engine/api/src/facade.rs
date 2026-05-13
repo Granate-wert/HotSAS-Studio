@@ -426,7 +426,13 @@ impl HotSasApi {
         let definition = library
             .components
             .iter()
-            .find(|d| d.id == component.definition_id);
+            .find(|d| d.id == component.definition_id)
+            .or_else(|| {
+                library
+                    .components
+                    .iter()
+                    .find(|d| d.id == format!("generic_{}", component.definition_id))
+            });
         // Merge definition defaults with instance overrides
         let mut param_values: std::collections::BTreeMap<String, &ValueWithUnit> =
             std::collections::BTreeMap::new();
@@ -2210,6 +2216,12 @@ impl HotSasApi {
                     .components
                     .iter()
                     .find(|d| d.id == comp.definition_id)
+                    .or_else(|| {
+                        library
+                            .components
+                            .iter()
+                            .find(|d| d.id == format!("generic_{}", comp.definition_id))
+                    })
                     .cloned()
                     .unwrap_or_else(|| ComponentDefinition {
                         id: comp.definition_id.clone(),

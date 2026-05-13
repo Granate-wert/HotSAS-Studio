@@ -1,6 +1,8 @@
-use hotsas_api::{DeleteWireRequestDto, HotSasApi, PlaceComponentRequestDto};
+use hotsas_api::{
+    AddComponentRequestDto, DeleteWireRequestDto, HotSasApi, PlaceComponentRequestDto,
+};
 use hotsas_application::AppServices;
-use hotsas_core::{CircuitProject, ProjectPackageManifest, ProjectPackageValidationReport};
+use hotsas_core::{CircuitProject, ProjectPackageManifest};
 use hotsas_ports::{
     BomExporterPort, ComponentLibraryExporterPort, FormulaEnginePort, NetlistExporterPort,
     PortError, ProjectPackageStoragePort, ReportExporterPort, SchematicExporterPort,
@@ -245,7 +247,7 @@ fn get_selected_component_r1_returns_parameters() {
     api.create_rc_low_pass_demo_project().unwrap();
     let selected = api.get_selected_component("R1".to_string()).unwrap();
     assert_eq!(selected.instance_id, "R1");
-    assert_eq!(selected.component_kind, "resistor");
+    assert_eq!(selected.component_kind, "generic_resistor");
     assert!(selected.parameters.iter().any(|p| p.name == "resistance"));
     assert!(selected.symbol.is_some());
 }
@@ -543,4 +545,310 @@ fn update_schematic_quick_parameter_updates_resistor_value() {
         .unwrap();
     assert_eq!(resistance.value.unit, "Ohm");
     assert!(resistance.value.si_value - 4700.0 < 0.1);
+}
+
+// v3.6-pre-fix2: newly placed palette components must have editable parameters
+
+#[test]
+fn add_schematic_component_capacitor_uses_generic_capacitor_definition_or_defaults() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let result = api
+        .add_schematic_component(AddComponentRequestDto {
+            component_kind: "capacitor".to_string(),
+            component_definition_id: None,
+            instance_id: None,
+            x: 100.0,
+            y: 100.0,
+            rotation_deg: 0.0,
+        })
+        .unwrap();
+
+    let project = result.project;
+    let cap = project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id == "generic_capacitor")
+        .expect("component should resolve to generic_capacitor definition");
+    assert!(
+        cap.parameters.iter().any(|p| p.name == "capacitance"),
+        "newly placed capacitor should have capacitance parameter from definition defaults"
+    );
+}
+
+#[test]
+fn place_schematic_component_generic_capacitor_gets_default_parameters() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let result = api
+        .place_schematic_component(PlaceComponentRequestDto {
+            component_definition_id: "generic_capacitor".to_string(),
+            x: 200.0,
+            y: 200.0,
+            rotation_deg: 0.0,
+        })
+        .unwrap();
+
+    let project = result.project;
+    let cap = project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id == "generic_capacitor")
+        .expect("component should have generic_capacitor definition_id");
+    assert!(
+        cap.parameters.iter().any(|p| p.name == "capacitance"),
+        "newly placed generic_capacitor should have capacitance parameter from definition defaults"
+    );
+}
+
+#[test]
+fn get_selected_component_for_newly_placed_resistor_includes_resistance() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let result = api
+        .place_schematic_component(PlaceComponentRequestDto {
+            component_definition_id: "generic_resistor".to_string(),
+            x: 100.0,
+            y: 100.0,
+            rotation_deg: 0.0,
+        })
+        .unwrap();
+
+    let placed = result
+        .project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id == "generic_resistor")
+        .unwrap();
+
+    let selected = api
+        .get_selected_component(placed.instance_id.clone())
+        .unwrap();
+    assert_eq!(selected.component_kind, "generic_resistor");
+    let resistance = selected
+        .parameters
+        .iter()
+        .find(|p| p.name == "resistance")
+        .expect("Properties panel should show resistance for newly placed resistor");
+    assert_eq!(resistance.unit.as_deref(), Some("Ohm"));
+}
+
+#[test]
+fn get_selection_details_for_newly_placed_capacitor_includes_capacitance_field() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let result = api
+        .place_schematic_component(PlaceComponentRequestDto {
+            component_definition_id: "generic_capacitor".to_string(),
+            x: 100.0,
+            y: 100.0,
+            rotation_deg: 0.0,
+        })
+        .unwrap();
+
+    let placed = result
+        .project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id == "generic_capacitor")
+        .unwrap();
+
+    let details = api
+        .get_schematic_selection_details(hotsas_api::SchematicSelectionRequestDto {
+            kind: "component".to_string(),
+            id: placed.instance_id.clone(),
+        })
+        .unwrap();
+
+    let field = details
+        .editable_fields
+        .iter()
+        .find(|f| f.field_id == "capacitance")
+        .expect("Selection tab should show capacitance for newly placed capacitor");
+    assert_eq!(field.label, "Capacitance");
+    assert!(field.editable);
+    assert_eq!(field.unit.as_deref(), Some("F"));
+}
+
+#[test]
+fn get_selection_details_for_newly_placed_resistor_includes_resistance_field() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let result = api
+        .place_schematic_component(PlaceComponentRequestDto {
+            component_definition_id: "generic_resistor".to_string(),
+            x: 100.0,
+            y: 100.0,
+            rotation_deg: 0.0,
+        })
+        .unwrap();
+
+    let placed = result
+        .project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id == "generic_resistor")
+        .unwrap();
+
+    let details = api
+        .get_schematic_selection_details(hotsas_api::SchematicSelectionRequestDto {
+            kind: "component".to_string(),
+            id: placed.instance_id.clone(),
+        })
+        .unwrap();
+
+    let field = details
+        .editable_fields
+        .iter()
+        .find(|f| f.field_id == "resistance")
+        .expect("Selection tab should show resistance for newly placed resistor");
+    assert_eq!(field.label, "Resistance");
+    assert!(field.editable);
+    assert_eq!(field.unit.as_deref(), Some("Ohm"));
+}
+
+#[test]
+fn get_selection_details_for_newly_placed_voltage_source_includes_voltage_field() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let result = api
+        .place_schematic_component(PlaceComponentRequestDto {
+            component_definition_id: "generic_voltage_source".to_string(),
+            x: 100.0,
+            y: 100.0,
+            rotation_deg: 0.0,
+        })
+        .unwrap();
+
+    let placed = result
+        .project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id == "generic_voltage_source")
+        .unwrap();
+
+    let details = api
+        .get_schematic_selection_details(hotsas_api::SchematicSelectionRequestDto {
+            kind: "component".to_string(),
+            id: placed.instance_id.clone(),
+        })
+        .unwrap();
+
+    let field = details
+        .editable_fields
+        .iter()
+        .find(|f| f.field_id == "voltage")
+        .expect("Selection tab should show voltage for newly placed voltage source");
+    assert_eq!(field.label, "Voltage");
+    assert!(field.editable);
+    assert_eq!(field.unit.as_deref(), Some("V"));
+}
+
+#[test]
+fn update_newly_placed_capacitor_parameter_updates_override() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let result = api
+        .place_schematic_component(PlaceComponentRequestDto {
+            component_definition_id: "generic_capacitor".to_string(),
+            x: 100.0,
+            y: 100.0,
+            rotation_deg: 0.0,
+        })
+        .unwrap();
+
+    let placed = result
+        .project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id == "generic_capacitor")
+        .unwrap();
+
+    let updated = api
+        .update_component_parameter(
+            placed.instance_id.clone(),
+            "capacitance".to_string(),
+            "10u".to_string(),
+            None,
+        )
+        .unwrap();
+
+    let cap = updated
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.instance_id == placed.instance_id)
+        .unwrap();
+    let param = cap
+        .parameters
+        .iter()
+        .find(|p| p.name == "capacitance")
+        .unwrap();
+    assert_eq!(param.value.unit, "F");
+    assert!(param.value.si_value - 1e-5 < 1e-10);
+}
+
+#[test]
+fn save_load_preserves_updated_value_for_newly_placed_component() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let result = api
+        .place_schematic_component(PlaceComponentRequestDto {
+            component_definition_id: "generic_capacitor".to_string(),
+            x: 100.0,
+            y: 100.0,
+            rotation_deg: 0.0,
+        })
+        .unwrap();
+
+    let placed = result
+        .project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id == "generic_capacitor")
+        .unwrap();
+
+    // Update the value
+    api.update_component_parameter(
+        placed.instance_id.clone(),
+        "capacitance".to_string(),
+        "22u".to_string(),
+        None,
+    )
+    .unwrap();
+
+    // Save project
+    api.save_project_as("D:\\test\\project.circuit".to_string())
+        .unwrap();
+
+    // Verify current project still has the updated value
+    let project = api.get_current_project().unwrap();
+    let cap = project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.instance_id == placed.instance_id)
+        .unwrap();
+    let param = cap
+        .parameters
+        .iter()
+        .find(|p| p.name == "capacitance")
+        .unwrap();
+    assert_eq!(param.value.original, "22u");
 }

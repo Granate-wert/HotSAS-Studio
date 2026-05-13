@@ -27,7 +27,8 @@ const nodeTypes = {
 };
 
 function mapComponentKindToNodeType(kind: string): string {
-  switch (kind) {
+  const base = kind.startsWith("generic_") ? kind.slice(8) : kind;
+  switch (base) {
     case "resistor":
       return "resistor";
     case "capacitor":

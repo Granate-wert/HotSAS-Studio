@@ -549,8 +549,11 @@ pub fn op_amp_symbol() -> SymbolDefinition {
 }
 
 /// Lookup a seed symbol by component kind.
+/// Supports bare kinds (e.g. `resistor`) and generic/library ids
+/// (e.g. `generic_resistor`, `capacitor_100n_0603`).
 pub fn seed_symbol_for_kind(kind: &str) -> Option<SymbolDefinition> {
-    match kind {
+    let base = kind.strip_prefix("generic_").unwrap_or(kind);
+    match base {
         "resistor" => Some(resistor_symbol()),
         "capacitor" => Some(capacitor_symbol()),
         "inductor" => Some(inductor_symbol()),
