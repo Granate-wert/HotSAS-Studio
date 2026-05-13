@@ -90,12 +90,17 @@ export function GenericComponentNode({ data, selected }: NodeProps) {
   const { component } = data as {
     component: ComponentDto;
     onSelect?: (instanceId: string) => void;
+    onPinClick?: (componentId: string, pinId: string) => void;
+  };
+  const { onPinClick } = data as {
+    onPinClick?: (componentId: string, pinId: string) => void;
   };
   const primaryParam = component.parameters[0];
   const label = primaryParam ? `${primaryParam.value.display}` : component.component_kind;
 
   return (
     <div
+      data-testid={`generic-component-card-${component.instance_id}`}
       style={{
         padding: "6px 10px",
         borderRadius: 6,
@@ -121,6 +126,10 @@ export function GenericComponentNode({ data, selected }: NodeProps) {
             height: 8,
             background: "#7db2ff",
             border: "none",
+          }}
+          onClick={(event) => {
+            event.stopPropagation();
+            onPinClick?.(component.instance_id, pin.id);
           }}
         />
       ))}

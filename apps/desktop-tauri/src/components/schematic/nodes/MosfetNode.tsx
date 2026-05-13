@@ -1,6 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { SchematicSymbolNode } from "./SchematicSymbolNode";
 
-export function CapacitorNode(props: NodeProps) {
+export function MosfetNode(props: NodeProps) {
   return <SchematicSymbolNode {...props} />;
 }

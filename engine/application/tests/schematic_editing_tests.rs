@@ -200,6 +200,7 @@ fn connect_pins_creates_net_and_wire() {
             to_component_id: "C1".to_string(),
             to_pin_id: "1".to_string(),
             net_name: Some("net_rc".to_string()),
+            route_points: None,
         },
     );
     assert!(result.is_ok());
@@ -221,6 +222,7 @@ fn connect_unknown_component_returns_error() {
             to_component_id: "C1".to_string(),
             to_pin_id: "1".to_string(),
             net_name: None,
+            route_points: None,
         },
     );
     assert!(result.is_err());
@@ -303,6 +305,7 @@ fn connect_unknown_from_pin_returns_controlled_error() {
             to_component_id: "C1".to_string(),
             to_pin_id: "1".to_string(),
             net_name: None,
+            route_points: None,
         },
     );
     assert!(result.is_err());
@@ -344,6 +347,7 @@ fn connect_unknown_to_pin_returns_controlled_error() {
             to_component_id: "C1".to_string(),
             to_pin_id: "unknown_pin".to_string(),
             net_name: None,
+            route_points: None,
         },
     );
     assert!(result.is_err());
@@ -385,6 +389,7 @@ fn connect_valid_pins_creates_connection() {
             to_component_id: "C1".to_string(),
             to_pin_id: "2".to_string(),
             net_name: Some("net_rc".to_string()),
+            route_points: None,
         },
     );
     assert!(result.is_ok());
@@ -437,6 +442,7 @@ fn delete_connected_component_removes_related_wires() {
             to_component_id: "C1".to_string(),
             to_pin_id: "1".to_string(),
             net_name: Some("net_rc".to_string()),
+            route_points: None,
         },
     )
     .unwrap();
@@ -487,6 +493,7 @@ fn delete_connected_component_removes_stale_net_connected_pins() {
             to_component_id: "C1".to_string(),
             to_pin_id: "1".to_string(),
             net_name: Some("net_rc".to_string()),
+            route_points: None,
         },
     )
     .unwrap();
@@ -539,6 +546,7 @@ fn delete_connected_component_returns_floating_net_warning() {
             to_component_id: "C1".to_string(),
             to_pin_id: "1".to_string(),
             net_name: Some("net_rc".to_string()),
+            route_points: None,
         },
     )
     .unwrap();
@@ -592,6 +600,7 @@ fn delete_wire_removes_wire_and_cleans_up_net() {
             to_component_id: "C1".to_string(),
             to_pin_id: "1".to_string(),
             net_name: Some("net_rc".to_string()),
+            route_points: None,
         },
     )
     .unwrap();

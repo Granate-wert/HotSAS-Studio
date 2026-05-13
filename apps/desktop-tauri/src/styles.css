@@ -64,7 +64,7 @@ body {
 .grid {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: 260px minmax(0, 1fr) 320px;
   grid-template-rows: auto 1fr auto;
   min-height: 0;
 }
@@ -98,10 +98,20 @@ body {
   border-right: 1px solid #263244;
 }
 
+.schematic-left-panel {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  border-right: 1px solid #263244;
+  background: #111722;
+}
+
 .canvas {
   width: 100%;
   height: 100%;
   background: #0f1520;
+  position: relative;
 }
 
 .canvas.cursor-crosshair .react-flow__pane {
@@ -112,10 +122,41 @@ body {
   cursor: not-allowed !important;
 }
 
+.wire-guidance {
+  position: absolute;
+  z-index: 5;
+  top: 10px;
+  left: 10px;
+  padding: 6px 10px;
+  border: 1px solid #4e6178;
+  border-radius: 4px;
+  background: rgba(17, 23, 34, 0.92);
+  color: #d7e0ee;
+  font-size: 12px;
+}
+
+.wire-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.wire-preview path {
+  fill: none;
+  stroke: #f1c663;
+  stroke-dasharray: 6 4;
+  stroke-width: 2;
+}
+
 .side-panel {
+  grid-column: 3;
   padding: 16px;
   background: #121722;
   border-bottom: 1px solid #263244;
+  overflow: auto;
 }
 
 .metric {
@@ -196,6 +237,42 @@ pre {
   min-width: 118px;
 }
 
+.react-flow__node-resistor,
+.react-flow__node-capacitor,
+.react-flow__node-inductor,
+.react-flow__node-voltage_source,
+.react-flow__node-ground,
+.react-flow__node-diode,
+.react-flow__node-op_amp,
+.react-flow__node-mosfet {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.schematic-symbol-node {
+  border-radius: 4px;
+  background: rgba(15, 21, 32, 0.78);
+}
+
+.schematic-symbol-body {
+  width: 120px;
+  height: 84px;
+}
+
+.schematic-symbol-body svg {
+  width: 120px;
+  height: 84px;
+  display: block;
+}
+
+.schematic-symbol-labels {
+  display: grid;
+  gap: 2px;
+  padding: 2px 4px 0;
+  text-align: center;
+}
+
 .react-flow__edge-path {
   stroke: #7db2ff;
   stroke-width: 2;
@@ -207,4 +284,26 @@ pre {
 
 .react-flow__edge-text {
   fill: #d7e0ee;
+}
+
+@media (max-width: 1120px) {
+  .grid {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .side-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .schematic-left-panel,
+  .schematic-panel,
+  .side-panel {
+    grid-column: 1;
+  }
 }

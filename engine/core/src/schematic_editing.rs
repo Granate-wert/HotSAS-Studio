@@ -28,6 +28,7 @@ pub struct ConnectPinsRequest {
     pub to_component_id: String,
     pub to_pin_id: String,
     pub net_name: Option<String>,
+    pub route_points: Option<Vec<Point>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

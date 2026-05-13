@@ -1,5 +1,10 @@
 export { CapacitorNode } from "./CapacitorNode";
+export { DiodeNode } from "./DiodeNode";
 export { GenericComponentNode } from "./GenericComponentNode";
 export { GroundNode } from "./GroundNode";
+export { InductorNode } from "./InductorNode";
+export { MosfetNode } from "./MosfetNode";
+export { OpAmpNode } from "./OpAmpNode";
 export { ResistorNode } from "./ResistorNode";
+export { SchematicSymbolNode } from "./SchematicSymbolNode";
 export { VoltageSourceNode } from "./VoltageSourceNode";

@@ -356,6 +356,7 @@ fn save_load_roundtrip_preserves_interactive_edits() {
                 to_component_id: "C2".to_string(),
                 to_pin_id: "1".to_string(),
                 net_name: Some("net_c1_c2".to_string()),
+                route_points: None,
             },
         )
         .unwrap();

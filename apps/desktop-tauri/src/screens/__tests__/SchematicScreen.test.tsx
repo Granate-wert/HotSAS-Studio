@@ -123,9 +123,17 @@ describe("SchematicScreen v2.5", () => {
 
   it("renders component palette", () => {
     renderWithProvider(<SchematicScreen {...baseProps} />);
+    expect(screen.getByTestId("schematic-left-panel")).toBeInTheDocument();
     expect(screen.getByText("Component Palette")).toBeInTheDocument();
     expect(screen.getByTestId("add-resistor")).toBeInTheDocument();
     expect(screen.getByTestId("add-capacitor")).toBeInTheDocument();
+  });
+
+  it("shows wire-mode guidance in the canvas area", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} schematicToolMode="wire" />);
+    expect(
+      screen.getByText("Wire mode: click a visible pin to start a grid-snapped manual wire"),
+    ).toBeInTheDocument();
   });
 
   it("calls onAddComponent when palette button clicked", async () => {

@@ -476,6 +476,7 @@ fn undo_after_connect_wire_removes_wire() {
         to_component_id: "C1".to_string(),
         to_pin_id: "1".to_string(),
         net_name: None,
+        route_points: None,
     })
     .unwrap();
 
@@ -851,4 +852,186 @@ fn save_load_preserves_updated_value_for_newly_placed_component() {
         .find(|p| p.name == "capacitance")
         .unwrap();
     assert_eq!(param.value.original, "22u");
+}
+
+// v3.6-pre-fix3: wire connection workflow
+
+#[test]
+fn api_connect_schematic_pins_creates_wire_or_net() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let result = api
+        .connect_schematic_pins(hotsas_api::ConnectPinsRequestDto {
+            from_component_id: "R1".to_string(),
+            from_pin_id: "1".to_string(),
+            to_component_id: "C1".to_string(),
+            to_pin_id: "1".to_string(),
+            net_name: Some("test_net".to_string()),
+            route_points: None,
+        })
+        .unwrap();
+
+    let project = result.project;
+    // Net should exist with the custom name
+    let net = project
+        .schematic
+        .nets
+        .iter()
+        .find(|n| n.name == "test_net")
+        .expect("a net should be created with the custom name");
+    // Wire should exist and reference that net
+    assert!(
+        project.schematic.wires.iter().any(|w| w.net_id == net.id),
+        "a wire should be created connecting the pins via the new net"
+    );
+}
+
+#[test]
+fn api_connect_newly_placed_resistor_to_capacitor() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    // Place a new resistor
+    api.place_schematic_component(PlaceComponentRequestDto {
+        component_definition_id: "generic_resistor".to_string(),
+        x: 300.0,
+        y: 300.0,
+        rotation_deg: 0.0,
+    })
+    .unwrap();
+
+    // Place a new capacitor
+    api.place_schematic_component(PlaceComponentRequestDto {
+        component_definition_id: "generic_capacitor".to_string(),
+        x: 400.0,
+        y: 400.0,
+        rotation_deg: 0.0,
+    })
+    .unwrap();
+
+    let project = api.get_current_project().unwrap();
+    let resistor = project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id == "generic_resistor" && c.x == 300.0)
+        .unwrap();
+    let capacitor = project
+        .schematic
+        .components
+        .iter()
+        .find(|c| c.definition_id == "generic_capacitor" && c.x == 400.0)
+        .unwrap();
+
+    // Connect resistor pin 2 to capacitor pin 1
+    let result = api
+        .connect_schematic_pins(hotsas_api::ConnectPinsRequestDto {
+            from_component_id: resistor.instance_id.clone(),
+            from_pin_id: "2".to_string(),
+            to_component_id: capacitor.instance_id.clone(),
+            to_pin_id: "1".to_string(),
+            net_name: None,
+            route_points: None,
+        })
+        .unwrap();
+
+    let project = result.project;
+    let wire = project
+        .schematic
+        .wires
+        .iter()
+        .find(|w| {
+            w.from_component_id == Some(resistor.instance_id.clone())
+                && w.to_component_id == Some(capacitor.instance_id.clone())
+        })
+        .expect("wire should exist between newly placed components");
+    assert_eq!(wire.from_pin_id, Some("2".to_string()));
+    assert_eq!(wire.to_pin_id, Some("1".to_string()));
+}
+
+#[test]
+fn invalid_pin_connection_returns_error_not_panic() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let result = api.connect_schematic_pins(hotsas_api::ConnectPinsRequestDto {
+        from_component_id: "R1".to_string(),
+        from_pin_id: "nonexistent_pin".to_string(),
+        to_component_id: "C1".to_string(),
+        to_pin_id: "1".to_string(),
+        net_name: None,
+        route_points: None,
+    });
+
+    assert!(
+        result.is_err(),
+        "connecting a nonexistent pin should return an error"
+    );
+}
+
+#[test]
+fn api_create_wire_with_route_points() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    let result = api
+        .connect_schematic_pins(hotsas_api::ConnectPinsRequestDto {
+            from_component_id: "R1".to_string(),
+            from_pin_id: "2".to_string(),
+            to_component_id: "C1".to_string(),
+            to_pin_id: "1".to_string(),
+            net_name: Some("manual_vout".to_string()),
+            route_points: Some(vec![
+                hotsas_api::WireRoutePointDto { x: 320.0, y: 160.0 },
+                hotsas_api::WireRoutePointDto { x: 320.0, y: 240.0 },
+                hotsas_api::WireRoutePointDto { x: 430.0, y: 240.0 },
+            ]),
+        })
+        .unwrap();
+
+    let wire = result
+        .project
+        .schematic
+        .wires
+        .iter()
+        .find(|w| w.net_id == "net-4")
+        .expect("manual wire should be returned in the API project DTO");
+
+    assert_eq!(wire.routing_style.as_deref(), Some("manual"));
+    assert_eq!(
+        wire.route_points,
+        vec![
+            hotsas_api::WireRoutePointDto { x: 320.0, y: 160.0 },
+            hotsas_api::WireRoutePointDto { x: 320.0, y: 240.0 },
+            hotsas_api::WireRoutePointDto { x: 430.0, y: 240.0 },
+        ]
+    );
+}
+
+#[test]
+fn netlist_uses_wire_connectivity_independent_of_route_geometry() {
+    let api = fake_api();
+    api.create_rc_low_pass_demo_project().unwrap();
+
+    api.connect_schematic_pins(hotsas_api::ConnectPinsRequestDto {
+        from_component_id: "R1".to_string(),
+        from_pin_id: "2".to_string(),
+        to_component_id: "C1".to_string(),
+        to_pin_id: "1".to_string(),
+        net_name: Some("manual_vout".to_string()),
+        route_points: Some(vec![
+            hotsas_api::WireRoutePointDto { x: 320.0, y: 160.0 },
+            hotsas_api::WireRoutePointDto { x: 320.0, y: 240.0 },
+            hotsas_api::WireRoutePointDto { x: 430.0, y: 240.0 },
+        ]),
+    })
+    .unwrap();
+
+    let preview = api.generate_current_schematic_netlist_preview().unwrap();
+
+    assert!(preview.netlist.contains("R1"));
+    assert!(preview.netlist.contains("C1"));
+    assert!(!preview.netlist.contains("320.0"));
+    assert!(!preview.netlist.contains("430.0"));
 }

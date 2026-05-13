@@ -1,6 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
-import { GenericComponentNode } from "./GenericComponentNode";
+import { SchematicSymbolNode } from "./SchematicSymbolNode";
 
 export function GroundNode(props: NodeProps) {
-  return <GenericComponentNode {...props} />;
+  return <SchematicSymbolNode {...props} />;
 }

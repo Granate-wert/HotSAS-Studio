@@ -75,8 +75,25 @@ impl From<&CircuitProject> for ProjectDto {
                     .map(|wire| WireDto {
                         id: wire.id.clone(),
                         from_component_id: wire.from.component_id.clone(),
+                        from_pin_id: wire.from.pin_id.clone(),
                         to_component_id: wire.to.component_id.clone(),
+                        to_pin_id: wire.to.pin_id.clone(),
                         net_id: wire.net_id.clone(),
+                        route_points: wire
+                            .geometry
+                            .as_ref()
+                            .map(|geometry| {
+                                geometry
+                                    .points
+                                    .iter()
+                                    .map(WireRoutePointDto::from)
+                                    .collect()
+                            })
+                            .unwrap_or_default(),
+                        routing_style: wire
+                            .geometry
+                            .as_ref()
+                            .map(|geometry| format!("{:?}", geometry.routing_style).to_lowercase()),
                     })
                     .collect(),
                 nets: project
@@ -187,8 +204,27 @@ pub struct CircuitValidationReportDto {
 pub struct WireDto {
     pub id: String,
     pub from_component_id: Option<String>,
+    pub from_pin_id: Option<String>,
     pub to_component_id: Option<String>,
+    pub to_pin_id: Option<String>,
     pub net_id: String,
+    pub route_points: Vec<WireRoutePointDto>,
+    pub routing_style: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WireRoutePointDto {
+    pub x: f64,
+    pub y: f64,
+}
+
+impl From<&hotsas_core::Point> for WireRoutePointDto {
+    fn from(point: &hotsas_core::Point) -> Self {
+        Self {
+            x: point.x,
+            y: point.y,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -2380,6 +2416,7 @@ pub struct ConnectPinsRequestDto {
     pub to_component_id: String,
     pub to_pin_id: String,
     pub net_name: Option<String>,
+    pub route_points: Option<Vec<WireRoutePointDto>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

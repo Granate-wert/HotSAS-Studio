@@ -52,8 +52,17 @@ export type ComponentDto = {
 export type WireDto = {
   id: string;
   from_component_id: string | null;
+  from_pin_id: string | null;
   to_component_id: string | null;
+  to_pin_id: string | null;
   net_id: string;
+  route_points: WireRoutePointDto[];
+  routing_style: string | null;
+};
+
+export type WireRoutePointDto = {
+  x: number;
+  y: number;
 };
 
 export type NetDto = {
@@ -977,6 +986,7 @@ export type ConnectPinsRequestDto = {
   to_component_id: string;
   to_pin_id: string;
   net_name?: string | null;
+  route_points?: WireRoutePointDto[] | null;
 };
 
 export type RenameNetRequestDto = {

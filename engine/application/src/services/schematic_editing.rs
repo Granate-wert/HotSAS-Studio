@@ -2,7 +2,7 @@ use hotsas_core::{
     AddComponentRequest, CircuitEndpoint, CircuitModel, CircuitProject, CircuitValidationReport,
     ComponentInstance, ConnectPinsRequest, ConnectedPin, DeleteComponentRequest, DeleteWireRequest,
     MoveComponentRequest, Net, Point, RenameNetRequest, SchematicEditResult,
-    UpdateQuickParameterRequest, ValueWithUnit, Wire,
+    UpdateQuickParameterRequest, ValueWithUnit, Wire, WireGeometry, WireRoutingStyle,
 };
 
 #[derive(Clone)]
@@ -303,7 +303,16 @@ impl SchematicEditingService {
                 point: Point::new(0.0, 0.0),
             },
             net_id: net_id.clone(),
-            geometry: None,
+            geometry: request.route_points.as_ref().and_then(|points| {
+                if points.is_empty() {
+                    None
+                } else {
+                    Some(WireGeometry {
+                        points: points.clone(),
+                        routing_style: WireRoutingStyle::Manual,
+                    })
+                }
+            }),
         });
 
         project.updated_at = format!("{:?}", std::time::SystemTime::now());

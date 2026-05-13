@@ -34,6 +34,7 @@ import type {
   SchematicToolCapabilityDto,
   SelectedComponentDto,
   UndoRedoStateDto,
+  WireRoutePointDto,
 } from "../types";
 import type { ProjectMetricsData } from "./screenTypes";
 
@@ -63,6 +64,7 @@ type SchematicScreenProps = ProjectMetricsData & {
     to_component_id: string;
     to_pin_id: string;
     net_name?: string | null;
+    route_points?: WireRoutePointDto[] | null;
   }) => void;
   onRenameNet: (netId: string, newName: string) => void;
   onSetPendingConnectionStart: (start: { componentId: string; pinId: string } | null) => void;
@@ -225,17 +227,6 @@ export function SchematicScreen({
           onRedo={onRedoSchematicEdit}
           disabled={!hasProject || schematicInteractionLoading}
         />
-        {schematicToolMode === "place" && hasProject && (
-          <PlaceableComponentPalette
-            components={placeableComponents}
-            onSelect={onSetPendingPlaceComponent}
-            selected={pendingPlaceComponent}
-            disabled={schematicInteractionLoading}
-          />
-        )}
-        {hasProject && schematicToolMode !== "place" && (
-          <ComponentPalette onAdd={onAddComponent} disabled={schematicEditLoading} />
-        )}
         {showConnectionPanel && hasProject && (
           <ConnectionPanel
             components={project?.schematic.components ?? []}
@@ -262,6 +253,28 @@ export function SchematicScreen({
           </div>
         )}
       </div>
+
+      <aside className="schematic-left-panel" data-testid="schematic-left-panel">
+        <Text size="xs" fw={700} c="dimmed" mb={8}>
+          Components
+        </Text>
+        {hasProject ? (
+          schematicToolMode === "place" ? (
+            <PlaceableComponentPalette
+              components={placeableComponents}
+              onSelect={onSetPendingPlaceComponent}
+              selected={pendingPlaceComponent}
+              disabled={schematicInteractionLoading}
+            />
+          ) : (
+            <ComponentPalette onAdd={onAddComponent} disabled={schematicEditLoading} />
+          )
+        ) : (
+          <Text size="sm" c="dimmed">
+            Create or open a project to place schematic components.
+          </Text>
+        )}
+      </aside>
 
       <section className="schematic-panel" style={{ position: "relative" }}>
         {isEmptyProject ? (

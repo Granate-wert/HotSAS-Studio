@@ -2,9 +2,32 @@
 
 All notable changes to HotSAS Studio are documented in this file.
 
+## [v3.6-pre-fix4] - CAD-Style Manual Wire Routing Foundation
+
+### Added
+
+- CAD-style schematic symbols for resistor, capacitor, inductor, voltage source, ground, diode, op-amp, and MOSFET placeholder nodes.
+- Left-side Schematic component palette with responsive layout breakpoints for the canvas and Properties panel.
+- Manual wire routing foundation: click a pin to start, click canvas to add grid-snapped bend points, click a target pin to complete, and press `Escape` to cancel.
+- Wire route geometry in frontend types, API DTOs, application service requests, and core `WireGeometry`.
+- Persistence coverage for wire route points and API coverage for manual routing metadata.
+- Frontend tests for symbol rendering, visible pin handles, route hydration, manual pin-to-pin routing, and draft cancellation.
+
+### Changed
+
+- React Flow edges use a manual polyline edge when persisted route points exist.
+- Netlist generation remains connectivity-driven; route geometry is visual metadata and does not affect electrical topology.
+- Schematic docs, verification log, acceptance matrix, README, and testing guide now document fix4 behavior and CAD limitations.
+
+### Known limitations
+
+- No post-creation bend-point editing, component rotation, drag-from-palette placement, buses, hierarchical sheets, live ERC, or full KiCad/Altium/EasyEDA/LTspice parity.
+- Native Tauri desktop smoke is still required for OS-level dialogs and shell-integrated flows.
+
 ## [v3.6-pre] — Practical Schematic Construction Flow
 
 ### Added
+
 - Tauri ACL fix: added 45 missing schematic editing and analysis commands to `permissions/hotsas.toml`, resolving `Command add_schematic_component not allowed by ACL` and similar denials.
 - React Flow v12 placement coordinate fix: `SchematicCanvas` now wraps `ReactFlow` in `ReactFlowProvider` and uses `screenToFlowPosition` for accurate click-to-place coordinates.
 - Frontend tests for schematic interaction:
@@ -13,6 +36,7 @@ All notable changes to HotSAS Studio are documented in this file.
   - Placeable palette item selection.
 
 ### Fixed
+
 - `add_schematic_component` ACL denial — root cause was missing command entries in `permissions/hotsas.toml`.
 - `move_schematic_component` ACL denial — same root cause.
 - `place_schematic_component`, `delete_schematic_component`, `connect_schematic_pins`, `rename_schematic_net`, and 39 other commands now permitted by Tauri ACL.
@@ -21,6 +45,7 @@ All notable changes to HotSAS Studio are documented in this file.
 ## [v3.5] — Schematic Editor & Simulation Workflow Usability Gate
 
 ### Added
+
 - Schematic Editor empty state: centered card with "New RC Demo", "Open Project" buttons and workflow guidance when no project or empty project.
 - Tool modes wired to `SchematicCanvas`:
   - `place`: `onPaneClick` handler calls `onPlaceSchematicComponent` with click coordinates.
@@ -44,6 +69,7 @@ All notable changes to HotSAS Studio are documented in this file.
   - `SchematicScreen` canvas visibility test.
 
 ### Changed
+
 - `SchematicScreen` layout refactored: top toolbar uses `schematic-topbar` flex row, canvas uses `flex: 1`, empty state replaces canvas when no components.
 - `styles.css` updated with `.schematic-topbar`, `.schematic-empty-state`, cursor classes for place/delete modes.
 - `GenericComponentNode` removed internal `onClick` to prevent double-fire with React Flow `onNodeClick`.
@@ -51,12 +77,14 @@ All notable changes to HotSAS Studio are documented in this file.
 - README roadmap stage updated to `v3.5 ACCEPTED WITH DOCUMENTED LIMITATIONS`.
 
 ### Fixed
+
 - Double invocation of `onSelectComponent` on node click (removed node-internal onClick).
 - Edge labels showing raw net UUIDs instead of human-readable net names.
 
 ## [v3.4-ui-report-fix] — Model Persistence UI Indicators & Report Section
 
 ### Added
+
 - Frontend persistence status badges in `ModelAssignmentCard`:
   - Persisted, Package-backed, Derived builtin, Session-only, Missing asset, Stale reference, Unknown.
   - Persistence warning alert for missing/stale asset references.
@@ -77,6 +105,7 @@ All notable changes to HotSAS Studio are documented in this file.
 - Rust tests: 5 new tests for `ModelPersistence` report section in core, application, and API layers.
 
 ### Changed
+
 - `AdvancedReportContext` extended with `model_persistence_summary: Option<ProjectModelPersistenceSummary>`.
 - `validate_project_model_persistence` refactored to use shared `build_model_persistence_summary` helper.
 - Acceptance matrix updated: MP-036, MP-037, MP-038 changed from DEFERRED to PASS.
@@ -85,6 +114,7 @@ All notable changes to HotSAS Studio are documented in this file.
 ## [v3.4] — Model Persistence & Project Package Hardening
 
 ### Added
+
 - Core domain models for model persistence in `hotsas_core::model_persistence`:
   - `PersistedModelAsset` — kind, source, status, content hash, package path, raw content, warnings.
   - `PersistedModelCatalog` — container for persisted model assets.
@@ -107,16 +137,19 @@ All notable changes to HotSAS Studio are documented in this file.
 - Documentation: verification log and acceptance matrix for v3.4.
 
 ### Changed
+
 - `CircuitProjectPackageStorage` now manages `models/` subdirectory inside `.circuit` packages.
 - `FakeProjectPackageStorage` implementations across test files updated with new trait methods.
 
 ### Fixed
+
 - Malformed multi-line `use` statements in test files caused by automated replacements.
 - Missing trait method implementations in fake storages across ~25 test files.
 
 ## [v2.7] — CLI / Headless Mode Foundation
 
 ### Added
+
 - New `hotsas_cli` crate with `hotsas-cli` binary in `engine/cli/`.
 - CLI commands delegating to `HotSasApi` facade (zero duplicated business logic):
   - `validate <path>` — validate a `.circuit` project package.
@@ -135,12 +168,14 @@ All notable changes to HotSAS Studio are documented in this file.
 - Total Rust tests: 361 (all passing).
 
 ### Changed
+
 - `engine/Cargo.toml` workspace now includes `cli` member.
 - `engine/cli/Cargo.toml` depends on `clap` (derive feature), `serde`, `serde_json`, and all internal workspace crates.
 
 ## [0.1.4-fix] — Generic Formula Engine Completion Gate
 
 ### Added
+
 - `ErrorBoundary` React component (`src/components/ErrorBoundary.tsx`) to catch render errors and prevent black screen crashes.
 - UI workflow tests with Vitest + React Testing Library + jsdom:
   - `src/components/ErrorBoundary.test.tsx` — 4 tests (render, error catch, reset, custom fallback).
@@ -155,18 +190,21 @@ All notable changes to HotSAS Studio are documented in this file.
   - `FormulaLibraryScreen` logs user actions: formula selection, input changes, calculate requests, success/failure.
 
 ### Fixed
+
 - Black screen crash in `FormulaLibraryScreen` when modifying variable inputs.
 - Defensive null/undefined checks for all arrays (`variables`, `equations`, `outputs`, `calculationResult.outputs`, `calculationResult.warnings`).
 - Safe `event.currentTarget?.value` access in variable input `onChange` handlers.
 - Wrapped `Workbench` in `ErrorBoundary` inside `App.tsx`.
 
 ### Changed
+
 - `docs/testing/TESTING.md` — added v1.1.4-fix test section, updated test count to 63+ Rust + 12 frontend tests, added `npm.cmd run test` to pre-commit commands.
 - `docs/formula_library/FORMULA_PACK_FORMAT.md` — clarified that frontend does not evaluate formulas; evaluation happens in Rust backend.
 
 ## [0.1.4] — Generic FormulaEnginePort
 
 ### Added
+
 - Generic `FormulaEnginePort` methods: `evaluate_formula`, `evaluate_expression`, `validate_expression`.
 - `SimpleFormulaEngine` allowlist evaluator supporting:
   - `fc = 1 / (2*pi*R*C)` (RC low-pass cutoff)
@@ -178,12 +216,14 @@ All notable changes to HotSAS Studio are documented in this file.
 - Backend tests for generic formula engine, service, and API.
 
 ### Changed
+
 - Formula packs YAML normalized to readable multiline `solve_for`.
 - Old RC-specific commands (`calculate_rc_low_pass`) preserved for backward compatibility.
 
 ## [0.1.3] — FormulaPackLoader + FormulaRegistry
 
 ### Added
+
 - `FormulaPack` / `FormulaPackMetadata` domain models in `hotsas_core`.
 - `FormulaPackFileLoader` in `hotsas_adapters`: loads `.yaml`, `.yml`, `.json` packs from files or directories.
 - `FormulaPackValidationError` and pack validation rules.
@@ -193,12 +233,14 @@ All notable changes to HotSAS Studio are documented in this file.
 - Formula Library UI connected to backend registry.
 
 ### Changed
+
 - `shared/formula_packs/*.yaml` normalized to valid multiline YAML.
 - `docs/testing/TESTING.md` and `docs/formula_library/FORMULA_PACK_FORMAT.md` updated.
 
 ## [0.1.2] — Backend Test Expansion
 
 ### Added
+
 - `EngineeringValue` parsing tests (positive, suffix, negative cases).
 - `PreferredValues` tests for E24/E12/E6, boundary cases, invalid inputs, `generate_decade_values`.
 - RC formula and circuit template binding tests.
@@ -211,18 +253,21 @@ All notable changes to HotSAS Studio are documented in this file.
 ## [0.1.1] — Formatting and Build/Test Infrastructure
 
 ### Added
+
 - Prettier 3.8 with `.prettierrc` and `.prettierignore`.
 - npm scripts: `format`, `format:check`, `typecheck`.
 - `docs/testing/TESTING.md` with verification commands and smoke test checklist.
 - Expanded root `.gitignore` for Rust, Node, Tauri, OS/IDE artifacts.
 
 ### Changed
+
 - All Rust code formatted with `rustfmt`.
 - All TypeScript/React code formatted with Prettier.
 
 ## [0.1.0] — Architecture Hardening
 
 ### Added
+
 - `CircuitQueryService` in `hotsas_core` for reusable component/parameter access.
 - Separate application services: `ProjectService`, `FormulaService`, `PreferredValuesService`, `CircuitTemplateService`, `NetlistGenerationService`, `SimulationService`, `ExportService`.
 - `AppServices` as a composition facade instead of a god service.
@@ -234,6 +279,7 @@ All notable changes to HotSAS Studio are documented in this file.
 ## [0.0.1] — Initial Vertical Slice
 
 ### Added
+
 - Rust workspace: `hotsas_core`, `hotsas_ports`, `hotsas_application`, `hotsas_adapters`, `hotsas_api`.
 - Domain models: `CircuitProject`, `CircuitModel`, `ComponentDefinition`, `ComponentInstance`, `Net`, `Wire`, `FormulaDefinition`, `CircuitTemplate`, `SimulationProfile`, `SimulationResult`, `ReportModel`.
 - `EngineeringValue` / `ValueWithUnit` with prefix parsing (`p`, `n`, `u`, `m`, `k`, `M`).

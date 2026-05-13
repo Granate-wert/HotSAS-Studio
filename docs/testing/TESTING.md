@@ -67,6 +67,43 @@ apps/desktop-tauri/src-tauri/target/release/hotsas_desktop_tauri.exe
 
 ---
 
+## v3.6-pre-fix4 CAD Schematic UI Verification
+
+Targeted checks for the CAD-style Schematic page foundation:
+
+```bash
+cd "D:\Документы\vscode\HotSAS Studio\engine"
+cargo test -p hotsas_core --test wire_geometry_tests
+cargo test -p hotsas_api --test schematic_editor_api_tests api_create_wire_with_route_points
+cargo test -p hotsas_api --test schematic_editor_api_tests netlist_uses_wire_connectivity_independent_of_route_geometry
+```
+
+```bash
+cd "D:\Документы\vscode\HotSAS Studio\apps\desktop-tauri"
+npm.cmd run test -- SchematicCanvas.test.tsx
+npm.cmd run test -- src/screens/__tests__/SchematicScreen.test.tsx -t "renders component palette|wire-mode guidance"
+```
+
+Manual or Browser smoke checklist:
+
+1. Open the Schematic page.
+2. Verify the component palette appears in the left panel.
+3. Verify resistor, capacitor, source, ground, diode, op-amp, and MOSFET symbols render as schematic symbols rather than generic cards.
+4. Select Wire mode and click a symbol pin to start a draft.
+5. Click the canvas to add at least one bend point.
+6. Click a target pin and verify a routed wire appears.
+7. Select a component and verify the Properties panel still shows editable parameters.
+8. Save and reload a project and verify routed wire geometry persists.
+
+Known v3.6-pre-fix4 CAD limitations:
+
+- No post-creation route vertex editing.
+- No component rotation or mirror controls.
+- No drag-from-palette placement.
+- No bus wiring, hierarchical sheets, symbol library editor, live ERC, or full KiCad/Altium/EasyEDA/LTspice parity.
+
+---
+
 ## Why npm.cmd Is Used
 
 On this Windows PowerShell setup, `npm.ps1` can be blocked by Execution Policy. Use `npm.cmd` for project scripts.

@@ -2074,6 +2074,12 @@ impl HotSasApi {
                     to_component_id: request.to_component_id,
                     to_pin_id: request.to_pin_id,
                     net_name: request.net_name,
+                    route_points: request.route_points.map(|points| {
+                        points
+                            .into_iter()
+                            .map(|point| hotsas_core::Point::new(point.x, point.y))
+                            .collect()
+                    }),
                 },
             )
             .map_err(|e| ApiError::InvalidInput(e))?;

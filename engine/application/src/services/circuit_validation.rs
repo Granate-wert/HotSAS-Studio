@@ -81,7 +81,7 @@ impl CircuitValidationService {
         for component in &circuit.components {
             let params = &component.overridden_parameters;
             match component.definition_id.as_str() {
-                "resistor" => {
+                "resistor" | "generic_resistor" => {
                     if !params.contains_key("resistance") {
                         report.add_error(
                             "missing_required_parameter",
@@ -94,7 +94,7 @@ impl CircuitValidationService {
                         );
                     }
                 }
-                "capacitor" => {
+                "capacitor" | "generic_capacitor" => {
                     if !params.contains_key("capacitance") {
                         report.add_error(
                             "missing_required_parameter",
@@ -107,7 +107,7 @@ impl CircuitValidationService {
                         );
                     }
                 }
-                "voltage_source" => {
+                "voltage_source" | "generic_voltage_source" => {
                     if !params.contains_key("amplitude") && !params.contains_key("ac_magnitude") {
                         report.add_error(
                             "missing_required_parameter",

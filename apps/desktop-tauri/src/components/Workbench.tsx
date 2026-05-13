@@ -27,7 +27,7 @@ import { SimulationScreen } from "../screens/SimulationScreen";
 import { StartScreen } from "../screens/StartScreen";
 import { useHotSasStore } from "../store";
 import type { ScreenId } from "../screens/navigation";
-import type { ProjectSessionStateDto } from "../types";
+import type { ProjectSessionStateDto, WireRoutePointDto } from "../types";
 import { ProjectToolbar } from "./project/ProjectToolbar";
 import { RecentProjectsPanel } from "./project/RecentProjectsPanel";
 import { UnsavedChangesBanner } from "./project/UnsavedChangesBanner";
@@ -570,6 +570,7 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         to_component_id: string;
         to_pin_id: string;
         net_name?: string | null;
+        route_points?: WireRoutePointDto[] | null;
       }) => {
         setSchematicEditLoading(true);
         setSchematicEditError(null);
@@ -939,6 +940,7 @@ function renderScreen(
         to_component_id: string;
         to_pin_id: string;
         net_name?: string | null;
+        route_points?: WireRoutePointDto[] | null;
       }) => void;
       renameSchematicNet: (netId: string, newName: string) => void;
       loadPlaceableComponents: () => void;
