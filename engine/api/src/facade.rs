@@ -422,8 +422,23 @@ impl HotSasApi {
                 ApiError::InvalidInput(format!("component '{}' not found", instance_id))
             })?;
         let symbol = hotsas_core::seed_symbol_for_kind(&component.definition_id);
-        let parameters: Vec<ComponentParameterDto> = component
-            .overridden_parameters
+        let library = hotsas_core::built_in_component_library();
+        let definition = library
+            .components
+            .iter()
+            .find(|d| d.id == component.definition_id);
+        // Merge definition defaults with instance overrides
+        let mut param_values: std::collections::BTreeMap<String, &ValueWithUnit> =
+            std::collections::BTreeMap::new();
+        if let Some(def) = definition {
+            for (name, value) in &def.parameters {
+                param_values.insert(name.clone(), value);
+            }
+        }
+        for (name, value) in &component.overridden_parameters {
+            param_values.insert(name.clone(), value);
+        }
+        let parameters: Vec<ComponentParameterDto> = param_values
             .iter()
             .map(|(name, value)| ComponentParameterDto {
                 name: name.clone(),
@@ -464,7 +479,7 @@ impl HotSasApi {
             Some("F") => EngineeringUnit::Farad,
             Some("Hz") => EngineeringUnit::Hertz,
             Some("V") => EngineeringUnit::Volt,
-            Some("") | None => EngineeringUnit::Unitless,
+            Some("") | None => parameter_unit(&parameter_name),
             Some(other) => {
                 return Err(ApiError::InvalidInput(format!("unsupported unit: {other}")))
             }
@@ -3335,4 +3350,17 @@ fn fallback_formula_registry() -> FormulaRegistryService {
         formulas: vec![rc_low_pass_formula()],
     }])
     .expect("fallback formula registry must be valid")
+}
+
+/// Infer the engineering unit for a parameter key.
+fn parameter_unit(parameter_id: &str) -> hotsas_core::EngineeringUnit {
+    match parameter_id {
+        "resistance" => hotsas_core::EngineeringUnit::Ohm,
+        "capacitance" => hotsas_core::EngineeringUnit::Farad,
+        "inductance" => hotsas_core::EngineeringUnit::Henry,
+        "voltage" | "ac_magnitude" | "dc_voltage" => hotsas_core::EngineeringUnit::Volt,
+        "current" => hotsas_core::EngineeringUnit::Ampere,
+        "frequency" => hotsas_core::EngineeringUnit::Hertz,
+        _ => hotsas_core::EngineeringUnit::Unitless,
+    }
 }
