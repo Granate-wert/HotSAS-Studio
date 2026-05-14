@@ -6,12 +6,14 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  useNodesState,
+  useViewport,
   ConnectionMode,
   type Edge,
   type EdgeProps,
   type Node,
 } from "@xyflow/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PlaceableComponentDto, ProjectDto, WireRoutePointDto } from "../types";
 import {
   CapacitorNode,
@@ -42,10 +44,13 @@ const edgeTypes = {
 };
 
 const GRID_SIZE = 20;
+const SYMBOL_PIN_ORIGIN_X = 60;
+const SYMBOL_PIN_ORIGIN_Y = 42;
 
 type WireDraft = {
   from_component_id: string;
   from_pin_id: string;
+  source_point: WireRoutePointDto;
   route_points: WireRoutePointDto[];
   preview_point: WireRoutePointDto | null;
 };
@@ -102,6 +107,36 @@ function manualWirePath({
 }) {
   const points = [{ x: sourceX, y: sourceY }, ...routePoints, { x: targetX, y: targetY }];
   return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+}
+
+function manualWirePathFromPoints(points: WireRoutePointDto[]) {
+  return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+}
+
+function findPinFlowPoint(
+  project: ProjectDto | null,
+  componentId: string,
+  pinId: string,
+): WireRoutePointDto | null {
+  const component = project?.schematic.components.find((item) => item.instance_id === componentId);
+  const pin = component?.pins.find((item) => item.id === pinId);
+
+  if (!component || !pin) {
+    return null;
+  }
+
+  const nodeType = mapComponentKindToNodeType(component.component_kind);
+  if (nodeType === "generic") {
+    return {
+      x: component.x + pin.x,
+      y: component.y + pin.y,
+    };
+  }
+
+  return {
+    x: component.x + SYMBOL_PIN_ORIGIN_X + pin.x,
+    y: component.y + SYMBOL_PIN_ORIGIN_Y + pin.y,
+  };
 }
 
 function ManualWireEdge({
@@ -169,7 +204,13 @@ function SchematicCanvasInner({
   disabled,
 }: SchematicCanvasProps) {
   const { screenToFlowPosition } = useReactFlow();
+  const viewport = useViewport();
   const [wireDraft, setWireDraft] = useState<WireDraft | null>(null);
+  const wireDraftRef = useRef<WireDraft | null>(null);
+
+  useEffect(() => {
+    wireDraftRef.current = wireDraft;
+  }, [wireDraft]);
 
   const handlePinClick = useCallback(
     (componentId: string, pinId: string) => {
@@ -177,30 +218,33 @@ function SchematicCanvasInner({
         return;
       }
 
-      if (!wireDraft) {
+      const currentDraft = wireDraftRef.current;
+
+      if (!currentDraft) {
         setWireDraft({
           from_component_id: componentId,
           from_pin_id: pinId,
+          source_point: findPinFlowPoint(project, componentId, pinId) ?? { x: 0, y: 0 },
           route_points: [],
           preview_point: null,
         });
         return;
       }
 
-      if (wireDraft.from_component_id === componentId && wireDraft.from_pin_id === pinId) {
+      if (currentDraft.from_component_id === componentId && currentDraft.from_pin_id === pinId) {
         return;
       }
 
       onConnect?.({
-        from_component_id: wireDraft.from_component_id,
-        from_pin_id: wireDraft.from_pin_id,
+        from_component_id: currentDraft.from_component_id,
+        from_pin_id: currentDraft.from_pin_id,
         to_component_id: componentId,
         to_pin_id: pinId,
-        route_points: wireDraft.route_points,
+        route_points: currentDraft.route_points,
       });
       setWireDraft(null);
     },
-    [toolMode, disabled, wireDraft, onConnect],
+    [toolMode, disabled, project, onConnect],
   );
 
   const netNameMap = useMemo(() => {
@@ -209,7 +253,7 @@ function SchematicCanvasInner({
     return map;
   }, [project]);
 
-  const { nodes, edges } = useMemo(() => {
+  const { nodes: projectNodes, edges } = useMemo(() => {
     if (!project) {
       return { nodes: [], edges: [] };
     }
@@ -242,6 +286,12 @@ function SchematicCanvasInner({
 
     return { nodes, edges };
   }, [project, onSelectComponent, netNameMap, handlePinClick]);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+
+  useEffect(() => {
+    setNodes(projectNodes);
+  }, [projectNodes, setNodes]);
 
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -376,6 +426,16 @@ function SchematicCanvasInner({
     wireDraft && wireDraft.preview_point
       ? [...wireDraft.route_points, wireDraft.preview_point]
       : (wireDraft?.route_points ?? []);
+  const previewPoints = useMemo(() => {
+    if (!wireDraft || draftRoutePoints.length === 0) {
+      return [];
+    }
+
+    return [wireDraft.source_point, ...draftRoutePoints].map((point) => ({
+      x: point.x * viewport.zoom + viewport.x,
+      y: point.y * viewport.zoom + viewport.y,
+    }));
+  }, [draftRoutePoints, viewport.x, viewport.y, viewport.zoom, wireDraft]);
 
   return (
     <div className={`canvas ${cursorClass}`}>
@@ -391,6 +451,7 @@ function SchematicCanvasInner({
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        onNodesChange={onNodesChange}
         onNodeClick={handleNodeClick}
         onNodeDragStop={handleNodeDragStop}
         onEdgeClick={handleEdgeClick}
@@ -403,17 +464,9 @@ function SchematicCanvasInner({
         fitView
         fitViewOptions={{ maxZoom: 1.5, minZoom: 0.5 }}
       >
-        {wireDraft && draftRoutePoints.length > 0 && (
+        {previewPoints.length > 1 && (
           <svg className="wire-preview" data-testid="wire-route-preview">
-            <path
-              d={manualWirePath({
-                sourceX: 0,
-                sourceY: 0,
-                targetX: draftRoutePoints[draftRoutePoints.length - 1].x,
-                targetY: draftRoutePoints[draftRoutePoints.length - 1].y,
-                routePoints: draftRoutePoints.slice(0, -1),
-              })}
-            />
+            <path d={manualWirePathFromPoints(previewPoints)} />
           </svg>
         )}
         <Background />

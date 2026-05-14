@@ -1,5 +1,6 @@
 import { Text } from "@mantine/core";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Fragment, type CSSProperties } from "react";
 import type { ComponentDto } from "../../../types";
 
 function mapSide(side: string): Position {
@@ -86,6 +87,21 @@ function ComponentSymbol({ kind }: { kind: string }) {
   }
 }
 
+function genericPinClickTargetStyle(pin: ComponentDto["pins"][number]): CSSProperties {
+  return {
+    position: "absolute",
+    left: `calc(50% + ${pin.x}px)`,
+    top: `calc(50% + ${pin.y}px)`,
+    width: 22,
+    height: 22,
+    transform: "translate(-50%, -50%)",
+    borderRadius: "50%",
+    background: "transparent",
+    cursor: "crosshair",
+    zIndex: 8,
+  };
+}
+
 export function GenericComponentNode({ data, selected }: NodeProps) {
   const { component } = data as {
     component: ComponentDto;
@@ -114,24 +130,38 @@ export function GenericComponentNode({ data, selected }: NodeProps) {
       }}
     >
       {component.pins.map((pin) => (
-        <Handle
-          key={pin.id}
-          type="source"
-          id={pin.id}
-          position={mapSide(pin.side)}
-          isConnectableStart={true}
-          isConnectableEnd={true}
-          style={{
-            width: 8,
-            height: 8,
-            background: "#7db2ff",
-            border: "none",
-          }}
-          onClick={(event) => {
-            event.stopPropagation();
-            onPinClick?.(component.instance_id, pin.id);
-          }}
-        />
+        <Fragment key={pin.id}>
+          <Handle
+            type="source"
+            id={pin.id}
+            position={mapSide(pin.side)}
+            isConnectableStart={true}
+            isConnectableEnd={true}
+            style={{
+              width: 8,
+              height: 8,
+              background: "#7db2ff",
+              border: "none",
+            }}
+            onClick={(event) => {
+              event.stopPropagation();
+              onPinClick?.(component.instance_id, pin.id);
+            }}
+          />
+          {onPinClick && (
+            <button
+              type="button"
+              aria-label={`${component.display_label} ${pin.name} pin`}
+              data-testid={`pin-click-target-${component.instance_id}-${pin.id}`}
+              style={genericPinClickTargetStyle(pin)}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                onPinClick(component.instance_id, pin.id);
+              }}
+            />
+          )}
+        </Fragment>
       ))}
       <ComponentSymbol kind={component.component_kind} />
       <Text fw={700} size="sm">

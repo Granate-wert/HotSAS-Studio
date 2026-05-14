@@ -40,6 +40,7 @@ vi.mock("@xyflow/react", async () => {
       edges,
       nodeTypes,
       edgeTypes,
+      onNodesChange,
       onPaneClick,
       onPaneMouseMove,
       children,
@@ -52,6 +53,7 @@ vi.mock("@xyflow/react", async () => {
       }>;
       nodeTypes: Record<string, React.ComponentType<any>>;
       edgeTypes?: Record<string, React.ComponentType<any>>;
+      onNodesChange?: () => void;
       onPaneClick?: (event: React.MouseEvent) => void;
       onPaneMouseMove?: (event: React.MouseEvent) => void;
       children: React.ReactNode;
@@ -59,6 +61,7 @@ vi.mock("@xyflow/react", async () => {
       <div
         className="react-flow"
         data-testid="mock-flow"
+        data-has-node-change-handler={String(Boolean(onNodesChange))}
         onClick={onPaneClick}
         onMouseMove={onPaneMouseMove}
       >
@@ -100,6 +103,11 @@ vi.mock("@xyflow/react", async () => {
     useReactFlow: () => ({
       screenToFlowPosition: ({ x, y }: { x: number; y: number }) => ({ x, y }),
     }),
+    useNodesState: (initialNodes: unknown[]) => {
+      const [nodes, setNodes] = React.useState(initialNodes);
+      return [nodes, setNodes, vi.fn()];
+    },
+    useViewport: () => ({ x: 0, y: 0, zoom: 1 }),
   };
 });
 
@@ -404,6 +412,22 @@ describe("SchematicCanvas CAD symbol rendering", () => {
 });
 
 describe("SchematicCanvas manual wire routing", () => {
+  it("starts the wire preview from the selected pin instead of the canvas origin", () => {
+    render(<SchematicCanvas project={project} toolMode="wire" onConnect={vi.fn()} />);
+
+    fireEvent.click(screen.getAllByTestId("pin-handle-2")[0]);
+    fireEvent.click(screen.getByTestId("mock-flow"), { clientX: 151, clientY: 161 });
+
+    const previewPath = screen.getByTestId("wire-route-preview").querySelector("path");
+    expect(previewPath).toHaveAttribute("d", "M 200 142 L 160 160");
+  });
+
+  it("passes node changes back into React Flow so dragged components remain visible", () => {
+    render(<SchematicCanvas project={project} />);
+
+    expect(screen.getByTestId("mock-flow")).toHaveAttribute("data-has-node-change-handler", "true");
+  });
+
   it("starts a wire from a pin, adds a grid-snapped bend, and completes on a target pin", () => {
     const onConnect = vi.fn();
     render(<SchematicCanvas project={project} toolMode="wire" onConnect={onConnect} />);

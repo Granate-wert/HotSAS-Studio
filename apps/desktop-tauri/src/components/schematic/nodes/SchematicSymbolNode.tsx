@@ -1,6 +1,6 @@
 import { Text } from "@mantine/core";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
 import type { ComponentDto } from "../../../types";
 
 type SymbolKind =
@@ -68,6 +68,23 @@ function pinStyle(pin: ComponentDto["pins"][number]): CSSProperties {
     background: "#f1c663",
     border: "1px solid #0f1520",
     boxShadow: "0 0 0 2px rgba(241, 198, 99, 0.2)",
+  };
+}
+
+function pinClickTargetStyle(pin: ComponentDto["pins"][number]): CSSProperties {
+  const left = SYMBOL_WIDTH / 2 + pin.x;
+  const top = SYMBOL_HEIGHT / 2 + pin.y;
+  return {
+    position: "absolute",
+    left,
+    top,
+    width: 22,
+    height: 22,
+    transform: "translate(-50%, -50%)",
+    borderRadius: "50%",
+    background: "transparent",
+    cursor: "crosshair",
+    zIndex: 8,
   };
 }
 
@@ -192,19 +209,33 @@ export function SchematicSymbolNode({ data, selected }: NodeProps) {
       }}
     >
       {component.pins.map((pin) => (
-        <Handle
-          key={pin.id}
-          type="source"
-          id={pin.id}
-          position={mapSide(pin.side)}
-          isConnectableStart
-          isConnectableEnd
-          style={pinStyle(pin)}
-          onClick={(event) => {
-            event.stopPropagation();
-            onPinClick?.(component.instance_id, pin.id);
-          }}
-        />
+        <Fragment key={pin.id}>
+          <Handle
+            type="source"
+            id={pin.id}
+            position={mapSide(pin.side)}
+            isConnectableStart
+            isConnectableEnd
+            style={pinStyle(pin)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onPinClick?.(component.instance_id, pin.id);
+            }}
+          />
+          {onPinClick && (
+            <button
+              type="button"
+              aria-label={`${component.display_label} ${pin.name} pin`}
+              data-testid={`pin-click-target-${component.instance_id}-${pin.id}`}
+              style={pinClickTargetStyle(pin)}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                onPinClick(component.instance_id, pin.id);
+              }}
+            />
+          )}
+        </Fragment>
       ))}
       <div className="schematic-symbol-body">
         <SymbolSvg kind={kind} />
