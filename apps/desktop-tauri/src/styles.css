@@ -15,7 +15,15 @@
 body {
   margin: 0;
   min-width: 0;
+  height: 100vh;
+  overflow: hidden;
   background: #0e1117;
+}
+
+#root {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .navbar {
@@ -24,16 +32,51 @@ body {
 }
 
 .main {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
   background: #0e1117;
 }
 
 .workbench {
-  min-height: 100vh;
+  height: 100vh;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.project-toolbar {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 30;
+  overflow: visible;
+  padding: 8px 12px;
+  border-bottom: 1px solid #263244;
+  background: #111722;
+}
+
+.project-path-tools {
+  min-width: 0;
+}
+
+.project-path-tools > summary {
+  cursor: pointer;
+  color: #9aa9bd;
+  font-size: 12px;
+  line-height: 24px;
+  outline-offset: 2px;
+}
+
+.project-path-input {
+  width: min(260px, 42vw);
 }
 
 .toolbar {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 20;
   min-height: 64px;
   display: flex;
   flex-wrap: wrap;
@@ -63,22 +106,48 @@ body {
 
 .grid {
   flex: 1;
+  height: 100%;
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) 320px;
-  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 240px minmax(0, 1fr) 320px;
+  grid-template-rows: auto minmax(0, 1fr) auto minmax(150px, 24vh);
   min-height: 0;
+  overflow: hidden;
 }
 
 .schematic-topbar {
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: stretch;
   gap: 8px;
   padding: 8px 12px;
   border-bottom: 1px solid #263244;
   background: #111722;
   min-height: 0;
+  overflow: visible;
+  position: relative;
+  z-index: 10;
+}
+
+.cad-workspace-title {
+  display: grid;
+  align-content: center;
+  min-width: 150px;
+  padding: 4px 10px 4px 0;
+  border-right: 1px solid #263244;
+}
+
+.cad-toolbar-group {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: max-content;
+  padding: 4px 8px;
+  border-right: 1px solid #263244;
+}
+
+.cad-toolbar-group:last-child {
+  border-right: 0;
 }
 
 .schematic-empty-state {
@@ -93,12 +162,15 @@ body {
 }
 
 .schematic-panel {
+  grid-column: 2;
   min-width: 0;
   min-height: 0;
   border-right: 1px solid #263244;
+  overflow: hidden;
 }
 
 .schematic-left-panel {
+  grid-column: 1;
   min-width: 0;
   min-height: 0;
   overflow: auto;
@@ -153,10 +225,27 @@ body {
 
 .side-panel {
   grid-column: 3;
-  padding: 16px;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
   background: #121722;
   border-bottom: 1px solid #263244;
   overflow: auto;
+}
+
+.inspector-shell {
+  flex: 0 0 auto;
+  border: 1px solid #263244;
+  border-radius: 6px;
+  background: #0f1520;
+}
+
+.inspector-tabs {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .metric {
@@ -168,9 +257,44 @@ body {
 
 .bottom-panel {
   grid-column: 1 / -1;
+  grid-row: 4;
   min-height: 0;
   border-top: 1px solid #263244;
   background: #111722;
+  overflow: hidden;
+}
+
+.engineering-status-bar {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  min-height: 30px;
+  padding: 4px 12px;
+  border-top: 1px solid #263244;
+  background: #0f1520;
+  color: #c9d5e5;
+  overflow: hidden;
+}
+
+.component-palette {
+  display: grid;
+  gap: 8px;
+}
+
+.palette-group {
+  padding: 8px;
+  border: 1px solid #263244;
+  border-radius: 6px;
+  background: #0f1520;
+}
+
+.palette-button-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
 }
 
 .screen-panel {
@@ -288,22 +412,40 @@ pre {
 
 @media (max-width: 1120px) {
   .grid {
-    grid-template-columns: 220px minmax(0, 1fr);
-  }
-
-  .side-panel {
-    grid-column: 1 / -1;
+    grid-template-columns: 210px minmax(0, 1fr) 280px;
   }
 }
 
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto minmax(360px, 1fr) minmax(220px, auto) auto minmax(150px, 24vh);
   }
 
   .schematic-left-panel,
   .schematic-panel,
   .side-panel {
     grid-column: 1;
+  }
+
+  .schematic-left-panel {
+    grid-row: 2;
+    max-height: 220px;
+  }
+
+  .schematic-panel {
+    grid-row: 3;
+  }
+
+  .side-panel {
+    grid-row: 4;
+  }
+
+  .engineering-status-bar {
+    grid-row: 5;
+  }
+
+  .bottom-panel {
+    grid-row: 6;
   }
 }

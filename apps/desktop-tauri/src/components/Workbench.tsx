@@ -680,91 +680,93 @@ export function Workbench({ activeScreen }: { activeScreen: ScreenId }) {
         onSave={actions.saveCurrentProject}
         onSaveAs={actions.saveProjectAs}
       />
-      <header className="toolbar">
-        <Group gap="xs">
-          <Button
-            leftSection={<CircuitBoard size={16} />}
-            onClick={actions.createDemoProject}
-            loading={busy}
-          >
-            New RC Demo
-          </Button>
-          <Button
-            variant="light"
-            leftSection={<Calculator size={16} />}
-            onClick={actions.calculateCutoff}
-            disabled={!hasProject}
-          >
-            Calculate fc
-          </Button>
-          <Button
-            variant="light"
-            leftSection={<Sigma size={16} />}
-            onClick={actions.selectNearestE24}
-            disabled={!hasProject}
-          >
-            Nearest E24
-          </Button>
-          <Button
-            variant="light"
-            leftSection={<FileText size={16} />}
-            onClick={actions.generateNetlist}
-            disabled={!hasProject}
-          >
-            Netlist
-          </Button>
-          <Button
-            variant="light"
-            leftSection={<Play size={16} />}
-            onClick={actions.runSimulation}
-            disabled={!hasProject}
-          >
-            Mock AC
-          </Button>
-          <Button
-            variant="light"
-            leftSection={<Save size={16} />}
-            onClick={actions.saveProject}
-            disabled={!hasProject}
-          >
-            Save JSON
-          </Button>
-          <Button
-            variant="light"
-            leftSection={<Package size={16} />}
-            onClick={actions.saveProjectPackage}
-            disabled={!hasProject}
-          >
-            Save .circuit
-          </Button>
-          <Button
-            variant="light"
-            leftSection={<FolderOpen size={16} />}
-            onClick={actions.loadProjectPackage}
-          >
-            Load .circuit
-          </Button>
-        </Group>
-        <Group gap="xs">
-          <TextInput
-            className="save-path"
-            value={savePath}
-            onChange={(event) => setSavePath(event.currentTarget.value)}
-            aria-label="Project save path"
-          />
-          <TextInput
-            className="save-path"
-            value={packagePath}
-            onChange={(event) => setPackagePath(event.currentTarget.value)}
-            aria-label="Package path"
-          />
-        </Group>
-        {packageResult && (
-          <Text size="xs" c="dimmed">
-            {packageResult}
-          </Text>
-        )}
-      </header>
+      {activeScreen !== "schematic" && (
+        <header className="toolbar">
+          <Group gap="xs">
+            <Button
+              leftSection={<CircuitBoard size={16} />}
+              onClick={actions.createDemoProject}
+              loading={busy}
+            >
+              New RC Demo
+            </Button>
+            <Button
+              variant="light"
+              leftSection={<Calculator size={16} />}
+              onClick={actions.calculateCutoff}
+              disabled={!hasProject}
+            >
+              Calculate fc
+            </Button>
+            <Button
+              variant="light"
+              leftSection={<Sigma size={16} />}
+              onClick={actions.selectNearestE24}
+              disabled={!hasProject}
+            >
+              Nearest E24
+            </Button>
+            <Button
+              variant="light"
+              leftSection={<FileText size={16} />}
+              onClick={actions.generateNetlist}
+              disabled={!hasProject}
+            >
+              Netlist
+            </Button>
+            <Button
+              variant="light"
+              leftSection={<Play size={16} />}
+              onClick={actions.runSimulation}
+              disabled={!hasProject}
+            >
+              Mock AC
+            </Button>
+            <Button
+              variant="light"
+              leftSection={<Save size={16} />}
+              onClick={actions.saveProject}
+              disabled={!hasProject}
+            >
+              Save JSON
+            </Button>
+            <Button
+              variant="light"
+              leftSection={<Package size={16} />}
+              onClick={actions.saveProjectPackage}
+              disabled={!hasProject}
+            >
+              Save .circuit
+            </Button>
+            <Button
+              variant="light"
+              leftSection={<FolderOpen size={16} />}
+              onClick={actions.loadProjectPackage}
+            >
+              Load .circuit
+            </Button>
+          </Group>
+          <Group gap="xs">
+            <TextInput
+              className="save-path"
+              value={savePath}
+              onChange={(event) => setSavePath(event.currentTarget.value)}
+              aria-label="Project save path"
+            />
+            <TextInput
+              className="save-path"
+              value={packagePath}
+              onChange={(event) => setPackagePath(event.currentTarget.value)}
+              aria-label="Package path"
+            />
+          </Group>
+          {packageResult && (
+            <Text size="xs" c="dimmed">
+              {packageResult}
+            </Text>
+          )}
+        </header>
+      )}
 
       {error && (
         <Paper className="error-panel">
@@ -1008,6 +1010,7 @@ function renderScreen(
         validationReport={context.validationReport}
         onSelectComponent={context.actions.selectComponent}
         onValidate={context.actions.validateCircuit}
+        onValidateCurrentCircuit={context.actions.validateCircuit}
         onPropertyUpdate={context.actions.refreshSelectedComponent}
         schematicCapabilities={context.schematicEditorCapabilities}
         schematicEditLoading={context.schematicEditLoading}
@@ -1047,6 +1050,11 @@ function renderScreen(
         onSetSelectedSchematicEntity={context.actions.setSelectedSchematicEntity}
         onCreateDemoProject={context.actions.createDemoProject}
         onLoadProjectPackage={context.actions.loadProjectPackage}
+        onSaveCurrentProject={context.actions.saveCurrentProject}
+        onSaveProjectPackage={context.actions.saveProjectPackage}
+        onCalculateCutoff={context.actions.calculateCutoff}
+        onSelectNearestE24={context.actions.selectNearestE24}
+        onRunMockAcSimulation={context.actions.runSimulation}
       />
     );
   }

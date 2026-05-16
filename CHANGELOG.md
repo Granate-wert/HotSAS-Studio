@@ -2,6 +2,34 @@
 
 All notable changes to HotSAS Studio are documented in this file.
 
+## [v3.6-pre-ui-polish] - Engineering CAD Workspace Polish
+
+### Added
+
+- Schematic Engineering Inspector as the default right-side workspace surface with component identity, type/value, pins and connected nets, model/readiness status, diagnostics, and component actions.
+- Bottom engineering status bar with current tool, grid/snap state, project state, selected entity, and validation state.
+- Frontend tests for grouped toolbar rendering, palette groups, selected/no-selection inspector states, disabled reasons, and status bar state.
+
+### Changed
+
+- Schematic toolbar is grouped into Project, Edit, Analysis, Tools, and Export workflow sections.
+- Schematic screen no longer shows the duplicate backend/dev command toolbar above the CAD workspace.
+- Project path fields are de-emphasized behind an Advanced paths disclosure.
+- Left component palette is grouped as Passive, Sources, Semiconductors, and Op-Amps.
+- Root workbench/grid CSS now constrains height and overflow so Schematic content starts below top chrome and the toolbar is fully visible instead of partially clipped.
+
+### Fixed
+
+- Phantom/clipped button-outline effect at the top of the native window caused by duplicate/top chrome layout pressure.
+- Silent disabled toolbar controls now expose reasons such as no project, select component first, or feature not implemented yet.
+
+### Known limitations
+
+- Native Tauri manual smoke is still recommended for OS-window/titlebar behavior and file dialogs.
+- Full KiCad/Altium/EasyEDA/LTspice parity remains out of scope.
+- No post-creation route vertex editing, rotation/mirror, buses, hierarchical sheets, or live ERC yet.
+- No RF, Smith chart, S-parameter hardening, or new analysis workflow is included in this UI polish pass.
+
 ## [v3.6-pre-fix4] - CAD-Style Manual Wire Routing Foundation
 
 ### Added

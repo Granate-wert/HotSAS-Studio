@@ -5,7 +5,7 @@
 Desktop engineering application for schematic analysis, formula-driven circuit templates, SPICE-oriented simulation workflows, and report generation.
 
 **Current app version: v0.1.4**
-**Current roadmap stage: v3.6-pre-fix4 ACCEPTED WITH DOCUMENTED LIMITATIONS**
+**Current roadmap stage: v3.6-pre-ui-polish ACCEPTED WITH DOCUMENTED LIMITATIONS**
 
 > App version (v0.1.4) and roadmap stage are different concepts.
 
@@ -37,6 +37,7 @@ Completed:
 - v3.4 — Model Persistence & Project Package Hardening (ACCEPTED WITH DOCUMENTED LIMITATIONS)
 - v3.5 — Schematic Editor & Simulation Workflow Usability Gate (ACCEPTED WITH DOCUMENTED LIMITATIONS)
 - v3.6-pre-fix4 - Practical Schematic Construction Flow / CAD Schematic UI Foundation (ACCEPTED WITH DOCUMENTED LIMITATIONS)
+- v3.6-pre-ui-polish — Engineering CAD Workspace Polish (ACCEPTED WITH DOCUMENTED LIMITATIONS)
 
 ---
 
@@ -109,6 +110,17 @@ Completed:
 - Move component via React Flow `onNodeDragStop` → backend command.
 - React Flow remains view adapter; Rust `CircuitModel` / `ProjectDto` is source of truth.
 - 10 new Rust tests for schematic editing + 6 frontend tests.
+
+### v3.6-pre-ui-polish — Engineering CAD Workspace Polish
+
+- Schematic page top chrome cleaned up so the engineering toolbar is not duplicated or partially clipped under the native window/titlebar area.
+- Toolbar reorganized into CAD workflow groups: Project, Edit, Analysis, Tools, and Export.
+- Save JSON/raw path workflows are no longer primary Schematic toolbar actions; advanced paths remain in the project toolbar.
+- Left component palette is grouped by Passive, Sources, Semiconductors, and Op-Amps.
+- Right-side Engineering Inspector is always visible and shows identity, type/value, pins and connected nets, model/readiness status, diagnostics, and actions.
+- Bottom status bar shows current tool, grid/snap state, selected entity, project state, and validation status.
+- Disabled Schematic toolbar actions now expose explicit reasons such as "Open or create a project first", "Select component first", or "Nothing to undo".
+- No RF, Smith chart, S-parameter, or new analysis workflow was added in this polish pass.
 
 ### v2.3 — Advanced Reports
 

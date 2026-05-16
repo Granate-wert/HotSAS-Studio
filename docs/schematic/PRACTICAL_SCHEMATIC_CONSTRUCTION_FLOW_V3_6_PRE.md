@@ -12,6 +12,26 @@ v3.6-pre is the practical schematic construction gate for HotSAS Studio. The ori
 
 This is still a foundation, not a full KiCad/Altium/EasyEDA-class editor.
 
+## v3.6-pre-ui-polish — Engineering CAD Workspace Polish
+
+The UI polish pass keeps the existing schematic construction behavior and improves the workspace around it. It does not add RF analysis, Smith chart work, S-parameter hardening, or new analysis features.
+
+User-facing changes:
+
+- The Schematic page top chrome now avoids duplicate command bars and prevents toolbar controls from rendering partially under or against the native titlebar/window edge.
+- The Schematic toolbar is grouped by engineering workflow: Project, Edit, Analysis, Tools, and Export.
+- Raw Save JSON/path workflows are de-emphasized from the primary Schematic workflow; advanced path entry remains available in the project toolbar.
+- The left palette is compact and grouped by Passive, Sources, Semiconductors, and Op-Amps.
+- The right-side Engineering Inspector is always visible and shows component identity, type/value, pins and connected nets, model/readiness status, diagnostics, and actions.
+- Disabled controls expose reasons, including no project loaded, select component first, nothing to undo/redo, and feature not implemented yet.
+- A lower engineering status bar shows active tool, grid/snap state, project state, selected entity, and validation state.
+
+Verification notes:
+
+- Frontend tests cover grouped toolbar labels/actions, component palette groups, selected and no-selection inspector states, disabled button reasons, and status bar state.
+- Browser fallback smoke used Microsoft Edge headless screenshots at 1024x768, 1366x768, and 1440x900 against a temporary Vite Schematic harness. The harness was removed before final diff cleanup.
+- Native Tauri manual smoke remains recommended for OS-window/titlebar behavior and file dialogs.
+
 ## v3.6-pre-fix4 - CAD-Style Manual Wire Routing Foundation
 
 Manual routing now works through the Schematic canvas in wire mode:

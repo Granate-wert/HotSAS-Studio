@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MantineProvider } from "@mantine/core";
 import { describe, expect, it, vi } from "vitest";
@@ -27,7 +27,12 @@ const mockProject: ProjectDto = {
         x: 100,
         y: 100,
         rotation_degrees: 0,
-        parameters: [],
+        parameters: [
+          {
+            name: "resistance",
+            value: { original: "10k", si_value: 10000, unit: "Ohm", display: "10 kOhm" },
+          },
+        ],
         symbol: null,
         pins: [
           {
@@ -49,11 +54,17 @@ const mockProject: ProjectDto = {
             side: "right",
           },
         ],
-        connected_nets: [],
+        connected_nets: [
+          { component_id: "R1", pin_id: "p1", net_id: "net_in" },
+          { component_id: "R1", pin_id: "p2", net_id: "net_out" },
+        ],
       },
     ],
     wires: [],
-    nets: [],
+    nets: [
+      { id: "net_in", name: "Vin" },
+      { id: "net_out", name: "Vout" },
+    ],
   },
 };
 
@@ -72,6 +83,7 @@ const baseProps = {
   validationReport: null,
   onSelectComponent: vi.fn(),
   onValidate: vi.fn(),
+  onValidateCurrentCircuit: vi.fn(),
   onPropertyUpdate: vi.fn(),
   schematicCapabilities: [],
   schematicEditLoading: false,
@@ -110,6 +122,11 @@ const baseProps = {
   onSetSelectedSchematicEntity: vi.fn(),
   onCreateDemoProject: vi.fn(),
   onLoadProjectPackage: vi.fn(),
+  onSaveCurrentProject: vi.fn(),
+  onSaveProjectPackage: vi.fn(),
+  onCalculateCutoff: vi.fn(),
+  onSelectNearestE24: vi.fn(),
+  onRunMockAcSimulation: vi.fn(),
 };
 
 describe("SchematicScreen v2.5", () => {
@@ -555,5 +572,92 @@ describe("SchematicScreen v3.6-pre-fix parameter editing", () => {
     // passed down to the canvas.
     expect(onSelect).not.toHaveBeenCalled();
     expect(onGetDetails).not.toHaveBeenCalled();
+  });
+});
+
+describe("SchematicScreen v3.6-pre-ui-polish engineering workspace", () => {
+  it("renders grouped engineering toolbar labels and actions without dev-first Save JSON", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} />);
+
+    const toolbar = within(screen.getByTestId("engineering-cad-toolbar"));
+    expect(screen.getByTestId("engineering-cad-toolbar")).toBeInTheDocument();
+    expect(toolbar.getByText("Project")).toBeInTheDocument();
+    expect(toolbar.getByText("Edit")).toBeInTheDocument();
+    expect(toolbar.getByText("Analysis")).toBeInTheDocument();
+    expect(toolbar.getByText("Tools")).toBeInTheDocument();
+    expect(toolbar.getByText("Export")).toBeInTheDocument();
+    expect(screen.queryByText("Save JSON")).not.toBeInTheDocument();
+  });
+
+  it("renders component palette groups for engineering component classes", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} />);
+
+    expect(screen.getByText("Passive")).toBeInTheDocument();
+    expect(screen.getByText("Sources")).toBeInTheDocument();
+    expect(screen.getByText("Semiconductors")).toBeInTheDocument();
+    expect(screen.getByText("Op-Amps")).toBeInTheDocument();
+  });
+
+  it("shows engineering inspector guidance when nothing is selected", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} />);
+
+    expect(
+      screen.getByText("Select a component or place one from the palette."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows selected component identity, value, pins, nets, and action reasons", () => {
+    renderWithProvider(
+      <SchematicScreen
+        {...baseProps}
+        selectedSchematicEntity={{ kind: "component", id: "R1" }}
+        schematicSelectionDetails={{
+          kind: "component",
+          id: "R1",
+          display_name: "R1",
+          editable_fields: [
+            {
+              field_id: "resistance",
+              label: "Resistance",
+              current_value: "10k",
+              editable: true,
+              unit: "Ohm",
+            },
+          ],
+        }}
+      />,
+    );
+
+    const inspector = within(screen.getByTestId("engineering-inspector"));
+    expect(inspector.getByText("Component identity")).toBeInTheDocument();
+    expect(inspector.getByText("R1")).toBeInTheDocument();
+    expect(inspector.getAllByText("resistor").length).toBeGreaterThan(0);
+    expect(inspector.getByText("resistance: 10 kOhm")).toBeInTheDocument();
+    expect(inspector.getByText("Pins and connected nets")).toBeInTheDocument();
+    expect(inspector.getByText(/p1.*Vin/i)).toBeInTheDocument();
+    expect(inspector.getByText(/p2.*Vout/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rotate" })).toBeDisabled();
+    expect(screen.getByText("Rotation is not implemented yet")).toBeInTheDocument();
+  });
+
+  it("disabled toolbar buttons expose reasons", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} project={null} hasProject={false} />);
+
+    expect(screen.getByTestId("cad-tool-select")).toHaveAttribute(
+      "title",
+      "Open or create a project first",
+    );
+    expect(screen.getByTestId("cad-analysis-netlist")).toHaveAttribute(
+      "title",
+      "Open or create a project first",
+    );
+  });
+
+  it("status bar shows active tool and project state", () => {
+    renderWithProvider(<SchematicScreen {...baseProps} schematicToolMode="wire" />);
+
+    expect(screen.getByTestId("engineering-status-bar")).toHaveTextContent("Tool: Wire");
+    expect(screen.getByTestId("engineering-status-bar")).toHaveTextContent("Project: Test");
+    expect(screen.getByTestId("engineering-status-bar")).toHaveTextContent("Validation: Not run");
   });
 });

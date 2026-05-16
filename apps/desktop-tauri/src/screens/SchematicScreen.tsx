@@ -1,6 +1,23 @@
-import { useEffect, useRef, useState } from "react";
-import { Button, Paper, Stack, Tabs, Text, Tooltip } from "@mantine/core";
-import { CircuitBoard, FileInput, Play, Sigma } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Button, Group, Paper, Stack, Tabs, Text, Tooltip, type ButtonProps } from "@mantine/core";
+import {
+  Cable,
+  CheckCircle2,
+  CircuitBoard,
+  FileInput,
+  FileText,
+  FolderOpen,
+  MousePointer2,
+  Play,
+  Plus,
+  Save,
+  SaveAll,
+  Sigma,
+  Trash2,
+  Undo2,
+  Redo2,
+  Wrench,
+} from "lucide-react";
 import { FormulaPanel } from "../components/FormulaPanel";
 import { LibraryPanel } from "../components/LibraryPanel";
 import { PreBlock } from "../components/PreBlock";
@@ -15,12 +32,8 @@ import { ComponentPalette } from "../components/schematic-editor/ComponentPalett
 import { ConnectionPanel } from "../components/schematic-editor/ConnectionPanel";
 import { NetLabelEditor } from "../components/schematic-editor/NetLabelEditor";
 import { SchematicEditStatusPanel } from "../components/schematic-editor/SchematicEditStatusPanel";
-import { SchematicToolbar } from "../components/schematic-editor/SchematicToolbar";
-import { InteractiveSchematicToolbar } from "../components/schematic-editor/InteractiveSchematicToolbar";
 import { PlaceableComponentPalette } from "../components/schematic-editor/PlaceableComponentPalette";
 import { SchematicSelectionInspector } from "../components/schematic-editor/SchematicSelectionInspector";
-import { QuickParameterEditor } from "../components/schematic-editor/QuickParameterEditor";
-import { UndoRedoToolbar } from "../components/schematic-editor/UndoRedoToolbar";
 import { NetlistPreviewPanel } from "../components/schematic-editor/NetlistPreviewPanel";
 import { ErcIssuePanel } from "../components/schematic-editor/ErcIssuePanel";
 import { UserCircuitSimulationPanel } from "../components/simulation/UserCircuitSimulationPanel";
@@ -49,6 +62,7 @@ type SchematicScreenProps = ProjectMetricsData & {
   validationReport: CircuitValidationReportDto | null;
   onSelectComponent: (instanceId: string) => void;
   onValidate: (report: CircuitValidationReportDto) => void;
+  onValidateCurrentCircuit: () => void;
   onPropertyUpdate: () => void;
   schematicCapabilities: SchematicToolCapabilityDto[];
   schematicEditLoading: boolean;
@@ -106,7 +120,60 @@ type SchematicScreenProps = ProjectMetricsData & {
   // demo / project creation
   onCreateDemoProject: () => void;
   onLoadProjectPackage: () => void;
+  onSaveCurrentProject: () => void;
+  onSaveProjectPackage: () => void;
+  onCalculateCutoff: () => void;
+  onSelectNearestE24: () => void;
+  onRunMockAcSimulation: () => void;
 };
+
+function toolModeLabel(mode: "select" | "place" | "wire" | "delete") {
+  return mode.charAt(0).toUpperCase() + mode.slice(1);
+}
+
+function disabledReason(hasProject: boolean, busy: boolean, fallback?: string) {
+  if (!hasProject) return "Open or create a project first";
+  if (busy) return "Wait for the current schematic operation to finish";
+  return fallback;
+}
+
+type ReasonedButtonProps = ButtonProps & {
+  children: ReactNode;
+  reason?: string;
+  testId?: string;
+  disabled?: boolean;
+  onClick?: () => void;
+};
+
+function ReasonedButton({ children, reason, disabled, testId, ...props }: ReasonedButtonProps) {
+  return (
+    <Tooltip label={disabled && reason ? reason : String(children)} disabled={!disabled || !reason}>
+      <span>
+        <Button
+          {...props}
+          disabled={disabled}
+          title={disabled && reason ? reason : undefined}
+          data-testid={testId}
+        >
+          {children}
+        </Button>
+      </span>
+    </Tooltip>
+  );
+}
+
+function ToolbarGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="cad-toolbar-group">
+      <Text size="xs" fw={700} c="dimmed">
+        {label}
+      </Text>
+      <Group gap={4} wrap="nowrap">
+        {children}
+      </Group>
+    </div>
+  );
+}
 
 export function SchematicScreen({
   project,
@@ -123,6 +190,7 @@ export function SchematicScreen({
   validationReport,
   onSelectComponent,
   onValidate,
+  onValidateCurrentCircuit,
   onPropertyUpdate,
   schematicCapabilities,
   schematicEditLoading,
@@ -162,6 +230,11 @@ export function SchematicScreen({
   // demo
   onCreateDemoProject,
   onLoadProjectPackage,
+  onSaveCurrentProject,
+  onSaveProjectPackage,
+  onCalculateCutoff,
+  onSelectNearestE24,
+  onRunMockAcSimulation,
 }: SchematicScreenProps) {
   const [showConnectionPanel, setShowConnectionPanel] = useState(false);
   const [showNetEditor, setShowNetEditor] = useState(false);
@@ -189,44 +262,251 @@ export function SchematicScreen({
     }
   }, [hasProject, project, onGetSchematicUndoRedoState]);
 
-  const selectedInstanceId = selectedComponent?.instance_id ?? null;
+  const selectedInstanceId =
+    selectedSchematicEntity?.kind === "component"
+      ? selectedSchematicEntity.id
+      : (selectedComponent?.instance_id ?? null);
   const validationWarnings = validationReport?.warnings ?? [];
   const validationErrors = validationReport?.errors ?? [];
+  const selectedCanvasComponent =
+    project?.schematic.components.find(
+      (component) => component.instance_id === selectedSchematicEntity?.id,
+    ) ?? null;
+  const operationBusy = schematicEditLoading || schematicInteractionLoading;
+  const projectName = project?.name ?? "No project";
+  const validationStatus = validationReport
+    ? validationReport.valid
+      ? "Valid"
+      : `${validationErrors.length} errors / ${validationWarnings.length} warnings`
+    : "Not run";
 
   const isEmptyProject = !project || project.schematic.components.length === 0;
 
   return (
     <div className="grid">
-      <div className="schematic-topbar">
-        <SchematicToolbar
-          selectedComponentId={selectedInstanceId}
-          onDelete={onDeleteComponent}
-          onConnect={() => setShowConnectionPanel((s) => !s)}
-          onRenameNet={() => setShowNetEditor((s) => !s)}
-          disabled={!hasProject || schematicEditLoading}
-          editError={schematicEditError}
-        />
-        <InteractiveSchematicToolbar
-          toolMode={schematicToolMode}
-          onSetToolMode={onSetSchematicToolMode}
-          disabled={!hasProject || schematicEditLoading || schematicInteractionLoading}
-          disabledReason={
-            !hasProject
-              ? "Open or create a project to use schematic tools"
-              : schematicEditLoading || schematicInteractionLoading
-                ? "Operation in progress..."
-                : undefined
-          }
-        />
-        <UndoRedoToolbar
-          canUndo={undoRedoState?.can_undo ?? false}
-          canRedo={undoRedoState?.can_redo ?? false}
-          lastActionLabel={undoRedoState?.last_action_label ?? null}
-          nextRedoLabel={undoRedoState?.next_redo_label ?? null}
-          onUndo={onUndoSchematicEdit}
-          onRedo={onRedoSchematicEdit}
-          disabled={!hasProject || schematicInteractionLoading}
-        />
+      <div className="schematic-topbar" data-testid="engineering-cad-toolbar">
+        <div className="cad-workspace-title">
+          <Text size="sm" fw={700}>
+            Schematic Editor
+          </Text>
+          <Text size="xs" c="dimmed">
+            Engineering CAD workspace
+          </Text>
+        </div>
+        <ToolbarGroup label="Project">
+          <ReasonedButton
+            size="xs"
+            leftSection={<CircuitBoard size={14} />}
+            onClick={onCreateDemoProject}
+          >
+            New
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<FolderOpen size={14} />}
+            onClick={onLoadProjectPackage}
+          >
+            Open
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<Save size={14} />}
+            onClick={onSaveCurrentProject}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+          >
+            Save
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<SaveAll size={14} />}
+            disabled
+            reason="Use Project toolbar advanced path controls for Save As"
+          >
+            Save As
+          </ReasonedButton>
+        </ToolbarGroup>
+
+        <ToolbarGroup label="Edit">
+          <ReasonedButton
+            size="xs"
+            variant={schematicToolMode === "select" ? "filled" : "light"}
+            leftSection={<MousePointer2 size={14} />}
+            onClick={() => onSetSchematicToolMode("select")}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+            testId="cad-tool-select"
+          >
+            Select
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant={schematicToolMode === "place" ? "filled" : "light"}
+            leftSection={<Plus size={14} />}
+            onClick={() => onSetSchematicToolMode("place")}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+          >
+            Place
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant={schematicToolMode === "wire" ? "filled" : "light"}
+            leftSection={<Cable size={14} />}
+            onClick={() => onSetSchematicToolMode("wire")}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+          >
+            Wire
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            color="red"
+            leftSection={<Trash2 size={14} />}
+            onClick={() => {
+              if (selectedInstanceId) onDeleteComponent(selectedInstanceId);
+            }}
+            disabled={!hasProject || operationBusy || !selectedInstanceId}
+            reason={
+              disabledReason(hasProject, operationBusy) ??
+              (!selectedInstanceId ? "Select component first" : undefined)
+            }
+            testId="delete-selected-component"
+          >
+            Delete
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="subtle"
+            onClick={() => setShowConnectionPanel((s) => !s)}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+            testId="connect-pins-button"
+          >
+            Connect
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="subtle"
+            onClick={() => setShowNetEditor((s) => !s)}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+            testId="rename-net-button"
+          >
+            Rename Net
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<Undo2 size={14} />}
+            onClick={onUndoSchematicEdit}
+            disabled={!hasProject || operationBusy || !(undoRedoState?.can_undo ?? false)}
+            reason={
+              disabledReason(hasProject, operationBusy) ??
+              (!(undoRedoState?.can_undo ?? false) ? "Nothing to undo" : undefined)
+            }
+          >
+            Undo
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<Redo2 size={14} />}
+            onClick={onRedoSchematicEdit}
+            disabled={!hasProject || operationBusy || !(undoRedoState?.can_redo ?? false)}
+            reason={
+              disabledReason(hasProject, operationBusy) ??
+              (!(undoRedoState?.can_redo ?? false) ? "Nothing to redo" : undefined)
+            }
+          >
+            Redo
+          </ReasonedButton>
+        </ToolbarGroup>
+
+        <ToolbarGroup label="Analysis">
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<CheckCircle2 size={14} />}
+            onClick={onValidateCurrentCircuit}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+          >
+            Validate
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<FileText size={14} />}
+            onClick={onGenerateCurrentSchematicNetlistPreview}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+            testId="cad-analysis-netlist"
+          >
+            Netlist
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<Play size={14} />}
+            onClick={onRunMockAcSimulation}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+          >
+            Run AC
+          </ReasonedButton>
+        </ToolbarGroup>
+
+        <ToolbarGroup label="Tools">
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<Wrench size={14} />}
+            onClick={onCalculateCutoff}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+          >
+            Calculate fc
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<Sigma size={14} />}
+            onClick={onSelectNearestE24}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+          >
+            Nearest E24
+          </ReasonedButton>
+        </ToolbarGroup>
+
+        <ToolbarGroup label="Export">
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<SaveAll size={14} />}
+            onClick={onSaveProjectPackage}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+          >
+            Save .circuit
+          </ReasonedButton>
+          <ReasonedButton
+            size="xs"
+            variant="light"
+            leftSection={<FileText size={14} />}
+            onClick={onMarkdown}
+            disabled={!hasProject || operationBusy}
+            reason={disabledReason(hasProject, operationBusy)}
+          >
+            Export report
+          </ReasonedButton>
+        </ToolbarGroup>
+
         {showConnectionPanel && hasProject && (
           <ConnectionPanel
             components={project?.schematic.components ?? []}
@@ -247,9 +527,9 @@ export function SchematicScreen({
             onCancel={() => setShowNetEditor(false)}
           />
         )}
-        {schematicInteractionError && (
+        {(schematicEditError || schematicInteractionError) && (
           <div style={{ padding: 8, background: "#ff444433", color: "#ffcccc" }}>
-            {schematicInteractionError}
+            {schematicEditError ?? schematicInteractionError}
           </div>
         )}
       </div>
@@ -308,8 +588,9 @@ export function SchematicScreen({
                   </Button>
                 </Stack>
                 <Text size="xs" c="dimmed">
-                  Workflow: place components → wire nets → edit values → validate → netlist →
-                  simulate
+                  {
+                    "Workflow: place components -> wire nets -> edit values -> validate -> netlist -> simulate"
+                  }
                 </Text>
               </Stack>
             </Paper>
@@ -355,10 +636,22 @@ export function SchematicScreen({
       </section>
 
       <aside className="side-panel">
-        <Tabs defaultValue="properties" className="tabs">
+        <section className="inspector-shell">
+          <SchematicSelectionInspector
+            entity={selectedSchematicEntity}
+            details={schematicSelectionDetails}
+            selectedComponent={selectedCanvasComponent}
+            nets={project?.schematic.nets ?? []}
+            validationReport={validationReport}
+            onDeleteComponent={onDeleteComponent}
+            onDeleteWire={onDeleteSchematicWire}
+            onUpdateParameter={onUpdateSchematicQuickParameter}
+            loading={schematicInteractionLoading}
+          />
+        </section>
+        <Tabs defaultValue="properties" className="tabs inspector-tabs">
           <Tabs.List>
             <Tabs.Tab value="properties">Properties</Tabs.Tab>
-            <Tabs.Tab value="selection">Selection</Tabs.Tab>
             <Tabs.Tab value="validation">Validation</Tabs.Tab>
             <Tabs.Tab value="metrics">Metrics</Tabs.Tab>
             <Tabs.Tab value="simulation">Simulation</Tabs.Tab>
@@ -366,15 +659,6 @@ export function SchematicScreen({
           </Tabs.List>
           <Tabs.Panel value="properties">
             <SchematicPropertyPanel component={selectedComponent} onUpdate={onPropertyUpdate} />
-          </Tabs.Panel>
-          <Tabs.Panel value="selection">
-            <SchematicSelectionInspector
-              entity={selectedSchematicEntity}
-              details={schematicSelectionDetails}
-              onDeleteWire={onDeleteSchematicWire}
-              onUpdateParameter={onUpdateSchematicQuickParameter}
-              loading={schematicInteractionLoading}
-            />
           </Tabs.Panel>
           <Tabs.Panel value="validation">
             <CircuitValidationPanel report={validationReport} onValidate={onValidate} />
@@ -399,6 +683,16 @@ export function SchematicScreen({
           </Tabs.Panel>
         </Tabs>
       </aside>
+
+      <section className="engineering-status-bar" data-testid="engineering-status-bar">
+        <Text size="xs">Tool: {toolModeLabel(schematicToolMode)}</Text>
+        <Text size="xs">Grid: 20 px / Snap on</Text>
+        <Text size="xs">Project: {projectName}</Text>
+        <Text size="xs">
+          Selected: {selectedSchematicEntity ? selectedSchematicEntity.id : "None"}
+        </Text>
+        <Text size="xs">Validation: {validationStatus}</Text>
+      </section>
 
       <section className="bottom-panel">
         <Tabs defaultValue="netlist" className="tabs">

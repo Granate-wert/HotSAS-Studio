@@ -66,7 +66,10 @@ describe("SchematicSelectionInspector", () => {
         onUpdateParameter={vi.fn()}
       />,
     );
-    expect(screen.getByText(/Select a component, wire, or net/)).toBeInTheDocument();
+    expect(screen.getByText("Engineering Inspector")).toBeInTheDocument();
+    expect(
+      screen.getByText("Select a component or place one from the palette."),
+    ).toBeInTheDocument();
   });
 
   it("renders component details", () => {
@@ -167,7 +170,7 @@ describe("SchematicSelectionInspector", () => {
     );
 
     expect(screen.getByText("inherited")).toBeInTheDocument();
-    expect(screen.getByText("Persisted")).toBeInTheDocument();
+    expect(screen.getAllByText("Persisted").length).toBeGreaterThan(0);
   });
 
   it("shows instance override persistence status", () => {
@@ -181,7 +184,7 @@ describe("SchematicSelectionInspector", () => {
     );
 
     expect(screen.getByText("override")).toBeInTheDocument();
-    expect(screen.getByText("Derived builtin")).toBeInTheDocument();
+    expect(screen.getAllByText("Derived builtin").length).toBeGreaterThan(0);
   });
 
   it("shows missing/stale diagnostics for selected instance", () => {
@@ -215,7 +218,7 @@ describe("SchematicSelectionInspector", () => {
       />,
     );
 
-    expect(screen.getByText("Missing asset")).toBeInTheDocument();
+    expect(screen.getAllByText("Missing asset").length).toBeGreaterThan(0);
     expect(
       screen.getByText(/missing or stale model asset references detected/i),
     ).toBeInTheDocument();
